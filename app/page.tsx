@@ -42,11 +42,7 @@ export default function FeedPage() {
         </section>
       </div>
 
-      <BottomTabBar
-        active={navTab}
-        onChange={setNavTab}
-        brand={TWEAKS.brand}
-      />
+      <BottomTabBar active={navTab} onChange={setNavTab} brand={TWEAKS.brand} />
     </main>
   );
 }
