@@ -19,7 +19,7 @@ export default function FeedPage() {
     <main className="absolute inset-0 overflow-hidden">
       <BackgroundBlobs palette={TWEAKS.palette} />
 
-      <div className="absolute inset-0 flex flex-col pt-[50px]">
+      <div className="absolute inset-0 flex flex-col pt-12.5">
         <FeedHeader
           brand={TWEAKS.brand}
           tab={feedTab}
