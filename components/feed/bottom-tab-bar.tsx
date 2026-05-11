@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Bookmark,
   Plus,
@@ -10,7 +12,6 @@ import {
 } from "lucide-react";
 
 import { GlassSurface } from "@/components/feed/glass-surface";
-import { cn } from "@/lib/utils";
 
 export type NavTab = "feed" | "search" | "add" | "saved" | "me";
 
@@ -19,23 +20,27 @@ type TabItem = {
   label: string;
   icon: LucideIcon;
   primary?: boolean;
+  href?: string;
 };
 
 const TABS: TabItem[] = [
-  { id: "feed", label: "Лента", icon: Rows3 },
-  { id: "search", label: "Поиск", icon: Search },
+  { id: "feed", label: "Лента", icon: Rows3, href: "/" },
+  { id: "search", label: "Поиск", icon: Search, href: "/search" },
   { id: "add", label: "", icon: Plus, primary: true },
   { id: "saved", label: "Избранное", icon: Bookmark },
   { id: "me", label: "Профиль", icon: User },
 ];
 
 type BottomTabBarProps = {
-  active: NavTab;
-  onChange: (next: NavTab) => void;
   brand: string;
 };
 
-export function BottomTabBar({ active, onChange, brand }: BottomTabBarProps) {
+export function BottomTabBar({ brand }: BottomTabBarProps) {
+  const pathname = usePathname();
+
+  const isActiveTab = (t: TabItem) =>
+    t.href !== undefined && pathname === t.href;
+
   return (
     <nav
       aria-label="Главная навигация"
@@ -44,7 +49,7 @@ export function BottomTabBar({ active, onChange, brand }: BottomTabBarProps) {
       <GlassSurface className="h-16 rounded-[28px]">
         <div className="flex h-16 items-center justify-around px-2">
           {TABS.map((t) => {
-            const isActive = active === t.id;
+            const isActive = isActiveTab(t);
 
             if (t.primary) {
               return (
@@ -52,7 +57,6 @@ export function BottomTabBar({ active, onChange, brand }: BottomTabBarProps) {
                   key={t.id}
                   type="button"
                   aria-label="Создать пост"
-                  onClick={() => onChange(t.id)}
                   className="grid size-[50px] cursor-pointer place-items-center border-0 bg-transparent p-0"
                   style={{ filter: `drop-shadow(0 6px 14px ${brand}55)` }}
                 >
@@ -95,17 +99,8 @@ export function BottomTabBar({ active, onChange, brand }: BottomTabBarProps) {
             }
 
             const Icon = t.icon;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => onChange(t.id)}
-                className={cn(
-                  "flex cursor-pointer flex-col items-center gap-0.5 border-0 bg-transparent px-2 py-1.5 text-[10.5px] font-semibold transition-colors"
-                )}
-                style={{ color: isActive ? brand : "#5C6B62" }}
-              >
+            const inner = (
+              <>
                 <Icon
                   className="size-[22px]"
                   strokeWidth={isActive ? 2.4 : 1.8}
@@ -113,6 +108,30 @@ export function BottomTabBar({ active, onChange, brand }: BottomTabBarProps) {
                   fill={isActive ? brand : "none"}
                 />
                 <span>{t.label}</span>
+              </>
+            );
+
+            if (t.href) {
+              return (
+                <Link
+                  key={t.id}
+                  href={t.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className="flex cursor-pointer flex-col items-center gap-0.5 px-2 py-1.5 text-[10.5px] font-semibold transition-colors"
+                  style={{ color: isActive ? brand : "#5C6B62" }}
+                >
+                  {inner}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={t.id}
+                type="button"
+                className="flex cursor-pointer flex-col items-center gap-0.5 border-0 bg-transparent px-2 py-1.5 text-[10.5px] font-semibold text-[#5C6B62]"
+              >
+                {inner}
               </button>
             );
           })}

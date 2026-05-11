@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { BackgroundBlobs } from "@/components/feed/background-blobs";
-import { BottomTabBar, type NavTab } from "@/components/feed/bottom-tab-bar";
+import { BottomTabBar } from "@/components/feed/bottom-tab-bar";
 import { FeedHeader, type FeedTab } from "@/components/feed/feed-header";
 import { PostCard } from "@/components/feed/post-card";
 import { DEFAULT_TWEAKS, POSTS, type Tweaks } from "@/lib/mock-data";
@@ -13,7 +13,6 @@ const CURRENT_USER: string | null = null;
 
 export default function FeedPage() {
   const [feedTab, setFeedTab] = useState<FeedTab>("new");
-  const [navTab, setNavTab] = useState<NavTab>("feed");
 
   return (
     <main className="absolute inset-0 overflow-hidden">
@@ -42,7 +41,7 @@ export default function FeedPage() {
         </section>
       </div>
 
-      <BottomTabBar active={navTab} onChange={setNavTab} brand={TWEAKS.brand} />
+      <BottomTabBar brand={TWEAKS.brand} />
     </main>
   );
 }

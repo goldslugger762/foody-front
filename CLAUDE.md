@@ -19,7 +19,17 @@ The stack is **Next.js 16.2.4 + React 19.2.4 + Tailwind v4 + shadcn 4**. All fou
 
 ### App Router + RSC boundaries
 
-Routes live in `app/`. The product surface (the only route today) is the Foody feed at `app/page.tsx`, which is `'use client'` because it owns the segmented-tab and bottom-nav state. **Push `'use client'` as far down the tree as possible** — most feed pieces (`background-blobs`, `glass-surface`, `user-avatar`, `dish-photo`, `feed-header`) are RSC. Only `post-card` and `bottom-tab-bar` need to be client components (local UI state).
+Routes live in `app/`. Current routes: `/` (Foody feed, `app/page.tsx`) and `/search` (`app/search/page.tsx`).
+
+**Two valid `page.tsx` shapes coexist — pick by how interconnected the state is:**
+- `app/page.tsx` is `'use client'` because `feedTab` is read by the header and would otherwise need a context. State is hoisted.
+- `app/search/page.tsx` is RSC. Each piece of state (search query, recent list) is local to its island under `components/search/`. No state crosses island boundaries.
+
+**Push `'use client'` as far down the tree as possible.** Most leaf visuals (`background-blobs`, `glass-surface`, `user-avatar`, `dish-photo`, `feed-header`, `section-header`) are RSC; only components with local `useState`/handlers (`post-card`, `bottom-tab-bar`, `search-header`, `recent-searches`, `popular-tags`, `category-picker`) are client.
+
+### Navigation
+
+`BottomTabBar` (`components/feed/bottom-tab-bar.tsx`) is shared by every route. The active tab is derived from `usePathname()` — **do not re-introduce an `active`/`onChange` controlled API.** Route-bound tabs render as `next/link`; stubs for routes that don't exist yet (`add`, `saved`, `me`) stay as `<button>`. To add a new route to the bar, set its `href` in the `TABS` array.
 
 ### Tailwind v4, CSS-first
 
@@ -49,14 +59,16 @@ See `components/ui/button.tsx`, `avatar.tsx`, `scroll-area.tsx`. Match this patt
 
 ### Domain components & "Liquid Glass + Flat" visual language
 
-Feed-specific components live in `components/feed/`. Visual conventions:
+Per-screen components live in feature subfolders: `components/feed/`, `components/search/`. Mirror this when adding a new screen. Cross-screen primitives (e.g. `GlassSurface`) live under `components/feed/` for now — promote to `components/` only when a third consumer appears.
+
+Visual conventions:
 - `GlassSurface` (`components/feed/glass-surface.tsx`) is the reusable backdrop-blur + inset-highlight shell — use it for any new "liquid glass" surface (header, tab bar, etc.) instead of re-creating the effect inline.
 - **Inline `style` is allowed only for dynamic values** (brand color from props, gradient angles computed from a seed, dynamically sized fonts). Static visuals must be Tailwind classes — including arbitrary-value utilities like `shadow-[inset_1px_1px_0_rgba(...)]` and `backdrop-blur-[22px]`. There is no project-wide `--brand` CSS variable; brand color flows from `lib/mock-data.ts → DEFAULT_TWEAKS` through props (the `Tweaks` shape is the design's tweakable surface area).
 - Russian UI copy is canonical. Inter is loaded via `next/font/google` with both `cyrillic` and `latin` subsets in `app/layout.tsx` — keep both subsets when changing the font setup.
 
 ### Mock data
 
-`lib/mock-data.ts` exports `POSTS`, the `Post` / `Palette` / `Density` / `Tweaks` types, and `DEFAULT_TWEAKS`. When fetching real data later, preserve these types — components consume them directly.
+`lib/mock-data.ts` exports `POSTS`, `POPULAR_TAGS`, `RECENT_SEARCHES`, the `Post` / `Palette` / `Density` / `Tweaks` types, and `DEFAULT_TWEAKS`. When fetching real data later, preserve these types — components consume them directly.
 
 ### Out of scope
 
