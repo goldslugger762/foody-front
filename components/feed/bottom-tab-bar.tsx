@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 import {
   Bookmark,
   Plus,
@@ -53,10 +54,11 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
 
             if (t.primary) {
               return (
-                <button
+                <motion.button
                   key={t.id}
                   type="button"
                   aria-label="Создать пост"
+                  whileTap={{ scale: 0.85 }}
                   className="grid size-[50px] cursor-pointer place-items-center border-0 bg-transparent p-0"
                   style={{ filter: `drop-shadow(0 6px 14px ${brand}55)` }}
                 >
@@ -94,19 +96,24 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
                       strokeLinecap="round"
                     />
                   </svg>
-                </button>
+                </motion.button>
               );
             }
 
             const Icon = t.icon;
             const inner = (
               <>
-                <Icon
-                  className="size-[22px]"
-                  strokeWidth={isActive ? 2.4 : 1.8}
-                  color={isActive ? brand : "#5C6B62"}
-                  fill={isActive ? brand : "none"}
-                />
+                <motion.span
+                  whileTap={{ scale: 0.85 }}
+                  className="grid place-items-center"
+                >
+                  <Icon
+                    className="size-[22px]"
+                    strokeWidth={isActive ? 2.4 : 1.8}
+                    color={isActive ? brand : "#5C6B62"}
+                    fill="none"
+                  />
+                </motion.span>
                 <span>{t.label}</span>
               </>
             );

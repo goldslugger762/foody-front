@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { BackgroundBlobs } from "@/components/feed/background-blobs";
-import { BottomTabBar } from "@/components/feed/bottom-tab-bar";
 import { FeedHeader, type FeedTab } from "@/components/feed/feed-header";
 import { PostCard } from "@/components/feed/post-card";
 import { DEFAULT_TWEAKS, POSTS, type Tweaks } from "@/lib/mock-data";
@@ -40,8 +39,6 @@ export default function FeedPage() {
           ))}
         </section>
       </div>
-
-      <BottomTabBar brand={TWEAKS.brand} />
     </main>
   );
 }

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { BottomTabBar } from "@/components/feed/bottom-tab-bar";
+import { PageTransition } from "@/components/page-transition";
+import { DEFAULT_TWEAKS } from "@/lib/mock-data";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -19,7 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={inter.variable}>
-      <body className="min-h-screen font-sans antialiased">{children}</body>
+      <body className="min-h-screen font-sans antialiased">
+        <PageTransition>{children}</PageTransition>
+        <BottomTabBar brand={DEFAULT_TWEAKS.brand} />
+      </body>
     </html>
   );
 }
