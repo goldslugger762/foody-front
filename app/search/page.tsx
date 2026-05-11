@@ -1,4 +1,5 @@
 import { BackgroundBlobs } from "@/components/feed/background-blobs";
+import { BottomTabBar } from "@/components/feed/bottom-tab-bar";
 import { CategoryPicker } from "@/components/search/category-picker";
 import { PopularTags } from "@/components/search/popular-tags";
 import { RecentSearches } from "@/components/search/recent-searches";
@@ -25,6 +26,8 @@ export default function SearchPage() {
           <PopularTags tags={POPULAR_TAGS} brand={TWEAKS.brand} />
         </div>
       </div>
+
+      <BottomTabBar brand={TWEAKS.brand} />
     </main>
   );
 }
