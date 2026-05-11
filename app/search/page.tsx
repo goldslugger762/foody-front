@@ -1,5 +1,3 @@
-import { BackgroundBlobs } from "@/components/feed/background-blobs";
-import { BottomTabBar } from "@/components/feed/bottom-tab-bar";
 import { CategoryPicker } from "@/components/search/category-picker";
 import { PopularTags } from "@/components/search/popular-tags";
 import { RecentSearches } from "@/components/search/recent-searches";
@@ -16,8 +14,6 @@ const TWEAKS: Tweaks = DEFAULT_TWEAKS;
 export default function SearchPage() {
   return (
     <main className="absolute inset-0 overflow-hidden">
-      <BackgroundBlobs palette={TWEAKS.palette} />
-
       <div className="absolute inset-0 flex flex-col pt-12.5">
         <div className="hide-scroll flex-1 overflow-y-auto pb-25">
           <SearchHeader brand={TWEAKS.brand} />
@@ -26,8 +22,6 @@ export default function SearchPage() {
           <PopularTags tags={POPULAR_TAGS} brand={TWEAKS.brand} />
         </div>
       </div>
-
-      <BottomTabBar brand={TWEAKS.brand} />
     </main>
   );
 }
