@@ -443,7 +443,7 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         </div>
       </div>
 
-      <p className="mx-3 mb-3 rounded-[14px] bg-[rgba(20,40,28,0.04)] px-3 py-2.5 text-[13.5px] leading-[1.45] text-pretty text-[#15291C]">
+      <p className="mx-3 mb-3 rounded-[14px] bg-[rgba(20,40,28,0.04)] px-3 py-2.5 font-[family-name:var(--font-roboto)] text-[15px] leading-[1.62] font-medium text-pretty text-[#15291C]">
         {post.text}
       </p>
     </>

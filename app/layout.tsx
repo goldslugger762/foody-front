@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
 import { BackgroundBlobs } from "@/components/feed/background-blobs";
 import { BottomTabBar } from "@/components/feed/bottom-tab-bar";
@@ -9,6 +9,12 @@ import { DEFAULT_TWEAKS } from "@/lib/mock-data";
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
   variable: "--font-inter",
+});
+
+const roboto = Roboto({
+  subsets: ["latin", "cyrillic"],
+  weight: ["400", "500"],
+  variable: "--font-roboto",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={inter.variable}>
+    <html lang="ru" className={`${inter.variable} ${roboto.variable}`}>
       <body className="min-h-screen font-sans antialiased">
         <BackgroundBlobs palette={DEFAULT_TWEAKS.palette} />
         <PageTransition>{children}</PageTransition>
