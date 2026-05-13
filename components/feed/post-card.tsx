@@ -16,7 +16,7 @@ import {
   useMotionValue,
   useReducedMotion,
 } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 import { DishPhoto } from "@/components/feed/dish-photo";
@@ -59,7 +59,6 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [likePulse, setLikePulse] = useState(0);
   const [commentPulse, setCommentPulse] = useState(0);
   const [savePulse, setSavePulse] = useState(0);
-  const [tagPulses, setTagPulses] = useState<Record<string, number>>({});
   const shouldReduceMotion = useReducedMotion();
 
   const photoHeight = density === "cozy" ? 360 : 320;
@@ -138,11 +137,15 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     setMorePulse((pulse) => pulse + 1);
   }
 
-  function handleTagClick(tag: string) {
-    setTagPulses((pulses) => ({
-      ...pulses,
-      [tag]: (pulses[tag] ?? 0) + 1,
-    }));
+  function handleTagClick() {
+    // Future search navigation will attach here.
+  }
+
+  function handleTagKeyDown(event: KeyboardEvent<HTMLSpanElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleTagClick();
+    }
   }
 
   function handlePhotoDragStart() {
@@ -537,40 +540,45 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
         <div className="mt-auto flex flex-wrap items-center gap-1.5 px-3.5 pb-3.5">
           {mainTag && (
-            <motion.button
-              key={`${mainTag}-${tagPulses[mainTag] ?? 0}`}
-              type="button"
-              onClick={() => handleTagClick(mainTag)}
-              className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border-0 px-3 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A]"
-              animate={
-                tagPulses[mainTag] && !shouldReduceMotion
-                  ? { scale: [1, 0.94, 1.04, 1] }
-                  : { scale: 1 }
-              }
-              transition={{ duration: 0.3, ease: "easeOut" }}
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={handleTagClick}
+              onKeyDown={handleTagKeyDown}
+              className={cn(
+                "inline-flex h-7 origin-center translate-z-0 cursor-pointer select-none items-center justify-center rounded-full px-3 will-change-transform",
+                "text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A] outline-none",
+                "transition-transform duration-150 ease-out [backface-visibility:hidden] [-webkit-tap-highlight-color:transparent]",
+                !shouldReduceMotion && "active:scale-[0.94]"
+              )}
               style={{
                 background: `linear-gradient(135deg, #BDF7D0, #73E89F)`,
                 boxShadow: `0 4px 12px ${brand}33, inset 1px 1px 0 rgba(255,255,255,0.65)`,
               }}
             >
-              {mainTag}
-            </motion.button>
+              <span className="flex h-full items-center justify-center leading-[28px]">
+                {mainTag}
+              </span>
+            </span>
           )}
           {restTags.map((t) => (
-            <motion.button
-              key={`${t}-${tagPulses[t] ?? 0}`}
-              type="button"
-              onClick={() => handleTagClick(t)}
-              className="inline-flex h-[26px] cursor-pointer items-center rounded-full border-0 bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[-0.1px] text-[#0E8A4F]"
-              animate={
-                tagPulses[t] && !shouldReduceMotion
-                  ? { scale: [1, 0.94, 1.04, 1] }
-                  : { scale: 1 }
-              }
-              transition={{ duration: 0.3, ease: "easeOut" }}
+            <span
+              key={t}
+              role="button"
+              tabIndex={0}
+              onClick={handleTagClick}
+              onKeyDown={handleTagKeyDown}
+              className={cn(
+                "inline-flex h-[26px] origin-center translate-z-0 cursor-pointer select-none items-center justify-center rounded-full bg-[rgba(46,204,113,0.14)] px-2.5 will-change-transform",
+                "text-[11.5px] font-bold tracking-[-0.1px] text-[#0E8A4F] outline-none",
+                "transition-transform duration-150 ease-out [backface-visibility:hidden] [-webkit-tap-highlight-color:transparent]",
+                !shouldReduceMotion && "active:scale-[0.94]"
+              )}
             >
-              {t}
-            </motion.button>
+              <span className="flex h-full items-center justify-center leading-[26px]">
+                {t}
+              </span>
+            </span>
           ))}
         </div>
       </article>
