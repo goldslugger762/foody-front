@@ -10,14 +10,14 @@ import {
   Star,
 } from "lucide-react";
 import {
-  AnimatePresence,
+  animate,
   motion,
   type PanInfo,
-  type Variants,
   useMotionValue,
   useReducedMotion,
 } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { DishPhoto } from "@/components/feed/dish-photo";
 import { UserAvatar } from "@/components/feed/user-avatar";
@@ -30,31 +30,30 @@ type PostCardProps = {
   density: Density;
 };
 
-const PHOTO_SLIDE_VARIANTS: Variants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? "100%" : "-100%",
-    opacity: 0.9,
-    scale: 0.995,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    scale: 1,
-  },
-  exit: (direction: number) => ({
-    x: direction > 0 ? "-100%" : "100%",
-    opacity: 0.9,
-    scale: 0.995,
-  }),
-};
+const PHOTO_SWIPE_DISTANCE_RATIO = 0.22;
+const PHOTO_SWIPE_VELOCITY = 520;
+const PHOTO_DRAG_PREVIEW_RATIO = 0.5;
+const PHOTO_RUBBER_BAND_CONSTANT = 0.55;
+
+function rubberBandDistance(offset: number, dimension: number) {
+  if (dimension <= 0) {
+    return 0;
+  }
+
+  const distance = Math.abs(offset);
+  const band =
+    (distance * dimension * PHOTO_RUBBER_BAND_CONSTANT) /
+    (dimension + PHOTO_RUBBER_BAND_CONSTANT * distance);
+
+  return Math.sign(offset) * band;
+}
 
 export function PostCard({ post, brand, density }: PostCardProps) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
-  const [photoDirection, setPhotoDirection] = useState(1);
-  const [dragPreviewDirection, setDragPreviewDirection] = useState(1);
-  const [photoBackdropIdx, setPhotoBackdropIdx] = useState(1);
+  const [photoIndicatorIdx, setPhotoIndicatorIdx] = useState(0);
+  const [photoWidth, setPhotoWidth] = useState(0);
   const [sharePulse, setSharePulse] = useState(0);
   const [morePulse, setMorePulse] = useState(0);
   const [likePulse, setLikePulse] = useState(0);
@@ -70,23 +69,45 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const lastPhotoIdx = post.photos - 1;
   const canDragToPreviousPhoto = photoIdx > 0;
   const canDragToNextPhoto = photoIdx < lastPhotoIdx;
-  const photoDragX = useMotionValue(0);
-  const fallbackPreviewPhotoDirection =
-    dragPreviewDirection < 0 && canDragToPreviousPhoto
-      ? -1
-      : canDragToNextPhoto
-        ? 1
-        : canDragToPreviousPhoto
-          ? -1
-          : 0;
-  const previewPhotoIdx = Math.min(
-    Math.max(photoBackdropIdx, 0),
-    lastPhotoIdx
-  );
-  const fallbackPreviewPhotoIdx = Math.min(
-    Math.max(photoIdx + fallbackPreviewPhotoDirection, 0),
-    lastPhotoIdx
-  );
+  const photoViewportRef = useRef<HTMLDivElement>(null);
+  const photoTrackX = useMotionValue(0);
+  const photoAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
+  const trackPhotoIndexes = [
+    canDragToPreviousPhoto ? photoIdx - 1 : photoIdx,
+    photoIdx,
+    canDragToNextPhoto ? photoIdx + 1 : photoIdx,
+  ];
+
+  useEffect(() => {
+    const viewport = photoViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const viewportElement = viewport;
+
+    function syncPhotoWidth() {
+      const nextWidth = viewportElement.getBoundingClientRect().width;
+      setPhotoWidth(nextWidth);
+      photoTrackX.jump(-nextWidth);
+    }
+
+    syncPhotoWidth();
+
+    const resizeObserver = new ResizeObserver(syncPhotoWidth);
+    resizeObserver.observe(viewportElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [photoTrackX]);
+
+  useEffect(() => {
+    return () => {
+      photoAnimationRef.current?.stop();
+    };
+  }, []);
 
   function handleLikeClick() {
     const nextLiked = !liked;
@@ -123,74 +144,85 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     }));
   }
 
-  function goToPhoto(index: number) {
-    const nextPhotoIdx = Math.min(Math.max(index, 0), lastPhotoIdx);
-
-    if (nextPhotoIdx === photoIdx) {
-      return;
-    }
-
-    setPhotoDirection(nextPhotoIdx > photoIdx ? 1 : -1);
-    setPhotoIdx(nextPhotoIdx);
+  function handlePhotoDragStart() {
+    photoAnimationRef.current?.stop();
+    photoTrackX.stop();
+    setPhotoIndicatorIdx(photoIdx);
   }
 
   function handlePhotoDrag(
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) {
-    if (!hasPhotoSlider || Math.abs(info.offset.x) < 8) {
+    if (!hasPhotoSlider || photoWidth <= 0) {
       return;
     }
 
-    const nextPreviewDirection = info.offset.x < 0 ? 1 : -1;
-    const nextPreviewPhotoIdx = photoIdx + nextPreviewDirection;
+    const centerX = -photoWidth;
+    const rawOffset = info.offset.x;
+    const canMove =
+      (rawOffset < 0 && canDragToNextPhoto) ||
+      (rawOffset > 0 && canDragToPreviousPhoto);
 
-    if (
-      (nextPreviewDirection < 0 && !canDragToPreviousPhoto) ||
-      (nextPreviewDirection > 0 && !canDragToNextPhoto)
-    ) {
+    if (!canMove) {
+      photoTrackX.set(centerX);
       return;
     }
 
-    setDragPreviewDirection((currentDirection) =>
-      currentDirection === nextPreviewDirection
-        ? currentDirection
-        : nextPreviewDirection
+    const constrainedOffset = rubberBandDistance(
+      rawOffset,
+      photoWidth * PHOTO_DRAG_PREVIEW_RATIO
     );
-    setPhotoBackdropIdx((currentIdx) =>
-      currentIdx === nextPreviewPhotoIdx ? currentIdx : nextPreviewPhotoIdx
-    );
+
+    photoTrackX.set(centerX + constrainedOffset);
   }
 
   function handlePhotoDragEnd(
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) {
-    if (!hasPhotoSlider) {
+    if (!hasPhotoSlider || photoWidth <= 0) {
       return;
     }
 
-    const swipeOffset = info.offset.x;
+    const visualOffset = photoTrackX.get() + photoWidth;
     const swipeVelocity = info.velocity.x;
+    const shouldGoNext =
+      canDragToNextPhoto &&
+      (visualOffset < -photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
+        (visualOffset < -photoWidth * 0.1 &&
+          swipeVelocity < -PHOTO_SWIPE_VELOCITY));
+    const shouldGoPrevious =
+      canDragToPreviousPhoto &&
+      (visualOffset > photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
+        (visualOffset > photoWidth * 0.1 &&
+          swipeVelocity > PHOTO_SWIPE_VELOCITY));
+    const targetPhotoIdx = shouldGoNext
+      ? photoIdx + 1
+      : shouldGoPrevious
+        ? photoIdx - 1
+        : photoIdx;
+    const targetX = shouldGoNext
+      ? -photoWidth * 2
+      : shouldGoPrevious
+        ? 0
+        : -photoWidth;
 
-    if ((swipeOffset < -72 || swipeVelocity < -420) && canDragToNextPhoto) {
-      const nextPhotoIdx = photoIdx + 1;
-      photoDragX.jump(0);
-      setDragPreviewDirection(1);
-      setPhotoBackdropIdx(nextPhotoIdx);
-      goToPhoto(nextPhotoIdx);
-    } else if (
-      (swipeOffset > 72 || swipeVelocity > 420) &&
-      canDragToPreviousPhoto
-    ) {
-      const nextPhotoIdx = photoIdx - 1;
-      photoDragX.jump(0);
-      setDragPreviewDirection(-1);
-      setPhotoBackdropIdx(nextPhotoIdx);
-      goToPhoto(nextPhotoIdx);
-    } else {
-      setPhotoBackdropIdx(fallbackPreviewPhotoIdx);
-    }
+    photoAnimationRef.current?.stop();
+    setPhotoIndicatorIdx(targetPhotoIdx);
+    photoAnimationRef.current = animate(photoTrackX, targetX, {
+      duration: shouldReduceMotion ? 0.01 : 0.32,
+      ease: [0.22, 1, 0.36, 1],
+      onComplete: () => {
+        if (targetPhotoIdx !== photoIdx) {
+          flushSync(() => {
+            setPhotoIdx(targetPhotoIdx);
+          });
+        }
+
+        photoTrackX.jump(-photoWidth);
+      },
+    });
   }
 
   return (
@@ -259,69 +291,56 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
         <div className="relative mx-3 overflow-hidden rounded-[18px]">
           <div
+            ref={photoViewportRef}
             className={cn(
               "relative select-none overflow-hidden",
               hasPhotoSlider && "cursor-grab active:cursor-grabbing"
             )}
             style={{ height: photoHeight }}
           >
-            {hasPhotoSlider && (
-              <div className="absolute inset-0">
-                <DishPhoto
-                  seed={post.seed + previewPhotoIdx}
-                  height={photoHeight}
-                  label={`dish photo ${previewPhotoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
-                  labelClassName={
-                    hasPhotoSlider
-                      ? "right-3 left-auto max-w-[calc(100%-6.75rem)] overflow-hidden text-right text-ellipsis whitespace-nowrap"
-                      : undefined
-                  }
-                />
-              </div>
-            )}
             <motion.div
               drag={hasPhotoSlider ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={{
-                left: canDragToNextPhoto ? 0.18 : 0,
-                right: canDragToPreviousPhoto ? 0.18 : 0,
+              dragConstraints={{
+                left: canDragToNextPhoto
+                  ? -photoWidth * 2
+                  : -photoWidth,
+                right: canDragToPreviousPhoto
+                  ? 0
+                  : -photoWidth,
               }}
+              dragElastic={0}
               dragMomentum={false}
               dragDirectionLock
+              onDragStart={handlePhotoDragStart}
               onDrag={handlePhotoDrag}
               onDragEnd={handlePhotoDragEnd}
-              className="absolute inset-0 [touch-action:pan-y]"
-              style={{ x: photoDragX }}
+              className="absolute inset-y-0 left-0 flex h-full w-[300%] [touch-action:pan-y]"
+              style={{ x: photoTrackX }}
             >
-              <AnimatePresence initial={false} custom={photoDirection}>
-                <motion.div
-                  key={photoIdx}
-                  custom={photoDirection}
-                  variants={PHOTO_SLIDE_VARIANTS}
-                  initial={shouldReduceMotion ? false : "enter"}
-                  animate="center"
-                  exit={shouldReduceMotion ? undefined : "exit"}
-                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-0"
+              {trackPhotoIndexes.map((trackPhotoIdx, trackPosition) => (
+                <div
+                  key={`${trackPosition}-${trackPhotoIdx}`}
+                  aria-hidden={trackPosition !== 1}
+                  className="h-full w-1/3 shrink-0"
                 >
                   <DishPhoto
-                    seed={post.seed + photoIdx}
+                    seed={post.seed + trackPhotoIdx}
                     height={photoHeight}
-                    label={`dish photo ${photoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
+                    label={`dish photo ${trackPhotoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
                     labelClassName={
                       hasPhotoSlider
                         ? "right-3 left-auto max-w-[calc(100%-6.75rem)] overflow-hidden text-right text-ellipsis whitespace-nowrap"
                         : undefined
                     }
                   />
-                </motion.div>
-              </AnimatePresence>
+                </div>
+              ))}
             </motion.div>
           </div>
           {hasPhotoSlider && (
-            <div className="absolute bottom-2.5 left-3 flex justify-start gap-1.5 rounded-full bg-black/15 p-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.16)] backdrop-blur-[10px]">
+            <div className="pointer-events-none absolute bottom-2.5 left-3 flex justify-start gap-1.5 rounded-full bg-black/15 p-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.16)] backdrop-blur-[10px]">
               {Array.from({ length: post.photos }).map((_, i) => {
-                const isActive = i === photoIdx;
+                const isActive = i === photoIndicatorIdx;
                 return (
                   <span
                     key={i}
