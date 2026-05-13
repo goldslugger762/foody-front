@@ -27,6 +27,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [sharePulse, setSharePulse] = useState(0);
   const [likePulse, setLikePulse] = useState(0);
   const [commentPulse, setCommentPulse] = useState(0);
   const [savePulse, setSavePulse] = useState(0);
@@ -54,6 +55,10 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
   function handleCommentClick() {
     setCommentPulse((pulse) => pulse + 1);
+  }
+
+  function handleShareClick() {
+    setSharePulse((pulse) => pulse + 1);
   }
 
   return (
@@ -89,9 +94,21 @@ export function PostCard({ post, brand, density }: PostCardProps) {
             type="button"
             title="Поделиться"
             aria-label="Поделиться"
+            onClick={handleShareClick}
             className="grid size-8 cursor-pointer place-items-center rounded-[9px] bg-[rgba(20,40,28,0.06)] text-[#15291C]"
           >
-            <Share2 className="size-[17px]" strokeWidth={2} />
+            <motion.span
+              key={`share-${sharePulse}`}
+              className="grid size-[17px] place-items-center"
+              animate={
+                sharePulse > 0 && !shouldReduceMotion
+                  ? { scale: [1, 0.86, 1.08, 1] }
+                  : { scale: 1 }
+              }
+              transition={{ duration: 0.28, ease: "easeOut" }}
+            >
+              <Share2 className="size-[17px]" strokeWidth={2} />
+            </motion.span>
           </button>
           <button
             type="button"
