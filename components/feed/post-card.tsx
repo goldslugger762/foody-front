@@ -83,13 +83,6 @@ export function PostCard({ post, brand, density }: PostCardProps) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 overflow-hidden text-sm font-bold tracking-[-0.2px] text-ellipsis whitespace-nowrap text-[#15291C]">
               <span>{post.user}</span>
-              <span
-                aria-label="Подтверждённый аккаунт"
-                className="grid size-3.5 shrink-0 place-items-center rounded-full text-[8px] font-black text-[#06301A]"
-                style={{ backgroundColor: brand }}
-              >
-                ✓
-              </span>
             </div>
             <div className="mt-px text-[11.5px] font-medium text-[#5C6B62]">
               {post.realName} · {post.when}
@@ -301,20 +294,6 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         </div>
 
         <div className="flex items-center justify-between gap-3 px-4 pt-1 pb-2.5">
-          <div className="inline-flex items-baseline gap-1.5">
-            <span className="text-[11px] font-bold tracking-[0.4px] text-[#5C6B62] uppercase">
-              Оценка
-            </span>
-            <span className="inline-flex items-center gap-1 text-[18px] font-extrabold tracking-[-0.3px] text-[#15291C]">
-              <Star
-                className="size-3.5"
-                color="#FFB400"
-                fill="#FFB400"
-                strokeWidth={0}
-              />{" "}
-              {post.rating}
-            </span>
-          </div>
           <div
             className={cn(
               "relative inline-flex items-center gap-1.5 rounded-[14px] px-3.5 py-1.5",
@@ -333,6 +312,20 @@ export function PostCard({ post, brand, density }: PostCardProps) {
               {post.price}
             </span>
           </div>
+          <div className="inline-flex items-baseline gap-1.5">
+            <span className="text-[11px] font-bold tracking-[0.4px] text-[#5C6B62] uppercase">
+              Оценка
+            </span>
+            <span className="inline-flex items-center gap-1 text-[18px] font-extrabold tracking-[-0.3px] text-[#15291C]">
+              <Star
+                className="size-3.5"
+                color="#FFB400"
+                fill="#FFB400"
+                strokeWidth={0}
+              />{" "}
+              {post.rating}
+            </span>
+          </div>
         </div>
 
         <p className="mx-3 mb-3 rounded-[14px] bg-[rgba(20,40,28,0.04)] px-3 py-2.5 text-[13.5px] leading-[1.45] text-pretty text-[#15291C]">
@@ -348,7 +341,6 @@ export function PostCard({ post, brand, density }: PostCardProps) {
                 boxShadow: `0 4px 12px ${brand}55, inset 1px 1px 0 rgba(255,255,255,0.5)`,
               }}
             >
-              <span className="text-[11px] opacity-75">★</span>
               {mainTag}
             </span>
           )}
