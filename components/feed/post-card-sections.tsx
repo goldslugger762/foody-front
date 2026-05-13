@@ -411,20 +411,29 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
       <div className="flex items-center justify-between gap-3 px-4 pt-1 pb-2.5">
         <div
           className={cn(
-            "relative inline-flex items-center gap-1.5 rounded-[14px] px-3.5 py-1.5",
-            "border-[0.5px] border-white/85",
-            "bg-[linear-gradient(135deg,rgba(255,255,255,0.85),rgba(255,255,255,0.55))]",
-            "backdrop-blur-[14px] backdrop-saturate-[200%]"
+            "relative isolate inline-flex rounded-[9px] p-px",
+            "bg-[linear-gradient(90deg,rgba(220,255,232,0.66),rgba(83,145,105,0.3))]",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_1px_2px_rgba(20,40,28,0.035)]"
           )}
           style={{
-            boxShadow: `inset 1px 1px 0 rgba(255,255,255,0.95), inset -1px -1px 0 rgba(255,255,255,0.45), 0 6px 16px ${brand}33`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.72), -6px 5px 14px ${brand}14`,
           }}
         >
-          <span className="text-[10.5px] font-bold tracking-[0.4px] text-[#5C6B62] uppercase">
-            Цена
-          </span>
-          <span className="text-[18px] font-extrabold tracking-[-0.3px] text-[#15291C]">
-            {post.price}
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5",
+              "border border-white/70",
+              "bg-[linear-gradient(135deg,rgba(244,255,248,0.62),rgba(255,255,255,0.74))]",
+              "shadow-[inset_1px_1px_0_rgba(255,255,255,0.9),inset_-1px_-1px_0_rgba(255,255,255,0.26)]",
+              "backdrop-blur-[14px] backdrop-saturate-[180%]"
+            )}
+          >
+            <span className="text-[10.5px] font-bold tracking-[0.38px] text-[#647268] uppercase">
+              Цена
+            </span>
+            <span className="text-[16.5px] leading-none font-extrabold tracking-[-0.18px] text-[#203829] tabular-nums">
+              {post.price}
+            </span>
           </span>
         </div>
         <div className="inline-flex items-baseline gap-1.5">
