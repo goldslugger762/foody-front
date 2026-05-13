@@ -32,6 +32,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [likePulse, setLikePulse] = useState(0);
   const [commentPulse, setCommentPulse] = useState(0);
   const [savePulse, setSavePulse] = useState(0);
+  const [tagPulses, setTagPulses] = useState<Record<string, number>>({});
   const shouldReduceMotion = useReducedMotion();
 
   const photoHeight = density === "cozy" ? 360 : 320;
@@ -64,6 +65,13 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
   function handleMoreClick() {
     setMorePulse((pulse) => pulse + 1);
+  }
+
+  function handleTagClick(tag: string) {
+    setTagPulses((pulses) => ({
+      ...pulses,
+      [tag]: (pulses[tag] ?? 0) + 1,
+    }));
   }
 
   return (
@@ -334,23 +342,40 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
         <div className="mt-auto flex flex-wrap items-center gap-1.5 px-3.5 pb-3.5">
           {mainTag && (
-            <span
-              className="inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A]"
+            <motion.button
+              key={`${mainTag}-${tagPulses[mainTag] ?? 0}`}
+              type="button"
+              onClick={() => handleTagClick(mainTag)}
+              className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border-0 px-3 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A]"
+              animate={
+                tagPulses[mainTag] && !shouldReduceMotion
+                  ? { scale: [1, 0.94, 1.04, 1] }
+                  : { scale: 1 }
+              }
+              transition={{ duration: 0.3, ease: "easeOut" }}
               style={{
                 background: `linear-gradient(135deg, #BDF7D0, #73E89F)`,
                 boxShadow: `0 4px 12px ${brand}33, inset 1px 1px 0 rgba(255,255,255,0.65)`,
               }}
             >
               {mainTag}
-            </span>
+            </motion.button>
           )}
           {restTags.map((t) => (
-            <span
-              key={t}
-              className="inline-flex h-[26px] items-center rounded-full bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[-0.1px] text-[#0E8A4F]"
+            <motion.button
+              key={`${t}-${tagPulses[t] ?? 0}`}
+              type="button"
+              onClick={() => handleTagClick(t)}
+              className="inline-flex h-[26px] cursor-pointer items-center rounded-full border-0 bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[-0.1px] text-[#0E8A4F]"
+              animate={
+                tagPulses[t] && !shouldReduceMotion
+                  ? { scale: [1, 0.94, 1.04, 1] }
+                  : { scale: 1 }
+              }
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
               {t}
-            </span>
+            </motion.button>
           ))}
         </div>
       </article>
