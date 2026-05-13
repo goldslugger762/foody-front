@@ -337,7 +337,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
             <span
               className="inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A]"
               style={{
-                background: `linear-gradient(135deg, color-mix(in srgb, ${brand} 46%, white), #7FEBAA)`,
+                background: `linear-gradient(135deg, #BDF7D0, #73E89F)`,
                 boxShadow: `0 4px 12px ${brand}33, inset 1px 1px 0 rgba(255,255,255,0.65)`,
               }}
             >
