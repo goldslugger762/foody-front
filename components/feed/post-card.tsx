@@ -491,7 +491,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         </div>
 
         <div className="px-4 pt-1 pb-2.5">
-          <div className="inline-flex max-w-full items-center gap-1.5 rounded-[9px] bg-[rgba(20,40,28,0.05)] px-2.5 py-[5px] text-[12.5px] font-semibold text-[#3A4A40]">
+          <div className="inline-flex max-w-full items-center gap-1.5 rounded-[9px] bg-[rgba(20,40,28,0.05)] px-2.5 py-[5px] text-[12.5px] font-semibold text-[#13251a]">
             <MapPin className="size-[11px] shrink-0" strokeWidth={2.2} />
             <span className="overflow-hidden text-ellipsis whitespace-nowrap">
               {post.place}
