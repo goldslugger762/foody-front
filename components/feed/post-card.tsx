@@ -120,10 +120,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     goToPhoto(photoIdx + 1);
   }
 
-  function handlePhotoDragEnd(
-    _event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo
-  ) {
+  function handlePhotoPanEnd(_event: PointerEvent, info: PanInfo) {
     if (!hasPhotoSlider) {
       return;
     }
@@ -204,14 +201,10 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
         <div className="relative mx-3 overflow-hidden rounded-[18px]">
           <motion.div
-            drag={hasPhotoSlider ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.18}
-            dragMomentum={false}
-            onDragEnd={handlePhotoDragEnd}
+            onPanEnd={handlePhotoPanEnd}
             className={cn(
               "relative select-none overflow-hidden",
-              hasPhotoSlider && "cursor-grab active:cursor-grabbing [touch-action:pan-y]"
+              hasPhotoSlider && "cursor-ew-resize [touch-action:pan-y]"
             )}
             style={{ height: photoHeight }}
           >
@@ -244,14 +237,11 @@ export function PostCard({ post, brand, density }: PostCardProps) {
               {Array.from({ length: post.photos }).map((_, i) => {
                 const isActive = i === photoIdx;
                 return (
-                  <button
+                  <span
                     key={i}
-                    type="button"
-                    aria-label={`Фото ${i + 1}`}
-                    aria-current={isActive}
-                    onClick={() => goToPhoto(i)}
+                    aria-hidden="true"
                     className={cn(
-                      "h-1.5 cursor-pointer rounded-full border-0 p-0 transition-[width] duration-200",
+                      "h-1.5 rounded-full transition-[width] duration-200",
                       isActive
                         ? "w-[22px] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
                         : "w-1.5 bg-white/55"
