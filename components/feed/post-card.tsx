@@ -9,6 +9,7 @@ import {
   Share2,
   Star,
 } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 
 import { DishPhoto } from "@/components/feed/dish-photo";
@@ -26,10 +27,34 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [likePulse, setLikePulse] = useState(0);
+  const [commentPulse, setCommentPulse] = useState(0);
+  const [savePulse, setSavePulse] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
 
   const photoHeight = density === "cozy" ? 360 : 320;
   const [mainTag, ...restTags] = post.tags;
   const likeCount = post.likes + (liked ? 1 : 0);
+
+  function handleLikeClick() {
+    const nextLiked = !liked;
+    setLiked(nextLiked);
+    if (nextLiked) {
+      setLikePulse((pulse) => pulse + 1);
+    }
+  }
+
+  function handleSaveClick() {
+    const nextSaved = !saved;
+    setSaved(nextSaved);
+    if (nextSaved) {
+      setSavePulse((pulse) => pulse + 1);
+    }
+  }
+
+  function handleCommentClick() {
+    setCommentPulse((pulse) => pulse + 1);
+  }
 
   return (
     <div
@@ -109,54 +134,121 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         </div>
 
         <div className="flex items-center gap-4 px-4 pt-3 pb-2">
-          <button
+          <motion.button
             type="button"
             aria-pressed={liked}
-            onClick={() => setLiked((l) => !l)}
+            onClick={handleLikeClick}
             className="inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0"
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.94 }}
           >
-            <Heart
-              className="size-[22px]"
-              strokeWidth={2}
-              color={liked ? "#E5443B" : "#15291C"}
-              fill={liked ? "#E5443B" : "none"}
-            />
-            <span className="text-[13.5px] font-bold tracking-[-0.1px] text-[#15291C]">
+            <motion.span
+              key={`like-${likePulse}`}
+              className="relative grid size-[22px] place-items-center"
+              animate={
+                liked && !shouldReduceMotion
+                  ? { scale: [1, 1.24, 0.96, 1], rotate: [0, -7, 4, 0] }
+                  : { scale: 1, rotate: 0 }
+              }
+              transition={{ duration: 0.42, ease: "easeOut" }}
+            >
+              <motion.span
+                aria-hidden="true"
+                className="absolute inset-0 rounded-full border border-[#E5443B]/45"
+                animate={
+                  liked && !shouldReduceMotion
+                    ? { scale: [0.55, 1.85], opacity: [0.45, 0] }
+                    : { scale: 0.55, opacity: 0 }
+                }
+                transition={{ duration: 0.42, ease: "easeOut" }}
+              />
+              <Heart
+                className="relative size-[22px]"
+                strokeWidth={2}
+                color={liked ? "#E5443B" : "#15291C"}
+                fill={liked ? "#E5443B" : "none"}
+              />
+            </motion.span>
+            <motion.span
+              className="text-[13.5px] font-bold tracking-[-0.1px] text-[#15291C]"
+              animate={
+                liked && !shouldReduceMotion
+                  ? { y: [0, -1, 0], opacity: [0.82, 1] }
+                  : { y: 0, opacity: 1 }
+              }
+              transition={{ duration: 0.24, ease: "easeOut" }}
+            >
               {likeCount.toLocaleString("ru-RU")}
-            </span>
-          </button>
-          <button
+            </motion.span>
+          </motion.button>
+          <motion.button
             type="button"
+            onClick={handleCommentClick}
             className="inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0"
           >
-            <MessageCircle
-              className="size-5"
-              strokeWidth={2}
-              color="#15291C"
-            />
+            <motion.span
+              key={`comment-${commentPulse}`}
+              className="grid size-5 place-items-center"
+              animate={
+                commentPulse > 0 && !shouldReduceMotion
+                  ? { scale: [1, 0.86, 1.08, 1] }
+                  : { scale: 1 }
+              }
+              transition={{ duration: 0.28, ease: "easeOut" }}
+            >
+              <MessageCircle
+                className="size-5"
+                strokeWidth={2}
+                color="#15291C"
+              />
+            </motion.span>
             <span className="text-[13.5px] font-bold tracking-[-0.1px] text-[#15291C]">
               {post.comments}
             </span>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             aria-pressed={saved}
             title="В избранное"
             aria-label="В избранное"
-            onClick={() => setSaved((s) => !s)}
-            className="ml-auto grid size-9 cursor-pointer place-items-center rounded-[10px] transition-colors"
+            onClick={handleSaveClick}
+            className="relative ml-auto grid size-9 cursor-pointer place-items-center overflow-hidden rounded-[10px] transition-colors"
             style={{
               backgroundColor: saved ? `${brand}22` : "rgba(20,40,28,0.06)",
               color: saved ? brand : "#15291C",
             }}
           >
-            <Bookmark
-              className="size-[18px]"
-              strokeWidth={2}
-              color={saved ? brand : "#15291C"}
-              fill={saved ? brand : "none"}
+            <motion.span
+              key={`save-glow-${savePulse}`}
+              aria-hidden="true"
+              className="absolute inset-0 rounded-[10px]"
+              animate={
+                saved && !shouldReduceMotion
+                  ? { opacity: [0, 0.28, 0], scale: [0.72, 1.15, 1.26] }
+                  : { opacity: 0, scale: 0.72 }
+              }
+              transition={{ duration: 0.46, ease: "easeOut" }}
+              style={{
+                background: `radial-gradient(circle at 50% 45%, ${brand} 0%, transparent 66%)`,
+              }}
             />
-          </button>
+            <motion.span
+              key={`save-${savePulse}`}
+              className="relative grid size-[18px] place-items-center"
+              animate={
+                saved && !shouldReduceMotion
+                  ? { y: [0, -2, 0], scale: [1, 1.2, 0.98, 1] }
+                  : { y: 0, scale: 1 }
+              }
+              transition={{ duration: 0.38, ease: "easeOut" }}
+            >
+              <Bookmark
+                className="size-[18px]"
+                strokeWidth={2}
+                color={saved ? brand : "#15291C"}
+                fill={saved ? brand : "none"}
+              />
+            </motion.span>
+          </motion.button>
         </div>
 
         <div className="px-4 pb-1">

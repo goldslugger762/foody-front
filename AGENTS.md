@@ -57,6 +57,10 @@ import { Slot } from "radix-ui"
 
 See `components/ui/button.tsx`, `avatar.tsx`, `scroll-area.tsx`. Match this pattern when adding new primitives.
 
+### Motion
+
+Use the `motion` library for React animations. Prefer existing Motion primitives and patterns for interactive transitions, enter/exit states, gesture-driven animation, and layout animation instead of adding ad hoc animation helpers.
+
 ### Path alias + `cn()`
 
 `@/*` maps to the repo root (`tsconfig.json`). shadcn aliases: `@/components`, `@/components/ui`, `@/lib`, `@/lib/utils`, `@/hooks`. The `cn()` helper in `lib/utils.ts` wraps `clsx` + `tailwind-merge`. Variants use `class-variance-authority` (`cva`) with `data-slot` / `data-variant` / `data-size` attributes — see `components/ui/button.tsx` for the canonical pattern.
