@@ -14,6 +14,7 @@ import {
   motion,
   type PanInfo,
   type Variants,
+  useMotionValue,
   useReducedMotion,
 } from "motion/react";
 import { useState } from "react";
@@ -52,6 +53,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [photoDirection, setPhotoDirection] = useState(1);
+  const [dragPreviewDirection, setDragPreviewDirection] = useState(1);
+  const [photoBackdropIdx, setPhotoBackdropIdx] = useState(1);
   const [sharePulse, setSharePulse] = useState(0);
   const [morePulse, setMorePulse] = useState(0);
   const [likePulse, setLikePulse] = useState(0);
@@ -65,6 +68,25 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const likeCount = post.likes + (liked ? 1 : 0);
   const hasPhotoSlider = post.photos > 1;
   const lastPhotoIdx = post.photos - 1;
+  const canDragToPreviousPhoto = photoIdx > 0;
+  const canDragToNextPhoto = photoIdx < lastPhotoIdx;
+  const photoDragX = useMotionValue(0);
+  const fallbackPreviewPhotoDirection =
+    dragPreviewDirection < 0 && canDragToPreviousPhoto
+      ? -1
+      : canDragToNextPhoto
+        ? 1
+        : canDragToPreviousPhoto
+          ? -1
+          : 0;
+  const previewPhotoIdx = Math.min(
+    Math.max(photoBackdropIdx, 0),
+    lastPhotoIdx
+  );
+  const fallbackPreviewPhotoIdx = Math.min(
+    Math.max(photoIdx + fallbackPreviewPhotoDirection, 0),
+    lastPhotoIdx
+  );
 
   function handleLikeClick() {
     const nextLiked = !liked;
@@ -112,15 +134,38 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     setPhotoIdx(nextPhotoIdx);
   }
 
-  function goToPreviousPhoto() {
-    goToPhoto(photoIdx - 1);
+  function handlePhotoDrag(
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) {
+    if (!hasPhotoSlider || Math.abs(info.offset.x) < 8) {
+      return;
+    }
+
+    const nextPreviewDirection = info.offset.x < 0 ? 1 : -1;
+    const nextPreviewPhotoIdx = photoIdx + nextPreviewDirection;
+
+    if (
+      (nextPreviewDirection < 0 && !canDragToPreviousPhoto) ||
+      (nextPreviewDirection > 0 && !canDragToNextPhoto)
+    ) {
+      return;
+    }
+
+    setDragPreviewDirection((currentDirection) =>
+      currentDirection === nextPreviewDirection
+        ? currentDirection
+        : nextPreviewDirection
+    );
+    setPhotoBackdropIdx((currentIdx) =>
+      currentIdx === nextPreviewPhotoIdx ? currentIdx : nextPreviewPhotoIdx
+    );
   }
 
-  function goToNextPhoto() {
-    goToPhoto(photoIdx + 1);
-  }
-
-  function handlePhotoPanEnd(_event: PointerEvent, info: PanInfo) {
+  function handlePhotoDragEnd(
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) {
     if (!hasPhotoSlider) {
       return;
     }
@@ -128,10 +173,23 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     const swipeOffset = info.offset.x;
     const swipeVelocity = info.velocity.x;
 
-    if (swipeOffset < -72 || swipeVelocity < -420) {
-      goToNextPhoto();
-    } else if (swipeOffset > 72 || swipeVelocity > 420) {
-      goToPreviousPhoto();
+    if ((swipeOffset < -72 || swipeVelocity < -420) && canDragToNextPhoto) {
+      const nextPhotoIdx = photoIdx + 1;
+      photoDragX.jump(0);
+      setDragPreviewDirection(1);
+      setPhotoBackdropIdx(nextPhotoIdx);
+      goToPhoto(nextPhotoIdx);
+    } else if (
+      (swipeOffset > 72 || swipeVelocity > 420) &&
+      canDragToPreviousPhoto
+    ) {
+      const nextPhotoIdx = photoIdx - 1;
+      photoDragX.jump(0);
+      setDragPreviewDirection(-1);
+      setPhotoBackdropIdx(nextPhotoIdx);
+      goToPhoto(nextPhotoIdx);
+    } else {
+      setPhotoBackdropIdx(fallbackPreviewPhotoIdx);
     }
   }
 
@@ -200,38 +258,66 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         </div>
 
         <div className="relative mx-3 overflow-hidden rounded-[18px]">
-          <motion.div
-            onPanEnd={handlePhotoPanEnd}
+          <div
             className={cn(
               "relative select-none overflow-hidden",
-              hasPhotoSlider && "cursor-ew-resize [touch-action:pan-y]"
+              hasPhotoSlider && "cursor-grab active:cursor-grabbing"
             )}
             style={{ height: photoHeight }}
           >
-            <AnimatePresence initial={false} custom={photoDirection}>
-              <motion.div
-                key={photoIdx}
-                custom={photoDirection}
-                variants={PHOTO_SLIDE_VARIANTS}
-                initial={shouldReduceMotion ? false : "enter"}
-                animate="center"
-                exit={shouldReduceMotion ? undefined : "exit"}
-                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute inset-0"
-              >
+            {hasPhotoSlider && (
+              <div className="absolute inset-0">
                 <DishPhoto
-                  seed={post.seed + photoIdx}
+                  seed={post.seed + previewPhotoIdx}
                   height={photoHeight}
-                  label={`dish photo ${photoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
+                  label={`dish photo ${previewPhotoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
                   labelClassName={
                     hasPhotoSlider
                       ? "right-3 left-auto max-w-[calc(100%-6.75rem)] overflow-hidden text-right text-ellipsis whitespace-nowrap"
                       : undefined
                   }
                 />
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
+              </div>
+            )}
+            <motion.div
+              drag={hasPhotoSlider ? "x" : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{
+                left: canDragToNextPhoto ? 0.18 : 0,
+                right: canDragToPreviousPhoto ? 0.18 : 0,
+              }}
+              dragMomentum={false}
+              dragDirectionLock
+              onDrag={handlePhotoDrag}
+              onDragEnd={handlePhotoDragEnd}
+              className="absolute inset-0 [touch-action:pan-y]"
+              style={{ x: photoDragX }}
+            >
+              <AnimatePresence initial={false} custom={photoDirection}>
+                <motion.div
+                  key={photoIdx}
+                  custom={photoDirection}
+                  variants={PHOTO_SLIDE_VARIANTS}
+                  initial={shouldReduceMotion ? false : "enter"}
+                  animate="center"
+                  exit={shouldReduceMotion ? undefined : "exit"}
+                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-0"
+                >
+                  <DishPhoto
+                    seed={post.seed + photoIdx}
+                    height={photoHeight}
+                    label={`dish photo ${photoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
+                    labelClassName={
+                      hasPhotoSlider
+                        ? "right-3 left-auto max-w-[calc(100%-6.75rem)] overflow-hidden text-right text-ellipsis whitespace-nowrap"
+                        : undefined
+                    }
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          </div>
           {hasPhotoSlider && (
             <div className="absolute bottom-2.5 left-3 flex justify-start gap-1.5 rounded-full bg-black/15 p-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.16)] backdrop-blur-[10px]">
               {Array.from({ length: post.photos }).map((_, i) => {
