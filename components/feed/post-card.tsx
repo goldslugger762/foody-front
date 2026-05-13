@@ -9,7 +9,13 @@ import {
   Share2,
   Star,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  type PanInfo,
+  type Variants,
+  useReducedMotion,
+} from "motion/react";
 import { useState } from "react";
 
 import { DishPhoto } from "@/components/feed/dish-photo";
@@ -23,10 +29,29 @@ type PostCardProps = {
   density: Density;
 };
 
+const PHOTO_SLIDE_VARIANTS: Variants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? "100%" : "-100%",
+    opacity: 0.9,
+    scale: 0.995,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? "-100%" : "100%",
+    opacity: 0.9,
+    scale: 0.995,
+  }),
+};
+
 export function PostCard({ post, brand, density }: PostCardProps) {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [photoDirection, setPhotoDirection] = useState(1);
   const [sharePulse, setSharePulse] = useState(0);
   const [morePulse, setMorePulse] = useState(0);
   const [likePulse, setLikePulse] = useState(0);
@@ -38,6 +63,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const photoHeight = density === "cozy" ? 360 : 320;
   const [mainTag, ...restTags] = post.tags;
   const likeCount = post.likes + (liked ? 1 : 0);
+  const hasPhotoSlider = post.photos > 1;
+  const lastPhotoIdx = post.photos - 1;
 
   function handleLikeClick() {
     const nextLiked = !liked;
@@ -72,6 +99,43 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       ...pulses,
       [tag]: (pulses[tag] ?? 0) + 1,
     }));
+  }
+
+  function goToPhoto(index: number) {
+    const nextPhotoIdx = Math.min(Math.max(index, 0), lastPhotoIdx);
+
+    if (nextPhotoIdx === photoIdx) {
+      return;
+    }
+
+    setPhotoDirection(nextPhotoIdx > photoIdx ? 1 : -1);
+    setPhotoIdx(nextPhotoIdx);
+  }
+
+  function goToPreviousPhoto() {
+    goToPhoto(photoIdx - 1);
+  }
+
+  function goToNextPhoto() {
+    goToPhoto(photoIdx + 1);
+  }
+
+  function handlePhotoDragEnd(
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) {
+    if (!hasPhotoSlider) {
+      return;
+    }
+
+    const swipeOffset = info.offset.x;
+    const swipeVelocity = info.velocity.x;
+
+    if (swipeOffset < -72 || swipeVelocity < -420) {
+      goToNextPhoto();
+    } else if (swipeOffset > 72 || swipeVelocity > 420) {
+      goToPreviousPhoto();
+    }
   }
 
   return (
@@ -139,13 +203,44 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         </div>
 
         <div className="relative mx-3 overflow-hidden rounded-[18px]">
-          <DishPhoto
-            seed={post.seed + photoIdx}
-            height={photoHeight}
-            label={`dish photo ${photoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
-          />
-          {post.photos > 1 && (
-            <div className="absolute right-0 bottom-2.5 left-0 flex justify-center gap-1.5">
+          <motion.div
+            drag={hasPhotoSlider ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.18}
+            dragMomentum={false}
+            onDragEnd={handlePhotoDragEnd}
+            className={cn(
+              "relative select-none overflow-hidden",
+              hasPhotoSlider && "cursor-grab active:cursor-grabbing [touch-action:pan-y]"
+            )}
+            style={{ height: photoHeight }}
+          >
+            <AnimatePresence initial={false} custom={photoDirection}>
+              <motion.div
+                key={photoIdx}
+                custom={photoDirection}
+                variants={PHOTO_SLIDE_VARIANTS}
+                initial={shouldReduceMotion ? false : "enter"}
+                animate="center"
+                exit={shouldReduceMotion ? undefined : "exit"}
+                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute inset-0"
+              >
+                <DishPhoto
+                  seed={post.seed + photoIdx}
+                  height={photoHeight}
+                  label={`dish photo ${photoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
+                  labelClassName={
+                    hasPhotoSlider
+                      ? "right-3 left-auto max-w-[calc(100%-6.75rem)] overflow-hidden text-right text-ellipsis whitespace-nowrap"
+                      : undefined
+                  }
+                />
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+          {hasPhotoSlider && (
+            <div className="absolute bottom-2.5 left-3 flex justify-start gap-1.5 rounded-full bg-black/15 p-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.16)] backdrop-blur-[10px]">
               {Array.from({ length: post.photos }).map((_, i) => {
                 const isActive = i === photoIdx;
                 return (
@@ -154,7 +249,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
                     type="button"
                     aria-label={`Фото ${i + 1}`}
                     aria-current={isActive}
-                    onClick={() => setPhotoIdx(i)}
+                    onClick={() => goToPhoto(i)}
                     className={cn(
                       "h-1.5 cursor-pointer rounded-full border-0 p-0 transition-[width] duration-200",
                       isActive

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 const PALETTES: ReadonlyArray<readonly [string, string, string]> = [
   ["#F6C453", "#E76F51", "#2A9D8F"],
   ["#FFB4A2", "#E5989B", "#6D597A"],
@@ -13,9 +15,15 @@ type DishPhotoProps = {
   seed: number;
   height?: number;
   label?: string;
+  labelClassName?: string;
 };
 
-export function DishPhoto({ seed, height = 360, label }: DishPhotoProps) {
+export function DishPhoto({
+  seed,
+  height = 360,
+  label,
+  labelClassName,
+}: DishPhotoProps) {
   const palette = PALETTES[seed % PALETTES.length];
   const angle = (seed * 47) % 360;
 
@@ -36,7 +44,12 @@ export function DishPhoto({ seed, height = 360, label }: DishPhotoProps) {
       />
       <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_30%_20%,rgba(255,255,255,0.35),transparent_60%)]" />
       {label && (
-        <div className="absolute bottom-2.5 left-3 font-mono text-[10px] tracking-[0.3px] text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]">
+        <div
+          className={cn(
+            "absolute bottom-2.5 left-3 font-mono text-[10px] tracking-[0.3px] text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.25)]",
+            labelClassName
+          )}
+        >
           {label}
         </div>
       )}
