@@ -326,7 +326,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
                 <div
                   key={`${trackPosition}-${trackPhotoIdx}`}
                   aria-hidden={trackPosition !== 1}
-                  className="h-full w-1/3 shrink-0"
+                  className="-mr-px h-full w-[calc(100%/3+1px)] shrink-0 overflow-hidden"
                 >
                   <DishPhoto
                     seed={post.seed + trackPhotoIdx}
