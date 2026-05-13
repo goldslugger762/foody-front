@@ -240,8 +240,9 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       <article
         className={cn(
           "flex flex-1 flex-col overflow-hidden rounded-[26px]",
-          "border-[0.5px] border-white/85 bg-white/95",
-          "shadow-[0_14px_36px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.85)]"
+          "border border-green-50/92 bg-white/75",
+          "shadow-[0_8px_20px_rgba(20,40,28,0.12),0_1px_3px_rgba(20,40,28,0.08),inset_0_1px_0_rgba(255,255,255,0.92),inset_0_0_0_1px_rgba(255,255,255,0.34)]",
+          "backdrop-blur-[28px] backdrop-saturate-[190%]"
         )}
       >
         <PostCardHeader
