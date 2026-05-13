@@ -30,8 +30,8 @@ type PostCardProps = {
   density: Density;
 };
 
-const PHOTO_SWIPE_DISTANCE_RATIO = 0.22;
-const PHOTO_SWIPE_VELOCITY = 520;
+const PHOTO_SWIPE_DISTANCE_RATIO = 0.04;
+const PHOTO_SWIPE_VELOCITY = 220;
 const PHOTO_DRAG_PREVIEW_RATIO = 0.5;
 const PHOTO_RUBBER_BAND_CONSTANT = 0.55;
 
@@ -72,6 +72,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const photoViewportRef = useRef<HTMLDivElement>(null);
   const photoTrackX = useMotionValue(0);
   const photoAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
+  const photoDragBaseXRef = useRef(0);
   const trackPhotoIndexes = [
     canDragToPreviousPhoto ? photoIdx - 1 : photoIdx,
     photoIdx,
@@ -146,6 +147,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
   function handlePhotoDragStart() {
     photoAnimationRef.current?.stop();
+    photoDragBaseXRef.current = photoTrackX.get();
     photoTrackX.stop();
     setPhotoIndicatorIdx(photoIdx);
   }
@@ -159,7 +161,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     }
 
     const centerX = -photoWidth;
-    const rawOffset = info.offset.x;
+    const rawOffset = photoDragBaseXRef.current - centerX + info.offset.x;
     const canMove =
       (rawOffset < 0 && canDragToNextPhoto) ||
       (rawOffset > 0 && canDragToPreviousPhoto);
@@ -190,36 +192,39 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     const shouldGoNext =
       canDragToNextPhoto &&
       (visualOffset < -photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
-        (visualOffset < -photoWidth * 0.1 &&
+        (visualOffset < -photoWidth * 0.015 &&
           swipeVelocity < -PHOTO_SWIPE_VELOCITY));
     const shouldGoPrevious =
       canDragToPreviousPhoto &&
       (visualOffset > photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
-        (visualOffset > photoWidth * 0.1 &&
+        (visualOffset > photoWidth * 0.015 &&
           swipeVelocity > PHOTO_SWIPE_VELOCITY));
     const targetPhotoIdx = shouldGoNext
       ? photoIdx + 1
       : shouldGoPrevious
         ? photoIdx - 1
         : photoIdx;
-    const targetX = shouldGoNext
-      ? -photoWidth * 2
+    const currentX = photoTrackX.get();
+    const nextTrackX = shouldGoNext
+      ? currentX + photoWidth
       : shouldGoPrevious
-        ? 0
-        : -photoWidth;
+        ? currentX - photoWidth
+        : currentX;
 
     photoAnimationRef.current?.stop();
     setPhotoIndicatorIdx(targetPhotoIdx);
-    photoAnimationRef.current = animate(photoTrackX, targetX, {
+
+    if (targetPhotoIdx !== photoIdx) {
+      flushSync(() => {
+        setPhotoIdx(targetPhotoIdx);
+      });
+      photoTrackX.jump(nextTrackX);
+    }
+
+    photoAnimationRef.current = animate(photoTrackX, -photoWidth, {
       duration: shouldReduceMotion ? 0.01 : 0.32,
       ease: [0.22, 1, 0.36, 1],
       onComplete: () => {
-        if (targetPhotoIdx !== photoIdx) {
-          flushSync(() => {
-            setPhotoIdx(targetPhotoIdx);
-          });
-        }
-
         photoTrackX.jump(-photoWidth);
       },
     });
