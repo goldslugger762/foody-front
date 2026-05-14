@@ -412,7 +412,7 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         <div
           className={cn(
             "relative isolate inline-flex rounded-[9px] p-px",
-            "bg-[rgba(83,145,105,0.09)]",
+            "bg-[rgba(83,145,105,0.07)]",
             "shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_28px_rgba(20,40,28,0.012)]"
           )}
           style={{
@@ -423,9 +423,9 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
             className={cn(
               "inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5",
               "border-0",
-              "bg-[linear-gradient(130deg,rgba(220,255,232,0.3),rgba(232,255,240,0.95))]",
+              "bg-[linear-gradient(135deg,rgba(220,255,232,1),rgba(232,255,240,0.60))]",
               "shadow-[inset_0_1px_0_rgba(255,255,255,0),inset_0_-1px_0_rgba(20,40,28,0)]",
-              "backdrop-blur-[14px] backdrop-saturate-[190%]"
+              "backdrop-blur-[14px] backdrop-saturate-[100%]"
             )}
           >
             <span className="text-[10.5px] font-bold tracking-[0.38px] text-[#647268] uppercase">
