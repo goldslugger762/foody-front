@@ -412,20 +412,20 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         <div
           className={cn(
             "relative isolate inline-flex rounded-[9px] p-px",
-            "bg-[linear-gradient(90deg,rgba(220,255,232,0.66),rgba(83,145,105,0.3))]",
-            "shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_1px_2px_rgba(20,40,28,0.035)]"
+            "bg-[rgba(83,145,105,0.10)]",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_28px_rgba(20,40,28,0.012)]"
           )}
           style={{
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.72), -6px 5px 14px ${brand}14`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0), 0 10px 28px rgba(20,40,28,0.012), -4px 6px 24px ${brand}05`,
           }}
         >
           <span
             className={cn(
               "inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5",
-              "border border-white/70",
-              "bg-[linear-gradient(135deg,rgba(244,255,248,0.62),rgba(255,255,255,0.74))]",
-              "shadow-[inset_1px_1px_0_rgba(255,255,255,0.9),inset_-1px_-1px_0_rgba(255,255,255,0.26)]",
-              "backdrop-blur-[14px] backdrop-saturate-[180%]"
+              "border-0",
+              "bg-[linear-gradient(130deg,rgba(220,255,232,0.3),rgba(232,255,240,0.95))]",
+              "shadow-[inset_0_1px_0_rgba(255,255,255,0),inset_0_-1px_0_rgba(20,40,28,0)]",
+              "backdrop-blur-[14px] backdrop-saturate-[190%]"
             )}
           >
             <span className="text-[10.5px] font-bold tracking-[0.38px] text-[#647268] uppercase">
