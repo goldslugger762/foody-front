@@ -412,7 +412,7 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         <div
           className={cn(
             "relative isolate inline-flex rounded-[9px] p-px",
-            "bg-[rgba(83,145,105,0.10)]",
+            "bg-[rgba(83,145,105,0.09)]",
             "shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_28px_rgba(20,40,28,0.012)]"
           )}
           style={{
