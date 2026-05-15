@@ -58,7 +58,7 @@ export function FeedHeader({
           >
             <motion.span
               aria-hidden="true"
-              className="absolute top-[3px] bottom-[3px] w-[calc(50%_-_4px)] rounded-full bg-white shadow-[0_2px_8px_rgba(20,40,28,0.10)]"
+              className="absolute top-[3px] bottom-[3px] w-[calc(50%_-_4px)] rounded-full bg-white shadow-[0_4px_15px_rgba(20,40,28,0.11)]"
               initial={false}
               animate={{ left: activeTabLeft }}
               transition={
