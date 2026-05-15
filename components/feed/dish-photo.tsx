@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import type { CSSProperties } from "react";
 
 const PALETTES: ReadonlyArray<readonly [string, string, string]> = [
   ["#F6C453", "#E76F51", "#2A9D8F"],
@@ -13,7 +14,7 @@ const PALETTES: ReadonlyArray<readonly [string, string, string]> = [
 
 type DishPhotoProps = {
   seed: number;
-  height?: number;
+  height?: CSSProperties["height"];
   label?: string;
   labelClassName?: string;
 };

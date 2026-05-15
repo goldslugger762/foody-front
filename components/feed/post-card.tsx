@@ -43,8 +43,20 @@ function rubberBandDistance(offset: number, dimension: number) {
   return Math.sign(offset) * band;
 }
 
-function getPhotoHeight(density: Density) {
-  return density === "cozy" ? 360 : 320;
+type ViewportSize = {
+  height: number;
+  width: number;
+};
+
+function getViewportSize(): ViewportSize {
+  if (typeof window === "undefined") {
+    return { height: 0, width: 0 };
+  }
+
+  return {
+    height: window.visualViewport?.height ?? window.innerHeight,
+    width: window.visualViewport?.width ?? window.innerWidth,
+  };
 }
 
 function usePulse() {
@@ -55,6 +67,54 @@ function usePulse() {
   }
 
   return [pulse, triggerPulse] as const;
+}
+
+function useViewportSize() {
+  const [viewportSize, setViewportSize] = useState<ViewportSize>({
+    height: 0,
+    width: 0,
+  });
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+
+    function syncViewportSize() {
+      setViewportSize(getViewportSize());
+    }
+
+    syncViewportSize();
+    window.addEventListener("resize", syncViewportSize);
+    viewport?.addEventListener("resize", syncViewportSize);
+
+    return () => {
+      window.removeEventListener("resize", syncViewportSize);
+      viewport?.removeEventListener("resize", syncViewportSize);
+    };
+  }, []);
+
+  return viewportSize;
+}
+
+function getPhotoRatio(density: Density, viewportSize: ViewportSize) {
+  const regularRatio = density === "cozy" ? 0.98 : 1.12;
+
+  if (viewportSize.width === 0 || viewportSize.width > 430) {
+    return regularRatio;
+  }
+
+  if (viewportSize.height <= 860) {
+    return density === "cozy" ? 1.28 : 1.22;
+  }
+
+  if (viewportSize.height <= 900) {
+    return density === "cozy" ? 1.3 : 1.3;
+  }
+
+  if (viewportSize.height <= 940) {
+    return density === "cozy" ? 1.16 : 1.2;
+  }
+
+  return density === "cozy" ? 1.12 : 1.26;
 }
 
 export function PostCard({ post, brand, density }: PostCardProps) {
@@ -70,7 +130,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [savePulse, triggerSavePulse] = usePulse();
   const shouldReduceMotion = useReducedMotion();
 
-  const photoHeight = getPhotoHeight(density);
+  const viewportSize = useViewportSize();
+  const photoRatio = getPhotoRatio(density, viewportSize);
   const [mainTag, ...restTags] = post.tags;
   const likeCount = post.likes + (liked ? 1 : 0);
   const hasPhotoSlider = post.photos > 1;
@@ -236,7 +297,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   }
 
   return (
-    <div className="flex min-h-full snap-start snap-always flex-col px-3.5 pt-2 pb-3.5 [scroll-snap-stop:always]">
+    <div className="flex min-h-full snap-start snap-always flex-col px-3.5 pt-2 pb-3.5 [scroll-snap-stop:always] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-3">
       <article
         className={cn(
           "flex flex-1 flex-col overflow-hidden rounded-[26px]",
@@ -261,8 +322,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
           onPhotoDrag={handlePhotoDrag}
           onPhotoDragEnd={handlePhotoDragEnd}
           onPhotoDragStart={handlePhotoDragStart}
-          photoHeight={photoHeight}
           photoIndicatorIdx={photoIndicatorIdx}
+          photoRatio={photoRatio}
           photoTrackX={photoTrackX}
           photoViewportRef={photoViewportRef}
           photoWidth={photoWidth}

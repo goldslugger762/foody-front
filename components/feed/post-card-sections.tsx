@@ -14,6 +14,7 @@ import { type KeyboardEvent, type RefObject } from "react";
 
 import { DishPhoto } from "@/components/feed/dish-photo";
 import { UserAvatar } from "@/components/feed/user-avatar";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,7 +174,7 @@ function IconPulseButton({
 
 type PhotoCarouselProps = {
   post: Post;
-  photoHeight: number;
+  photoRatio: number;
   hasPhotoSlider: boolean;
   canDragToNextPhoto: boolean;
   canDragToPreviousPhoto: boolean;
@@ -192,7 +193,7 @@ type PhotoCarouselProps = {
 
 export function PhotoCarousel({
   post,
-  photoHeight,
+  photoRatio,
   hasPhotoSlider,
   canDragToNextPhoto,
   canDragToPreviousPhoto,
@@ -206,14 +207,14 @@ export function PhotoCarousel({
   onPhotoDragEnd,
 }: PhotoCarouselProps) {
   return (
-    <div className="relative mx-3 overflow-hidden rounded-[18px]">
-      <div
+    <div className="relative mx-3 overflow-hidden rounded-[18px] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5">
+      <AspectRatio
         ref={photoViewportRef}
+        ratio={photoRatio}
         className={cn(
-          "relative select-none overflow-hidden",
+          "select-none overflow-hidden",
           hasPhotoSlider && "cursor-grab active:cursor-grabbing"
         )}
-        style={{ height: photoHeight }}
       >
         <motion.div
           drag={hasPhotoSlider ? "x" : false}
@@ -238,7 +239,7 @@ export function PhotoCarousel({
             >
               <DishPhoto
                 seed={post.seed + trackPhotoIdx}
-                height={photoHeight}
+                height="100%"
                 label={`dish photo ${trackPhotoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
                 labelClassName={
                   hasPhotoSlider
@@ -249,7 +250,7 @@ export function PhotoCarousel({
             </div>
           ))}
         </motion.div>
-      </div>
+      </AspectRatio>
       {hasPhotoSlider && (
         <PhotoIndicator count={post.photos} photoIndicatorIdx={photoIndicatorIdx} />
       )}
@@ -315,7 +316,7 @@ export function EngagementBar({
   onSaveClick,
 }: EngagementBarProps) {
   return (
-    <div className="flex items-center gap-4 px-4 pt-3 pb-2">
+    <div className="flex items-center gap-4 px-4 pt-3 pb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5 [@media(max-width:430px)_and_(max-height:860px)]:pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-1.5">
       <motion.button
         type="button"
         aria-pressed={liked}
@@ -391,7 +392,7 @@ export function EngagementBar({
         title="В избранное"
         aria-label="В избранное"
         onClick={onSaveClick}
-        className="relative ml-auto grid size-9 cursor-pointer place-items-center overflow-hidden rounded-[10px] transition-colors"
+        className="relative ml-auto grid size-9 cursor-pointer place-items-center overflow-hidden rounded-[10px] transition-colors [@media(max-width:430px)_and_(max-height:860px)]:size-8"
         style={{
           backgroundColor: saved ? `${brand}22` : "rgba(20,40,28,0.06)",
           color: saved ? brand : TEXT_PRIMARY,
@@ -441,13 +442,13 @@ type PostDetailsProps = {
 export function PostDetails({ post, brand }: PostDetailsProps) {
   return (
     <>
-      <div className="px-4 pb-1">
-        <h3 className="text-[19px] leading-[1.2] font-extrabold tracking-[-0.4px] text-[#15291C]">
+      <div className="px-4 pb-1 max-[390px]:pb-0.5 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5">
+        <h3 className="text-[19px] leading-[1.2] font-extrabold tracking-[-0.4px] text-[#15291C] max-[390px]:text-[18px] [@media(max-width:430px)_and_(max-height:860px)]:text-[17px]">
           {post.dish}
         </h3>
       </div>
 
-      <div className="px-4 pt-1 pb-2.5">
+      <div className="px-4 pt-1 pb-2.5 max-[390px]:pb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-1.5">
         <div className="inline-flex max-w-full items-center gap-1.5 rounded-[9px] bg-[rgba(20,40,28,0.05)] px-2.5 py-[5px] text-[12.5px] font-semibold text-[#13251a]">
           <MapPin className="size-[11px] shrink-0" strokeWidth={2.2} />
           <span className="overflow-hidden text-ellipsis whitespace-nowrap">
@@ -456,7 +457,7 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 px-4 pt-1 pb-2.5">
+      <div className="flex items-center justify-between gap-3 px-4 pt-1 pb-2.5 max-[390px]:pb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-1.5">
         <div
           className={cn(
             "relative isolate inline-flex rounded-[9px] p-px",
@@ -469,7 +470,7 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         >
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5",
+              "inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:py-1",
               "border-0",
               "bg-[linear-gradient(135deg,rgba(220,255,232,1),rgba(232,255,240,0.60))]",
               "shadow-[inset_0_1px_0_rgba(255,255,255,0),inset_0_-1px_0_rgba(20,40,28,0)]",
@@ -500,8 +501,10 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         </div>
       </div>
 
-      <p className="mx-3 mb-3 rounded-[14px] bg-[rgba(20,40,28,0.04)] px-3 py-2.5 font-[family-name:var(--font-roboto)] text-[15px] leading-[1.62] font-medium text-pretty text-[#15291C]">
-        {post.text}
+      <p className="mx-3 mb-3 rounded-[14px] bg-[rgba(20,40,28,0.04)] px-3 py-2.5 font-[family-name:var(--font-roboto)] text-[15px] leading-[1.62] font-medium text-pretty text-[#15291C] max-[390px]:mb-2 max-[390px]:py-2 max-[390px]:text-[14.5px] max-[390px]:leading-[1.5] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5 [@media(max-width:430px)_and_(max-height:860px)]:mb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:py-1.5 [@media(max-width:430px)_and_(max-height:860px)]:text-[14px] [@media(max-width:430px)_and_(max-height:860px)]:leading-[1.42]">
+        <span className="overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
+          {post.text}
+        </span>
       </p>
     </>
   );
@@ -523,10 +526,10 @@ export function PostTags({
   onTagClick,
 }: PostTagsProps) {
   return (
-    <div className="mt-auto px-3.5 pb-3.5">
+    <div className="mt-auto px-3.5 pb-3.5 max-[430px]:mt-0 max-[430px]:pb-3 [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-2.5">
       <span
         aria-hidden="true"
-        className="mb-2 block h-px w-full rounded-full bg-[rgba(20,40,28,0.1)]"
+        className="mb-2 block h-px w-full rounded-full bg-[rgba(20,40,28,0.1)] max-[390px]:mb-1.5 [@media(max-width:430px)_and_(max-height:860px)]:mb-1.5"
       />
       <div className="flex flex-wrap items-center gap-1.5">
         {mainTag && (
@@ -587,8 +590,8 @@ function TagButton({
         "transition-transform duration-150 ease-out [backface-visibility:hidden] [-webkit-tap-highlight-color:transparent]",
         canAnimate(shouldReduceMotion) && "active:scale-[0.94]",
         isMain
-          ? "h-7 bg-[linear-gradient(135deg,#BDF7D0,#73E89F)] px-3 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A]"
-          : "h-[26px] bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[-0.1px] text-[#0E8A4F]"
+          ? "h-7 bg-[linear-gradient(135deg,#BDF7D0,#73E89F)] px-3 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A] [@media(max-width:430px)_and_(max-height:860px)]:h-[26px] [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:text-[12px]"
+          : "h-[26px] bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[-0.1px] text-[#0E8A4F] [@media(max-width:430px)_and_(max-height:860px)]:h-6 [@media(max-width:430px)_and_(max-height:860px)]:px-2 [@media(max-width:430px)_and_(max-height:860px)]:text-[11px]"
       )}
       style={
         isMain

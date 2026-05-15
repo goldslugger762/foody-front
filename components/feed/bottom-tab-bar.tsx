@@ -45,10 +45,10 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
   return (
     <nav
       aria-label="Главная навигация"
-      className="absolute right-3.5 bottom-[18px] left-3.5 z-30 h-16"
+      className="absolute right-3.5 bottom-[18px] left-3.5 z-30 h-16 [@media(max-width:430px)_and_(max-height:860px)]:right-3 [@media(max-width:430px)_and_(max-height:860px)]:bottom-3 [@media(max-width:430px)_and_(max-height:860px)]:left-3 [@media(max-width:430px)_and_(max-height:860px)]:h-14"
     >
-      <GlassSurface className="h-16 rounded-[28px]">
-        <ul className="grid h-16 grid-cols-5 items-center px-2">
+      <GlassSurface className="h-16 rounded-[28px] [@media(max-width:430px)_and_(max-height:860px)]:h-14 [@media(max-width:430px)_and_(max-height:860px)]:rounded-[24px]">
+        <ul className="grid h-16 grid-cols-5 items-center px-2 [@media(max-width:430px)_and_(max-height:860px)]:h-14 [@media(max-width:430px)_and_(max-height:860px)]:px-1.5">
           {TABS.map((t) => {
             const isActive = isActiveTab(t);
 
@@ -59,14 +59,14 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
                     type="button"
                     aria-label={t.label}
                     whileTap={{ scale: 0.85 }}
-                    className="grid size-[50px] cursor-pointer place-items-center border-0 bg-transparent p-0"
+                    className="grid size-[50px] cursor-pointer place-items-center border-0 bg-transparent p-0 [@media(max-width:430px)_and_(max-height:860px)]:size-11"
                     style={{ filter: `drop-shadow(0 6px 14px ${brand}55)` }}
                   >
                     <svg
                       width="50"
                       height="50"
                       viewBox="0 0 50 50"
-                      className="block"
+                      className="block [@media(max-width:430px)_and_(max-height:860px)]:size-11"
                       aria-hidden="true"
                     >
                       <defs>
@@ -109,7 +109,7 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
                   className="grid place-items-center"
                 >
                   <Icon
-                    className="size-[22px]"
+                    className="size-[22px] [@media(max-width:430px)_and_(max-height:860px)]:size-5"
                     strokeWidth={isActive ? 2.4 : 1.8}
                     color={isActive ? brand : "#5C6B62"}
                     fill="none"
@@ -125,7 +125,7 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
                   <Link
                     href={t.href}
                     aria-current={isActive ? "page" : undefined}
-                    className="mx-auto flex min-h-[50px] w-full max-w-16 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-center text-[10.5px] font-semibold transition-colors"
+                    className="mx-auto flex min-h-[50px] w-full max-w-16 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-center text-[10.5px] font-semibold transition-colors [@media(max-width:430px)_and_(max-height:860px)]:min-h-11 [@media(max-width:430px)_and_(max-height:860px)]:py-1 [@media(max-width:430px)_and_(max-height:860px)]:text-[10px]"
                     style={{ color: isActive ? brand : "#5C6B62" }}
                   >
                     {inner}
@@ -139,7 +139,7 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
                 <button
                   type="button"
                   aria-label={t.label}
-                  className="mx-auto flex min-h-[50px] w-full max-w-16 cursor-pointer flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 py-1.5 text-center text-[10.5px] font-semibold text-[#5C6B62]"
+                  className="mx-auto flex min-h-[50px] w-full max-w-16 cursor-pointer flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 py-1.5 text-center text-[10.5px] font-semibold text-[#5C6B62] [@media(max-width:430px)_and_(max-height:860px)]:min-h-11 [@media(max-width:430px)_and_(max-height:860px)]:py-1 [@media(max-width:430px)_and_(max-height:860px)]:text-[10px]"
                 >
                   {inner}
                 </button>
