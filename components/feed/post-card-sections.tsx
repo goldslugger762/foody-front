@@ -475,27 +475,33 @@ export function PostTags({
   onTagClick,
 }: PostTagsProps) {
   return (
-    <div className="mt-auto flex flex-wrap items-center gap-1.5 px-3.5 pb-3.5">
-      {mainTag && (
-        <TagButton
-          isMain
-          brand={brand}
-          onClick={onTagClick}
-          shouldReduceMotion={shouldReduceMotion}
-        >
-          {mainTag}
-        </TagButton>
-      )}
-      {restTags.map((tag) => (
-        <TagButton
-          key={tag}
-          brand={brand}
-          onClick={onTagClick}
-          shouldReduceMotion={shouldReduceMotion}
-        >
-          {tag}
-        </TagButton>
-      ))}
+    <div className="mt-auto px-3.5 pb-3.5">
+      <span
+        aria-hidden="true"
+        className="mb-2 block h-px w-full rounded-full bg-[rgba(20,40,28,0.1)]"
+      />
+      <div className="flex flex-wrap items-center gap-1.5">
+        {mainTag && (
+          <TagButton
+            isMain
+            brand={brand}
+            onClick={onTagClick}
+            shouldReduceMotion={shouldReduceMotion}
+          >
+            {mainTag}
+          </TagButton>
+        )}
+        {restTags.map((tag) => (
+          <TagButton
+            key={tag}
+            brand={brand}
+            onClick={onTagClick}
+            shouldReduceMotion={shouldReduceMotion}
+          >
+            {tag}
+          </TagButton>
+        ))}
+      </div>
     </div>
   );
 }

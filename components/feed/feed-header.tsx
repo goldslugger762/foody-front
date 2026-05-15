@@ -1,3 +1,7 @@
+"use client";
+
+import { motion, useReducedMotion } from "motion/react";
+
 import { GlassSurface } from "@/components/feed/glass-surface";
 import { UserAvatar } from "@/components/feed/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -24,15 +28,17 @@ export function FeedHeader({
   currentUser,
 }: FeedHeaderProps) {
   const isLoggedIn = !!currentUser;
+  const shouldReduceMotion = useReducedMotion();
+  const activeTabLeft = tab === "new" ? "3px" : "calc(50% + 1px)";
 
   return (
     <header className="sticky top-0 z-20 px-3.5 pt-2.5 pb-3">
       <GlassSurface className="h-15">
-        <div className="flex h-15 items-center gap-2.5 pr-2 pl-3.5">
-          <div className="flex shrink-0 items-center gap-2 pr-1">
+        <div className="flex h-15 items-center gap-2 pr-2 pl-3">
+          <div className="flex shrink-0 items-center gap-1.5 pr-0.5">
             <span
               aria-hidden="true"
-              className="grid size-[26px] place-items-center rounded-[9px] text-sm leading-none"
+              className="grid size-6 place-items-center rounded-[8px] text-[13px] leading-none"
               style={{
                 background: `linear-gradient(135deg, ${brand}, #1FA85C)`,
                 boxShadow: `0 4px 12px ${brand}55`,
@@ -40,7 +46,7 @@ export function FeedHeader({
             >
               🍴
             </span>
-            <span className="text-[20px] font-black tracking-[-0.6px] text-[#15291C]">
+            <span className="font-sans text-[18px] font-black tracking-[-0.2px] text-[#15291C]">
               Foody
             </span>
           </div>
@@ -48,8 +54,24 @@ export function FeedHeader({
           <div
             role="tablist"
             aria-label="Лента"
-            className="ml-1 flex flex-1 gap-1 rounded-full bg-[rgba(20,40,28,0.06)] p-[3px]"
+            className="relative ml-0.5 grid min-w-[148px] flex-1 grid-cols-2 gap-0.5 rounded-full bg-[rgba(20,40,28,0.06)] p-[3px]"
           >
+            <motion.span
+              aria-hidden="true"
+              className="absolute top-[3px] bottom-[3px] w-[calc(50%_-_4px)] rounded-full bg-white shadow-[0_2px_8px_rgba(20,40,28,0.10)]"
+              initial={false}
+              animate={{ left: activeTabLeft }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : {
+                      type: "spring",
+                      stiffness: 520,
+                      damping: 42,
+                      mass: 0.55,
+                    }
+              }
+            />
             {TABS.map((t) => {
               const isActive = tab === t.id;
               return (
@@ -60,13 +82,13 @@ export function FeedHeader({
                   aria-selected={isActive}
                   onClick={() => onTabChange(t.id)}
                   className={cn(
-                    "h-[30px] flex-1 cursor-pointer rounded-full text-[12.5px] font-bold tracking-[-0.1px] transition-colors",
-                    isActive
-                      ? "bg-white text-[#15291C] shadow-[0_2px_8px_rgba(20,40,28,0.10)]"
-                      : "bg-transparent text-[#5C6B62]"
+                    "relative h-[31px] min-w-0 cursor-pointer overflow-hidden rounded-full px-1 font-sans text-[13px] leading-none font-extrabold tracking-[0px] transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/20",
+                    isActive ? "text-[#15291C]" : "text-[#5C6B62]"
                   )}
                 >
-                  {t.label}
+                  <span className="relative z-[1] block whitespace-nowrap">
+                    {t.label}
+                  </span>
                 </button>
               );
             })}
@@ -85,8 +107,8 @@ export function FeedHeader({
           ) : (
             <Button
               type="button"
-              size="lg"
-              className="h-9 rounded-full px-3.5 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A]"
+              size="sm"
+              className="h-8 rounded-full px-2 text-[10px] leading-none font-extrabold tracking-[0px] text-[#06301A]"
               style={{
                 backgroundColor: brand,
                 boxShadow: `0 4px 12px ${brand}55`,
