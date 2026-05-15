@@ -14,6 +14,10 @@ const TABS: { id: FeedTab; label: string }[] = [
   { id: "subs", label: "Подписки" },
 ];
 
+function canAnimate(shouldReduceMotion: boolean | null) {
+  return !shouldReduceMotion;
+}
+
 type FeedHeaderProps = {
   brand: string;
   tab: FeedTab;
@@ -108,10 +112,15 @@ export function FeedHeader({
             <Button
               type="button"
               size="sm"
-              className="h-8 rounded-full px-2 text-[10px] leading-none font-extrabold tracking-[0px] text-[#06301A]"
+              className={cn(
+                "h-8 origin-center translate-z-0 cursor-pointer select-none rounded-full border border-transparent bg-transparent px-2.5 text-[10px] leading-none font-extrabold tracking-[0px] text-[#0B2F1D] outline-none will-change-transform",
+                "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out [backface-visibility:hidden] [-webkit-tap-highlight-color:transparent]",
+                canAnimate(shouldReduceMotion) && "active:scale-[0.94]"
+              )}
               style={{
-                backgroundColor: brand,
-                boxShadow: `0 4px 12px ${brand}55`,
+                background: `linear-gradient(rgba(255,255,255,0.10), rgba(255,255,255,0.05)) padding-box, linear-gradient(135deg, ${brand}99, #00800095   ) border-box`,
+                boxShadow:
+                  "0 8px 18px rgba(8,58,33,0.17), inset 0 1px 0 rgba(255,255,255,0.58), inset 0 -1px 0 rgba(255,255,255,0.18)",
               }}
             >
               Регистрация
