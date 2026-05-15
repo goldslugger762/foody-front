@@ -36,9 +36,9 @@ export function FeedHeader({
   const activeTabLeft = tab === "new" ? "3px" : "calc(50% + 1px)";
 
   return (
-    <header className="sticky top-0 z-20 px-3.5 pt-2.5 pb-3">
-      <GlassSurface className="h-15">
-        <div className="flex h-15 items-center gap-2 pr-2 pl-3">
+    <header className="sticky top-0 z-20 px-3.5 pt-2 pb-0">
+      <GlassSurface className="h-13">
+        <div className="flex h-13 items-center gap-2 pr-2 pl-3">
           <div className="flex shrink-0 items-center gap-1.5 pr-0.5">
             <span
               aria-hidden="true"

@@ -236,7 +236,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   }
 
   return (
-    <div className="flex min-h-full snap-start snap-always flex-col px-3.5 pb-3.5 [scroll-snap-stop:always]">
+    <div className="flex min-h-full snap-start snap-always flex-col px-3.5 pt-2 pb-3.5 [scroll-snap-stop:always]">
       <article
         className={cn(
           "flex flex-1 flex-col overflow-hidden rounded-[26px]",
