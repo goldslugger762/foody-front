@@ -13,7 +13,7 @@ const PALETTES: Record<Palette, { base: string; blobs: Blob[] }> = {
     blobs: [
       { color: "#46DA8F", opacity: 0.55, left: "20%", top: "18%" },
       { color: "#8DE0B0", opacity: 0.45, left: "85%", top: "8%" },
-      { color: "#F5D08C", opacity: 0.35, left: "85%", top: "78%" },
+      { color: "#F5D08C", opacity: 0.2, left: "85%", top: "78%" },
       { color: "#B8E6CC", opacity: 0.4, left: "8%", top: "78%" },
     ],
   },
