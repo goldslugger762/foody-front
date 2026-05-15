@@ -297,7 +297,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   }
 
   return (
-    <div className="flex min-h-full snap-start snap-always flex-col px-3.5 pt-2 pb-3.5 [scroll-snap-stop:always] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-3">
+    <div className="flex h-[calc(100%+5.125rem)] min-h-0 snap-start snap-always flex-col px-3.5 pt-2 pb-[5.75rem] [scroll-snap-stop:always] [@media(max-width:430px)_and_(max-height:860px)]:h-[calc(100%+4.25rem)] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-[5rem]">
       <article
         className={cn(
           "flex flex-1 flex-col overflow-hidden rounded-[26px]",
