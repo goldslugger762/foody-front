@@ -585,13 +585,13 @@ function TagButton({
       onClick={onClick}
       onKeyDown={handleKeyDown}
       className={cn(
-        "origin-center translate-z-0 cursor-pointer select-none border-0 outline-none will-change-transform",
+        "origin-center cursor-pointer select-none border-0 outline-none",
         "inline-flex items-center justify-center rounded-full",
-        "transition-transform duration-150 ease-out [backface-visibility:hidden] [-webkit-tap-highlight-color:transparent]",
+        "transition-transform duration-150 ease-out [-webkit-tap-highlight-color:transparent]",
         canAnimate(shouldReduceMotion) && "active:scale-[0.94]",
         isMain
-          ? "h-7 bg-[linear-gradient(135deg,#BDF7D0,#73E89F)] px-3 text-[12.5px] font-extrabold tracking-[-0.1px] text-[#06301A] [@media(max-width:430px)_and_(max-height:860px)]:h-[26px] [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:text-[12px]"
-          : "h-[26px] bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[-0.1px] text-[#0E8A4F] [@media(max-width:430px)_and_(max-height:860px)]:h-6 [@media(max-width:430px)_and_(max-height:860px)]:px-2 [@media(max-width:430px)_and_(max-height:860px)]:text-[11px]"
+          ? "h-7 bg-[linear-gradient(135deg,#BDF7D0,#73E89F)] px-3 text-[12.5px] font-extrabold tracking-[0px] text-[#06301A] [@media(max-width:430px)_and_(max-height:860px)]:h-[26px] [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:text-[12px]"
+          : "h-[26px] bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[0px] text-[#0E8A4F] [@media(max-width:430px)_and_(max-height:860px)]:h-6 [@media(max-width:430px)_and_(max-height:860px)]:px-2 [@media(max-width:430px)_and_(max-height:860px)]:text-[11px]"
       )}
       style={
         isMain
