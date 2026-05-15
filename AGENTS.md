@@ -10,7 +10,7 @@ This file provides guidance to Codex when working with code in this repository.
 
 ## Critical: verify before coding
 
-The stack is **Next.js 16.2.4 + React 19.2.4 + Tailwind v4 + shadcn 4**. All four have breaking changes from older versions you may recall. Before writing code that touches framework APIs (routing, server/client components, fonts, metadata, caching, route handlers) or Tailwind theme/config, read the relevant page under `node_modules/next/dist/docs/` — `01-app/01-getting-started/` is the practical entrypoint. Heed deprecation notices.
+The stack is **Next.js 16.2.4 + React 19.2.4 + Tailwind v4 + shadcn 4 + motion**. All four have breaking changes from older versions you may recall. Before writing code that touches framework APIs (routing, server/client components, fonts, metadata, caching, route handlers) or Tailwind theme/config, read the relevant page under `node_modules/next/dist/docs/` — `01-app/01-getting-started/` is the practical entrypoint. Heed deprecation notices.
 
 ## Commands
 
