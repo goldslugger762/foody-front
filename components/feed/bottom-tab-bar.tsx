@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
 import {
   Bookmark,
   Plus,
@@ -31,6 +32,7 @@ const TABS: TabItem[] = [
   { id: "saved", label: "Избранное", icon: Bookmark },
   { id: "me", label: "Профиль", icon: User },
 ];
+const POST_CARD_EXPANDED_EVENT = "foody:post-card-expanded";
 
 type BottomTabBarProps = {
   brand: string;
@@ -38,9 +40,30 @@ type BottomTabBarProps = {
 
 export function BottomTabBar({ brand }: BottomTabBarProps) {
   const pathname = usePathname();
+  const [isPostCardExpanded, setIsPostCardExpanded] = useState(false);
+
+  useEffect(() => {
+    function handlePostCardExpanded(event: Event) {
+      const detail = (event as CustomEvent<{ expanded?: unknown }>).detail;
+
+      if (typeof detail?.expanded === "boolean") {
+        setIsPostCardExpanded(detail.expanded);
+      }
+    }
+
+    window.addEventListener(POST_CARD_EXPANDED_EVENT, handlePostCardExpanded);
+
+    return () => {
+      window.removeEventListener(POST_CARD_EXPANDED_EVENT, handlePostCardExpanded);
+    };
+  }, []);
 
   const isActiveTab = (t: TabItem) =>
     t.href !== undefined && pathname === t.href;
+
+  if (isPostCardExpanded) {
+    return null;
+  }
 
   return (
     <nav

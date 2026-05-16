@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  AnimatePresence,
   animate,
+  motion,
   type PanInfo,
   useMotionValue,
   useReducedMotion,
 } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { flushSync } from "react-dom";
 
 import {
@@ -29,6 +31,7 @@ const PHOTO_SWIPE_DISTANCE_RATIO = 0.04;
 const PHOTO_SWIPE_VELOCITY = 220;
 const PHOTO_DRAG_PREVIEW_RATIO = 0.5;
 const PHOTO_RUBBER_BAND_CONSTANT = 0.55;
+const POST_CARD_EXPANDED_EVENT = "foody:post-card-expanded";
 
 function rubberBandDistance(offset: number, dimension: number) {
   if (dimension <= 0) {
@@ -118,6 +121,7 @@ function getPhotoRatio(density: Density, viewportSize: ViewportSize) {
 }
 
 export function PostCard({ post, brand, density }: PostCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
@@ -138,10 +142,12 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const lastPhotoIdx = post.photos - 1;
   const canDragToPreviousPhoto = photoIdx > 0;
   const canDragToNextPhoto = photoIdx < lastPhotoIdx;
-  const photoViewportRef = useRef<HTMLDivElement>(null);
+  const feedPhotoViewportRef = useRef<HTMLDivElement>(null);
+  const expandedPhotoViewportRef = useRef<HTMLDivElement>(null);
   const photoTrackX = useMotionValue(0);
   const photoAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
   const photoDragBaseXRef = useRef(0);
+  const suppressOpenAfterPhotoDragRef = useRef(false);
   const trackPhotoIndexes = [
     canDragToPreviousPhoto ? photoIdx - 1 : photoIdx,
     photoIdx,
@@ -149,7 +155,9 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   ];
 
   useEffect(() => {
-    const viewport = photoViewportRef.current;
+    const viewport = isExpanded
+      ? expandedPhotoViewportRef.current
+      : feedPhotoViewportRef.current;
 
     if (!viewport) {
       return;
@@ -171,13 +179,92 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     return () => {
       resizeObserver.disconnect();
     };
-  }, [photoTrackX]);
+  }, [isExpanded, photoTrackX]);
 
   useEffect(() => {
     return () => {
       photoAnimationRef.current?.stop();
     };
   }, []);
+
+  useEffect(() => {
+    if (!isExpanded) {
+      return;
+    }
+
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsExpanded(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isExpanded]);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent(POST_CARD_EXPANDED_EVENT, {
+        detail: { expanded: isExpanded },
+      })
+    );
+
+    return () => {
+      if (isExpanded) {
+        window.dispatchEvent(
+          new CustomEvent(POST_CARD_EXPANDED_EVENT, {
+            detail: { expanded: false },
+          })
+        );
+      }
+    };
+  }, [isExpanded]);
+
+  async function copyPostLink() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const postUrl = new URL("/", window.location.origin);
+    postUrl.searchParams.set("post", String(post.id));
+    const postLink = postUrl.toString();
+
+    try {
+      await navigator.clipboard.writeText(postLink);
+      return;
+    } catch {
+      const fallbackField = document.createElement("textarea");
+      fallbackField.value = postLink;
+      fallbackField.setAttribute("readonly", "");
+      fallbackField.style.position = "fixed";
+      fallbackField.style.top = "-999px";
+      fallbackField.style.left = "-999px";
+      document.body.appendChild(fallbackField);
+      fallbackField.select();
+      document.execCommand("copy");
+      fallbackField.remove();
+    }
+  }
+
+  function handleCardClick(event: ReactMouseEvent<HTMLElement>) {
+    if (isExpanded || suppressOpenAfterPhotoDragRef.current) {
+      return;
+    }
+
+    const target = event.target;
+
+    if (
+      target instanceof Element &&
+      target.closest("a,button,input,textarea,select,[data-card-interactive]")
+    ) {
+      return;
+    }
+
+    setIsExpanded(true);
+  }
 
   function handleLikeClick() {
     const nextLiked = !liked;
@@ -201,6 +288,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
   function handleShareClick() {
     triggerSharePulse();
+    void copyPostLink();
   }
 
   function handleMoreClick() {
@@ -212,10 +300,17 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   }
 
   function handlePhotoDragStart() {
+    suppressOpenAfterPhotoDragRef.current = true;
     photoAnimationRef.current?.stop();
     photoDragBaseXRef.current = photoTrackX.get();
     photoTrackX.stop();
     setPhotoIndicatorIdx(photoIdx);
+  }
+
+  function releasePhotoDragSuppression() {
+    window.setTimeout(() => {
+      suppressOpenAfterPhotoDragRef.current = false;
+    }, 80);
   }
 
   function handlePhotoDrag(
@@ -249,6 +344,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) {
+    releasePhotoDragSuppression();
+
     if (!hasPhotoSlider || photoWidth <= 0) {
       return;
     }
@@ -299,8 +396,9 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   return (
     <div className="flex h-[calc(100%+5.125rem)] min-h-0 snap-start snap-always flex-col px-3.5 pt-2 pb-[5.75rem] [scroll-snap-stop:always] [@media(max-width:430px)_and_(max-height:860px)]:h-[calc(100%+4.25rem)] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-[5rem]">
       <article
+        onClick={handleCardClick}
         className={cn(
-          "flex flex-1 flex-col overflow-hidden rounded-[26px]",
+          "flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[26px]",
           "border border-green-50/92 bg-white/75",
           "shadow-[0_8px_20px_rgba(20,40,28,0.12),0_1px_3px_rgba(20,40,28,0.08),inset_0_1px_0_rgba(255,255,255,0.92),inset_0_0_0_1px_rgba(255,255,255,0.34)]",
           "backdrop-blur-[28px] backdrop-saturate-[190%]"
@@ -311,6 +409,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
           onMoreClick={handleMoreClick}
           onShareClick={handleShareClick}
           post={post}
+          brand={brand}
           sharePulse={sharePulse}
           shouldReduceMotion={shouldReduceMotion}
         />
@@ -325,7 +424,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
           photoIndicatorIdx={photoIndicatorIdx}
           photoRatio={photoRatio}
           photoTrackX={photoTrackX}
-          photoViewportRef={photoViewportRef}
+          photoViewportRef={feedPhotoViewportRef}
           photoWidth={photoWidth}
           post={post}
           trackPhotoIndexes={trackPhotoIndexes}
@@ -356,6 +455,87 @@ export function PostCard({ post, brand, density }: PostCardProps) {
           shouldReduceMotion={shouldReduceMotion}
         />
       </article>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.article
+            role="dialog"
+            aria-modal="true"
+            aria-label={post.dish}
+            className={cn(
+              "fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden",
+              "border-0 bg-white/82 text-[#15291C]",
+              "shadow-[0_18px_42px_rgba(20,40,28,0.22),inset_0_1px_0_rgba(255,255,255,0.88)]",
+              "backdrop-blur-[30px] backdrop-saturate-[190%]"
+            )}
+            initial={
+              shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 18, scale: 0.98 }
+            }
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={
+              shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.985 }
+            }
+            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <PostCardHeader
+              expanded
+              brand={brand}
+              morePulse={morePulse}
+              onBackClick={() => setIsExpanded(false)}
+              onMoreClick={handleMoreClick}
+              onShareClick={handleShareClick}
+              post={post}
+              sharePulse={sharePulse}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+
+            <div className="hide-scroll min-h-0 flex-1 overflow-y-auto px-3.5 pb-3 [@media(max-width:430px)_and_(max-height:860px)]:px-3">
+              <PhotoCarousel
+                canDragToNextPhoto={canDragToNextPhoto}
+                canDragToPreviousPhoto={canDragToPreviousPhoto}
+                hasPhotoSlider={hasPhotoSlider}
+                onPhotoDrag={handlePhotoDrag}
+                onPhotoDragEnd={handlePhotoDragEnd}
+                onPhotoDragStart={handlePhotoDragStart}
+                photoIndicatorIdx={photoIndicatorIdx}
+                photoRatio={photoRatio}
+                photoTrackX={photoTrackX}
+                photoViewportRef={expandedPhotoViewportRef}
+                photoWidth={photoWidth}
+                post={post}
+                trackPhotoIndexes={trackPhotoIndexes}
+              />
+
+              <div className="pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pt-1.5">
+                <PostDetails expanded brand={brand} post={post} />
+              </div>
+
+              <PostTags
+                brand={brand}
+                mainTag={mainTag}
+                onTagClick={handleTagClick}
+                restTags={restTags}
+                shouldReduceMotion={shouldReduceMotion}
+              />
+            </div>
+
+            <EngagementBar
+              fullscreen
+              brand={brand}
+              commentPulse={commentPulse}
+              likeCount={likeCount}
+              likePulse={likePulse}
+              liked={liked}
+              onCommentClick={handleCommentClick}
+              onLikeClick={handleLikeClick}
+              onSaveClick={handleSaveClick}
+              post={post}
+              savePulse={savePulse}
+              saved={saved}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+          </motion.article>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

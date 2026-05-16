@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   Bookmark,
   Flag,
   Heart,
@@ -36,23 +37,52 @@ function canAnimate(shouldReduceMotion: boolean | null) {
 
 type PostCardHeaderProps = {
   post: Post;
+  brand?: string;
+  expanded?: boolean;
   sharePulse: number;
   morePulse: number;
   shouldReduceMotion: boolean | null;
   onShareClick: () => void;
   onMoreClick: () => void;
+  onBackClick?: () => void;
 };
 
 export function PostCardHeader({
   post,
+  brand = "#2ECC71",
+  expanded = false,
   sharePulse,
   morePulse,
   shouldReduceMotion,
   onShareClick,
   onMoreClick,
+  onBackClick,
 }: PostCardHeaderProps) {
   return (
-    <div className="flex items-center gap-2.5 px-3 pt-3 pr-3 pb-2.5 pl-3.5">
+    <div
+      className={cn(
+        "flex items-center gap-2.5",
+        expanded
+          ? "shrink-0 px-3.5 pt-[calc(env(safe-area-inset-top)+3.625rem)] pb-3 backdrop-blur-[22px] backdrop-saturate-[180%] max-[409px]:px-3"
+          : "px-3 pt-3 pr-3 pb-2.5 pl-3.5"
+      )}
+    >
+      {expanded && (
+        <motion.button
+          type="button"
+          aria-label="Назад в ленту"
+          title="Назад"
+          onClick={onBackClick}
+          className={cn(
+            "grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-[#15291C] outline-none",
+            "border border-white/65 bg-white/58 shadow-[0_8px_20px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.86),inset_-1px_-1px_0_rgba(255,255,255,0.28)]",
+            "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+          )}
+          whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
+        >
+          <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
+        </motion.button>
+      )}
       <UserAvatar name={post.user} size={34} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 overflow-hidden text-sm font-bold tracking-[-0.2px] text-ellipsis whitespace-nowrap text-[#15291C]">
@@ -62,6 +92,23 @@ export function PostCardHeader({
           {post.realName} · {post.when}
         </div>
       </div>
+      {expanded && (
+        <motion.button
+          type="button"
+          className={cn(
+            "h-7 shrink-0 cursor-pointer rounded-full border border-transparent px-2.5 pt-px text-[10.5px] leading-none font-extrabold tracking-[0px] text-[#0B2F1D] outline-none",
+            "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+            "max-[360px]:px-2 max-[360px]:text-[9.75px]"
+          )}
+          style={{
+            background: `linear-gradient(rgba(255,255,255,0.44), rgba(255,255,255,0.24)) padding-box, linear-gradient(135deg, ${brand}B3, rgba(255,255,255,0.72)) border-box`,
+            boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(255,255,255,0.22)`,
+          }}
+          whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
+        >
+          Подписаться
+        </motion.button>
+      )}
       <IconPulseButton
         ariaLabel="Поделиться"
         icon={Share2}
@@ -84,7 +131,7 @@ export function PostCardHeader({
             type="button"
             title="Ещё"
             aria-label="Ещё"
-            className="grid size-8 cursor-pointer place-items-center rounded-[9px] bg-[rgba(20,40,28,0.06)] text-[#15291C] outline-none transition-colors hover:bg-[rgba(20,40,28,0.09)] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+            className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-[9px] bg-[rgba(20,40,28,0.06)] text-[#15291C] outline-none transition-colors hover:bg-[rgba(20,40,28,0.09)] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
           >
             <motion.span
               key={`Ещё-${morePulse}`}
@@ -154,7 +201,7 @@ function IconPulseButton({
       title={title}
       aria-label={ariaLabel}
       onClick={onClick}
-      className="grid size-8 cursor-pointer place-items-center rounded-[9px] bg-[rgba(20,40,28,0.06)] text-[#15291C]"
+      className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-[9px] bg-[rgba(20,40,28,0.06)] text-[#15291C]"
     >
       <motion.span
         key={`${ariaLabel}-${pulse}`}
@@ -289,6 +336,7 @@ function PhotoIndicator({ count, photoIndicatorIdx }: PhotoIndicatorProps) {
 type EngagementBarProps = {
   post: Post;
   brand: string;
+  fullscreen?: boolean;
   liked: boolean;
   saved: boolean;
   likeCount: number;
@@ -304,6 +352,7 @@ type EngagementBarProps = {
 export function EngagementBar({
   post,
   brand,
+  fullscreen = false,
   liked,
   saved,
   likeCount,
@@ -315,6 +364,144 @@ export function EngagementBar({
   onCommentClick,
   onSaveClick,
 }: EngagementBarProps) {
+  if (fullscreen) {
+    const actionPillStyle = {
+      background: `linear-gradient(rgba(255,255,255,0.62), rgba(255,255,255,0.36)) padding-box, linear-gradient(135deg, ${brand}D9, rgba(255,255,255,0.86), ${brand}70) border-box`,
+      boxShadow: `0 12px 28px rgba(20,40,28,0.14), 0 4px 16px ${brand}18, inset 1px 1px 0 rgba(255,255,255,0.82), inset -1px -1px 0 rgba(255,255,255,0.2)`,
+    };
+
+    return (
+      <div className="shrink-0 px-3.5 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.875rem)] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-[calc(env(safe-area-inset-bottom)+0.625rem)]">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_58px] items-center gap-2.5 max-[360px]:gap-2">
+          <motion.button
+            type="button"
+            aria-pressed={liked}
+            onClick={onLikeClick}
+            className="inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent px-3 text-[#15291C] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11"
+            style={actionPillStyle}
+            whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
+          >
+            <motion.span
+              key={`fullscreen-like-${likePulse}`}
+              className="relative grid size-[22px] shrink-0 place-items-center"
+              animate={
+                liked && canAnimate(shouldReduceMotion)
+                  ? { scale: [1, 1.24, 0.96, 1], rotate: [0, -7, 4, 0] }
+                  : { scale: 1, rotate: 0 }
+              }
+              transition={{ duration: 0.42, ease: "easeOut" }}
+            >
+              <motion.span
+                aria-hidden="true"
+                className="absolute inset-0 rounded-full border border-[#E5443B]/45"
+                animate={
+                  liked && canAnimate(shouldReduceMotion)
+                    ? { scale: [0.55, 1.85], opacity: [0.45, 0] }
+                    : { scale: 0.55, opacity: 0 }
+                }
+                transition={{ duration: 0.42, ease: "easeOut" }}
+              />
+              <Heart
+                className="relative size-[22px]"
+                strokeWidth={2}
+                color={liked ? HEART_COLOR : TEXT_PRIMARY}
+                fill={liked ? HEART_COLOR : "none"}
+              />
+            </motion.span>
+            <motion.span
+              className="min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]"
+              animate={
+                liked && canAnimate(shouldReduceMotion)
+                  ? { y: [0, -1, 0], opacity: [0.82, 1] }
+                  : { y: 0, opacity: 1 }
+              }
+              transition={{ duration: 0.24, ease: "easeOut" }}
+            >
+              {likeCount.toLocaleString("ru-RU")}
+            </motion.span>
+          </motion.button>
+
+          <motion.button
+            type="button"
+            onClick={onCommentClick}
+            className="inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent px-3 text-[#15291C] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11"
+            style={actionPillStyle}
+            whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
+          >
+            <motion.span
+              key={`fullscreen-comment-${commentPulse}`}
+              className="grid size-5 shrink-0 place-items-center"
+              animate={
+                commentPulse > 0 && canAnimate(shouldReduceMotion)
+                  ? ICON_PULSE_ANIMATION
+                  : { scale: 1 }
+              }
+              transition={ICON_PULSE_TRANSITION}
+            >
+              <MessageCircle
+                className="size-5"
+                strokeWidth={2}
+                color={TEXT_PRIMARY}
+              />
+            </motion.span>
+            <span className="min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]">
+              {post.comments}
+            </span>
+          </motion.button>
+
+          <motion.button
+            type="button"
+            aria-pressed={saved}
+            title="В избранное"
+            aria-label="В избранное"
+            onClick={onSaveClick}
+            className="relative grid h-12 min-w-0 cursor-pointer place-items-center overflow-hidden rounded-full border border-white/65 px-4 text-[#06301A] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11"
+            style={{
+              background: saved
+                ? `linear-gradient(135deg, ${brand}, #1FA85C)`
+                : `linear-gradient(135deg, ${brand}4D, rgba(255,255,255,0.66))`,
+              boxShadow: `0 12px 28px ${brand}30, inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(11,47,29,0.08)`,
+            }}
+            whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
+          >
+            <motion.span
+              key={`fullscreen-save-glow-${savePulse}`}
+              aria-hidden="true"
+              className="absolute inset-0 rounded-full"
+              animate={
+                saved && canAnimate(shouldReduceMotion)
+                  ? { opacity: [0, 0.36, 0], scale: [0.72, 1.18, 1.32] }
+                  : { opacity: 0, scale: 0.72 }
+              }
+              transition={{ duration: 0.46, ease: "easeOut" }}
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 45%, rgba(255,255,255,0.95) 0%, transparent 66%)",
+              }}
+            />
+            <motion.span
+              key={`fullscreen-save-${savePulse}`}
+              className="relative grid size-5 place-items-center"
+              animate={
+                saved && canAnimate(shouldReduceMotion)
+                  ? { y: [0, -2, 0], scale: [1, 1.2, 0.98, 1] }
+                  : { y: 0, scale: 1 }
+              }
+              transition={{ duration: 0.38, ease: "easeOut" }}
+            >
+              <Bookmark
+                className="size-5"
+                strokeWidth={2}
+                color={saved ? "#FFFFFF" : "#06301A"}
+                fill={saved ? "#FFFFFF" : brand}
+              />
+            </motion.span>
+          </motion.button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-4 px-4 pt-3 pb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5 [@media(max-width:430px)_and_(max-height:860px)]:pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-1.5">
       <motion.button
@@ -437,9 +624,10 @@ export function EngagementBar({
 type PostDetailsProps = {
   post: Post;
   brand: string;
+  expanded?: boolean;
 };
 
-export function PostDetails({ post, brand }: PostDetailsProps) {
+export function PostDetails({ post, brand, expanded = false }: PostDetailsProps) {
   return (
     <>
       <div className="px-4 pb-1 max-[390px]:pb-0.5 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5">
@@ -501,8 +689,16 @@ export function PostDetails({ post, brand }: PostDetailsProps) {
         </div>
       </div>
 
-      <p className="mx-3 mb-3 rounded-[14px] bg-[rgba(20,40,28,0.04)] px-3 py-2.5 font-[family-name:var(--font-roboto)] text-[15px] leading-[1.62] font-medium text-pretty text-[#15291C] max-[390px]:mb-2 max-[390px]:py-2 max-[390px]:text-[14.5px] max-[390px]:leading-[1.5] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5 [@media(max-width:430px)_and_(max-height:860px)]:mb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:py-1.5 [@media(max-width:430px)_and_(max-height:860px)]:text-[14px] [@media(max-width:430px)_and_(max-height:860px)]:leading-[1.42]">
-        <span className="overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]">
+      <p
+        className="mx-3 mb-3 rounded-[14px] bg-[rgba(20,40,28,0.04)] px-3 py-2.5 font-[family-name:var(--font-roboto)] text-[15px] leading-[1.62] font-medium text-pretty text-[#15291C] max-[390px]:mb-2 max-[390px]:py-2 max-[390px]:text-[14.5px] max-[390px]:leading-[1.5] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5 [@media(max-width:430px)_and_(max-height:860px)]:mb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:py-1.5 [@media(max-width:430px)_and_(max-height:860px)]:text-[14px] [@media(max-width:430px)_and_(max-height:860px)]:leading-[1.42]"
+      >
+        <span
+          className={
+            expanded
+              ? "block whitespace-pre-wrap"
+              : "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]"
+          }
+        >
           {post.text}
         </span>
       </p>
