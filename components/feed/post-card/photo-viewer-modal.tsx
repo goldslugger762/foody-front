@@ -452,7 +452,7 @@ function ViewerArrowButton({
       aria-label={ariaLabel}
       className={cn(
         "absolute top-1/2 z-20 grid size-9 -translate-y-1/2 place-items-center rounded-full",
-        "border border-white/20 bg-white/25 text-black shadow-md backdrop-blur-md",
+        "border border-white/15 bg-white/23 text-black shadow-md backdrop-blur-md",
         "cursor-pointer outline-none transition-colors duration-150 hover:bg-white/30 focus-visible:ring-2 focus-visible:ring-white/50",
         "max-[430px]:size-8.5",
         className
