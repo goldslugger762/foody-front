@@ -1,0 +1,127 @@
+import { type MotionValue, type PanInfo, motion } from "motion/react";
+import type { RefObject } from "react";
+
+import { DishPhoto } from "@/components/feed/dish-photo";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import type { Post } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+
+export type PhotoCarouselProps = {
+  post: Post;
+  photoRatio: number;
+  hasPhotoSlider: boolean;
+  canDragToNextPhoto: boolean;
+  canDragToPreviousPhoto: boolean;
+  photoWidth: number;
+  photoIndicatorIdx: number;
+  photoTrackX: MotionValue<number>;
+  photoViewportRef: RefObject<HTMLDivElement | null>;
+  trackPhotoIndexes: number[];
+  onPhotoDragStart: () => void;
+  onPhotoDrag: (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void;
+  onPhotoDragEnd: (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => void;
+};
+
+export function PhotoCarousel({
+  post,
+  photoRatio,
+  hasPhotoSlider,
+  canDragToNextPhoto,
+  canDragToPreviousPhoto,
+  photoWidth,
+  photoIndicatorIdx,
+  photoTrackX,
+  photoViewportRef,
+  trackPhotoIndexes,
+  onPhotoDragStart,
+  onPhotoDrag,
+  onPhotoDragEnd,
+}: PhotoCarouselProps) {
+  return (
+    <div className="relative mx-3 overflow-hidden rounded-[18px] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5">
+      <AspectRatio
+        ref={photoViewportRef}
+        ratio={photoRatio}
+        className={cn(
+          "select-none overflow-hidden",
+          hasPhotoSlider && "cursor-grab active:cursor-grabbing"
+        )}
+      >
+        <motion.div
+          drag={hasPhotoSlider ? "x" : false}
+          dragConstraints={{
+            left: canDragToNextPhoto ? -photoWidth * 2 : -photoWidth,
+            right: canDragToPreviousPhoto ? 0 : -photoWidth,
+          }}
+          dragElastic={0}
+          dragMomentum={false}
+          dragDirectionLock
+          onDragStart={onPhotoDragStart}
+          onDrag={onPhotoDrag}
+          onDragEnd={onPhotoDragEnd}
+          className="absolute inset-y-0 left-0 h-full w-[300%] [touch-action:pan-y]"
+          style={{ x: photoTrackX }}
+        >
+          {trackPhotoIndexes.map((trackPhotoIdx, trackPosition) => (
+            <div
+              key={`${trackPosition}-${trackPhotoIdx}`}
+              aria-hidden={trackPosition !== 1}
+              className={cn(
+                "absolute inset-y-0 overflow-hidden",
+                trackPosition === 0 && "left-0 z-0 w-1/3",
+                trackPosition === 1 &&
+                  "left-[calc(100%/3-4px)] z-10 w-[calc(100%/3+8px)]",
+                trackPosition === 2 && "left-[calc(200%/3)] z-0 w-1/3"
+              )}
+            >
+              <DishPhoto
+                seed={post.seed + trackPhotoIdx}
+                height="100%"
+                label={`dish photo ${trackPhotoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
+                labelClassName={
+                  hasPhotoSlider
+                    ? "right-3 left-auto max-w-[calc(100%-6.75rem)] overflow-hidden text-right text-ellipsis whitespace-nowrap"
+                    : undefined
+                }
+              />
+            </div>
+          ))}
+        </motion.div>
+      </AspectRatio>
+      {hasPhotoSlider && (
+        <PhotoIndicator count={post.photos} photoIndicatorIdx={photoIndicatorIdx} />
+      )}
+    </div>
+  );
+}
+
+type PhotoIndicatorProps = {
+  count: number;
+  photoIndicatorIdx: number;
+};
+
+function PhotoIndicator({ count, photoIndicatorIdx }: PhotoIndicatorProps) {
+  return (
+    <div className="pointer-events-none absolute bottom-2.5 left-3 flex justify-start gap-1.5 rounded-full bg-black/15 p-1.5 shadow-[0_4px_14px_rgba(0,0,0,0.16)] backdrop-blur-[10px]">
+      {Array.from({ length: count }).map((_, i) => {
+        const isActive = i === photoIndicatorIdx;
+
+        return (
+          <span
+            key={i}
+            aria-hidden="true"
+            className={cn(
+              "h-1.5 rounded-full transition-[width] duration-200",
+              isActive
+                ? "w-[22px] bg-white shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+                : "w-1.5 bg-white/55"
+            )}
+          />
+        );
+      })}
+    </div>
+  );
+}
