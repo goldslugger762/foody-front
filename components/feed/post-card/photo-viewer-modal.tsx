@@ -326,8 +326,8 @@ export function PhotoViewerModal({
           aria-modal="true"
           aria-label={`Фото: ${post.dish}`}
           className={cn(
-            "fixed inset-0 z-[80] flex h-[100dvh] w-screen items-center justify-center overflow-hidden",
-            "bg-black/85 px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1rem)]",
+            "fixed inset-0 z-[80] flex h-[100dvh] w-screen flex-col items-center justify-center overflow-hidden",
+            "bg-black/85 px-2 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+0.75rem)]",
             "[-webkit-tap-highlight-color:transparent]"
           )}
           initial={{ opacity: 0 }}
@@ -339,11 +339,11 @@ export function PhotoViewerModal({
           <motion.div
             ref={photoViewportRef}
             className={cn(
-              "relative z-10 w-[min(96vw,46rem)] overflow-hidden rounded-[28px]",
+              "relative z-10 w-[min(94vw,60rem)] overflow-hidden rounded-[28px]",
               "bg-white/5 shadow-[0_22px_70px_rgba(0,0,0,0.45)] ring-1 ring-white/15",
-              "max-[430px]:w-[min(96vw,30rem)] max-[430px]:rounded-[24px]"
+              "max-[430px]:w-[94vw] max-[430px]:rounded-[24px]"
             )}
-            style={{ aspectRatio: `${photoRatio} / 1` }}
+            style={{ aspectRatio: `${photoRatio} / 1.3` }}
             initial={shouldAnimate ? { opacity: 0, scale: 0.96 } : { opacity: 1 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={shouldAnimate ? { opacity: 0, scale: 0.98 } : { opacity: 0 }}
@@ -411,7 +411,7 @@ export function PhotoViewerModal({
           </motion.div>
 
           {hasMultiplePhotos && (
-            <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] left-1/2 z-20 flex -translate-x-1/2 gap-1.5 rounded-full border border-white/15 bg-white/14 p-1.5 shadow-md backdrop-blur-md">
+            <div className="pointer-events-none z-20 mt-4 flex gap-1.5 rounded-full border border-white/15 bg-white/14 p-1.5 shadow-md backdrop-blur-md">
               {Array.from({ length: post.photos }).map((_, index) => (
                 <span
                   key={index}
