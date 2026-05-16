@@ -38,6 +38,7 @@ type PhotoViewerModalProps = {
   post: Post;
   activeIndex: number;
   direction: PhotoDirection;
+  openKey: number;
   photoRatio: number;
   shouldReduceMotion: boolean | null;
   onClose: () => void;
@@ -68,6 +69,7 @@ export function PhotoViewerModal({
   post,
   activeIndex,
   direction,
+  openKey,
   photoRatio,
   shouldReduceMotion,
   onClose,
@@ -86,6 +88,7 @@ export function PhotoViewerModal({
   const photoAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
   const photoDragBaseXRef = useRef(0);
   const pendingDragTransitionXRef = useRef<number | null>(null);
+  const openKeyRef = useRef(openKey);
   const previousPhotoIndexRef = useRef(safeActiveIndex);
   const wasOpenRef = useRef(false);
   const trackPhotoIndexes = getPhotoTrackIndexes(safeActiveIndex, lastIndex);
@@ -125,22 +128,39 @@ export function PhotoViewerModal({
     if (!open) {
       wasOpenRef.current = false;
       previousPhotoIndexRef.current = safeActiveIndex;
+      pendingDragTransitionXRef.current = null;
+      photoAnimationRef.current?.stop();
+      photoAnimationRef.current = null;
+      photoTrackX.stop();
+      photoTrackX.jump(
+        photoWidth > 0 ? getPhotoSwitchCenterX(photoWidth) : 0
+      );
+      photoDragBaseXRef.current =
+        photoWidth > 0 ? getPhotoSwitchCenterX(photoWidth) : 0;
       return;
     }
+
+    const isNewOpenSession = openKeyRef.current !== openKey;
+    openKeyRef.current = openKey;
 
     if (photoWidth <= 0) {
       wasOpenRef.current = true;
       previousPhotoIndexRef.current = safeActiveIndex;
+      pendingDragTransitionXRef.current = null;
       return;
     }
 
     const centerX = getPhotoSwitchCenterX(photoWidth);
 
-    if (!wasOpenRef.current) {
+    if (!wasOpenRef.current || isNewOpenSession) {
       wasOpenRef.current = true;
       previousPhotoIndexRef.current = safeActiveIndex;
+      pendingDragTransitionXRef.current = null;
       photoAnimationRef.current?.stop();
+      photoAnimationRef.current = null;
+      photoTrackX.stop();
       photoTrackX.jump(centerX);
+      photoDragBaseXRef.current = centerX;
       return;
     }
 
@@ -167,6 +187,7 @@ export function PhotoViewerModal({
   }, [
     direction,
     open,
+    openKey,
     photoTrackX,
     photoWidth,
     safeActiveIndex,
@@ -180,18 +201,12 @@ export function PhotoViewerModal({
   }, []);
 
   useEffect(() => {
-    if (!open || !shouldAnimate) {
-      setShouldAnimatePhotoDots(false);
-      return;
-    }
-
     const animationFrame = window.requestAnimationFrame(() => {
-      setShouldAnimatePhotoDots(true);
+      setShouldAnimatePhotoDots(open && shouldAnimate);
     });
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
-      setShouldAnimatePhotoDots(false);
     };
   }, [open, shouldAnimate]);
 
@@ -369,6 +384,7 @@ export function PhotoViewerModal({
           >
             <div className="absolute inset-0 isolate overflow-hidden rounded-[inherit] bg-black">
               <motion.div
+                key={`photo-viewer-track-${post.id}-${openKey}`}
                 drag={hasMultiplePhotos ? "x" : false}
                 dragConstraints={{
                   left: canGoNext ? -photoWidth * 2 : -photoWidth,
@@ -388,7 +404,7 @@ export function PhotoViewerModal({
                     key={`${trackPosition}-${trackPhotoIdx}`}
                     aria-hidden={trackPosition !== 1}
                     className={cn(
-                      "absolute inset-y-0 w-1/3 overflow-hidden bg-black",
+                      "absolute inset-y-0 h-full w-1/3 overflow-hidden bg-black",
                       trackPosition === 0 && "left-0",
                       trackPosition === 1 && "left-1/3",
                       trackPosition === 2 && "left-2/3"

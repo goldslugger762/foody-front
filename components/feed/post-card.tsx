@@ -124,6 +124,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [viewerPhotoIdx, setViewerPhotoIdx] = useState(0);
   const [viewerPhotoDirection, setViewerPhotoDirection] =
     useState<PhotoDirection>(1);
+  const [viewerOpenKey, setViewerOpenKey] = useState(0);
   const [photoWidth, setPhotoWidth] = useState(0);
   const [sharePulse, triggerSharePulse] = usePulse();
   const [morePulse, triggerMorePulse] = usePulse();
@@ -261,6 +262,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       return;
     }
 
+    resetPhotoTrackToCenter();
     setIsExpanded(true);
   }
 
@@ -308,7 +310,10 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       return;
     }
 
+    resetPhotoTrackToCenter();
+    setViewerPhotoDirection(1);
     setViewerPhotoIdx(photoIdx);
+    setViewerOpenKey((currentKey) => currentKey + 1);
     setIsPhotoViewerOpen(true);
   }
 
@@ -335,6 +340,17 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         },
       }
     );
+  }
+
+  function resetPhotoTrackToCenter() {
+    const centerX = getPhotoSwitchCenterX(photoWidth);
+
+    photoAnimationRef.current?.stop();
+    photoAnimationRef.current = null;
+    photoTrackX.stop();
+    photoTrackX.jump(centerX);
+    photoDragBaseXRef.current = centerX;
+    setPhotoIndicatorIdx(photoIdx);
   }
 
   function handlePhotoDrag(
@@ -460,6 +476,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         onChangeIndex={handleViewerPhotoChange}
         onClose={() => setIsPhotoViewerOpen(false)}
         open={isPhotoViewerOpen}
+        openKey={viewerOpenKey}
         photoRatio={photoRatio}
         post={post}
         shouldReduceMotion={shouldReduceMotion}
