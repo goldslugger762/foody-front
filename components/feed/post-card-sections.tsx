@@ -18,6 +18,7 @@ import {
 } from "react";
 
 import { DishPhoto } from "@/components/feed/dish-photo";
+import { GlassSurface } from "@/components/feed/glass-surface";
 import { UserAvatar } from "@/components/feed/user-avatar";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import {
@@ -227,15 +228,8 @@ export function PostCardHeader({
     ? formatFullscreenAuthorMeta(post.when)
     : `${post.realName} · ${post.when}`;
 
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2.5",
-        expanded
-          ? "shrink-0 px-3.5 pt-[calc(env(safe-area-inset-top)+3.625rem)] pb-3 backdrop-blur-[22px] backdrop-saturate-[180%] max-[409px]:px-3"
-          : "px-3 pt-3 pr-3 pb-2.5 pl-3.5"
-      )}
-    >
+  const headerContent = (
+    <>
       {expanded && (
         <motion.button
           type="button"
@@ -354,6 +348,30 @@ export function PostCardHeader({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+    </>
+  );
+
+  if (expanded) {
+    return (
+      <div className="shrink-0 px-3.5 pt-[calc(env(safe-area-inset-top)+3.625rem)] pb-3 max-[409px]:px-3">
+        <GlassSurface
+          className={cn(
+            "rounded-[24px] shadow-[0_14px_34px_rgba(20,40,28,0.14),0_2px_10px_rgba(255,255,255,0.45)]",
+            "before:bg-white/48 before:backdrop-blur-[28px] before:backdrop-saturate-[210%]",
+            "after:border-white/70 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.9),inset_-1px_-1px_0_rgba(255,255,255,0.28)]"
+          )}
+        >
+          <div className="flex min-h-13 items-center gap-2.5 px-2.5 py-2 max-[380px]:gap-2 max-[380px]:px-2">
+            {headerContent}
+          </div>
+        </GlassSurface>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2.5 px-3 pt-3 pr-3 pb-2.5 pl-3.5">
+      {headerContent}
     </div>
   );
 }
