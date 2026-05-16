@@ -55,6 +55,14 @@ type ViewerArrowButtonProps = {
 const VIEWER_TRANSITION = { duration: 0.18, ease: [0.22, 1, 0.36, 1] } as const;
 const PHOTO_TRANSITION = { duration: 0.2, ease: [0.22, 1, 0.36, 1] } as const;
 
+function getPhotoViewportWidth(viewport: HTMLDivElement) {
+  const computedWidth = Number.parseFloat(getComputedStyle(viewport).width);
+
+  return Number.isFinite(computedWidth) && computedWidth > 0
+    ? computedWidth
+    : viewport.clientWidth;
+}
+
 export function PhotoViewerModal({
   open,
   post,
@@ -95,7 +103,7 @@ export function PhotoViewerModal({
     const viewportElement = viewport;
 
     function syncPhotoWidth() {
-      const nextWidth = viewportElement.getBoundingClientRect().width;
+      const nextWidth = getPhotoViewportWidth(viewportElement);
       photoAnimationRef.current?.stop();
       photoAnimationRef.current = null;
       setPhotoWidth(nextWidth);
@@ -342,7 +350,7 @@ export function PhotoViewerModal({
             transition={PHOTO_TRANSITION}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
+            <div className="absolute inset-0 isolate overflow-hidden rounded-[inherit] bg-black">
               <motion.div
                 drag={hasMultiplePhotos ? "x" : false}
                 dragConstraints={{
@@ -355,7 +363,7 @@ export function PhotoViewerModal({
                 onDragStart={handlePhotoDragStart}
                 onDrag={handlePhotoDrag}
                 onDragEnd={handlePhotoDragEnd}
-                className="absolute inset-y-0 left-0 h-full w-[300%] [touch-action:pan-y]"
+                className="absolute inset-y-0 left-0 h-full w-[300%] overflow-hidden [touch-action:pan-y]"
                 style={{ x: photoTrackX }}
               >
                 {trackPhotoIndexes.map((trackPhotoIdx, trackPosition) => (
@@ -369,12 +377,14 @@ export function PhotoViewerModal({
                       trackPosition === 2 && "left-2/3"
                     )}
                   >
-                    <DishPhoto
-                      seed={post.seed + trackPhotoIdx}
-                      height="100%"
-                      label={`${post.dish.toLowerCase()} · ${trackPhotoIdx + 1} / ${post.photos}`}
-                      labelClassName="right-4 bottom-4 left-auto max-w-[calc(100%-2rem)] overflow-hidden rounded-full bg-black/18 px-2.5 py-1 text-right text-ellipsis whitespace-nowrap backdrop-blur-[8px]"
-                    />
+                    <div className="absolute inset-0 h-full w-full overflow-hidden">
+                      <DishPhoto
+                        seed={post.seed + trackPhotoIdx}
+                        height="100%"
+                        label={`${post.dish.toLowerCase()} · ${trackPhotoIdx + 1} / ${post.photos}`}
+                        labelClassName="right-4 bottom-4 left-auto max-w-[calc(100%-2rem)] overflow-hidden rounded-full bg-black/18 px-2.5 py-1 text-right text-ellipsis whitespace-nowrap backdrop-blur-[8px]"
+                      />
+                    </div>
                   </div>
                 ))}
               </motion.div>
