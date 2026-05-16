@@ -56,6 +56,35 @@ const SUBSCRIBE_STATE_TRANSITION = {
 const SUBSCRIBE_STATE_SETTLE_MS = 240;
 const FULLSCREEN_COMPACT_AUTHOR_LENGTH = 11;
 const FULLSCREEN_SMALL_COMPACT_AUTHOR_LENGTH = 10;
+const LIKE_ICON_ACTIVE_ANIMATION = {
+  rotate: [0, -7, 4, 0],
+  scale: [1, 1.24, 0.96, 1],
+};
+const LIKE_ICON_IDLE_ANIMATION = { rotate: 0, scale: 1 };
+const LIKE_RING_ACTIVE_ANIMATION = {
+  opacity: [0.45, 0],
+  scale: [0.55, 1.85],
+};
+const LIKE_RING_IDLE_ANIMATION = { opacity: 0, scale: 0.55 };
+const LIKE_COUNT_ACTIVE_ANIMATION = {
+  opacity: [0.82, 1],
+  y: [0, -1, 0],
+};
+const LIKE_COUNT_IDLE_ANIMATION = { opacity: 1, y: 0 };
+const SAVE_ICON_ACTIVE_ANIMATION = {
+  scale: [1, 1.2, 0.98, 1],
+  y: [0, -2, 0],
+};
+const SAVE_ICON_IDLE_ANIMATION = { scale: 1, y: 0 };
+const FULLSCREEN_SAVE_GLOW_ACTIVE_ANIMATION = {
+  opacity: [0, 0.36, 0],
+  scale: [0.72, 1.18, 1.32],
+};
+const COLLAPSED_SAVE_GLOW_ACTIVE_ANIMATION = {
+  opacity: [0, 0.28, 0],
+  scale: [0.72, 1.15, 1.26],
+};
+const SAVE_GLOW_IDLE_ANIMATION = { opacity: 0, scale: 0.72 };
 
 // Single source of truth for the full-screen header glass layers.
 const FULLSCREEN_HEADER_GLASS = {
@@ -100,6 +129,15 @@ const FULLSCREEN_AUTHOR_TEXT = {
   metaProCompact:
     "[@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:text-[10.25px]",
 } as const;
+
+const FULLSCREEN_ACTION_BUTTON_CLASS =
+  "inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent px-3 text-[#15291C] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11";
+const COLLAPSED_ACTION_BUTTON_CLASS =
+  "inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0";
+const FULLSCREEN_SAVE_BUTTON_CLASS =
+  "relative grid h-12 min-w-0 cursor-pointer place-items-center overflow-hidden rounded-full border border-white/65 px-4 text-[#06301A] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11";
+const COLLAPSED_SAVE_BUTTON_CLASS =
+  "relative ml-auto grid size-9 cursor-pointer place-items-center overflow-hidden rounded-[10px] transition-colors [@media(max-width:430px)_and_(max-height:860px)]:size-8";
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
@@ -786,6 +824,156 @@ type EngagementBarProps = {
   onSaveClick: () => void;
 };
 
+type LikeActionContentProps = {
+  liked: boolean;
+  likeCount: number;
+  pulse: number;
+  shouldReduceMotion: boolean | null;
+  fullscreen?: boolean;
+};
+
+function LikeActionContent({
+  liked,
+  likeCount,
+  pulse,
+  shouldReduceMotion,
+  fullscreen = false,
+}: LikeActionContentProps) {
+  const shouldAnimate = liked && canAnimate(shouldReduceMotion);
+  const keyPrefix = fullscreen ? "fullscreen-like" : "like";
+
+  return (
+    <>
+      <motion.span
+        key={`${keyPrefix}-${pulse}`}
+        className={cn(
+          "relative grid size-[22px] place-items-center",
+          fullscreen && "shrink-0"
+        )}
+        animate={
+          shouldAnimate
+            ? LIKE_ICON_ACTIVE_ANIMATION
+            : LIKE_ICON_IDLE_ANIMATION
+        }
+        transition={{ duration: 0.42, ease: "easeOut" }}
+      >
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full border border-[#E5443B]/45"
+          animate={
+            shouldAnimate
+              ? LIKE_RING_ACTIVE_ANIMATION
+              : LIKE_RING_IDLE_ANIMATION
+          }
+          transition={{ duration: 0.42, ease: "easeOut" }}
+        />
+        <Heart
+          className="relative size-[22px]"
+          strokeWidth={2}
+          color={liked ? HEART_COLOR : TEXT_PRIMARY}
+          fill={liked ? HEART_COLOR : "none"}
+        />
+      </motion.span>
+      <motion.span
+        className={
+          fullscreen
+            ? "min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]"
+            : "text-[13.5px] font-bold tracking-[-0.1px] text-[#15291C]"
+        }
+        animate={
+          shouldAnimate
+            ? LIKE_COUNT_ACTIVE_ANIMATION
+            : LIKE_COUNT_IDLE_ANIMATION
+        }
+        transition={{ duration: 0.24, ease: "easeOut" }}
+      >
+        {likeCount.toLocaleString("ru-RU")}
+      </motion.span>
+    </>
+  );
+}
+
+type SaveActionIconProps = {
+  brand: string;
+  pulse: number;
+  saved: boolean;
+  shouldReduceMotion: boolean | null;
+  fullscreen?: boolean;
+};
+
+function SaveActionIcon({
+  brand,
+  pulse,
+  saved,
+  shouldReduceMotion,
+  fullscreen = false,
+}: SaveActionIconProps) {
+  const shouldAnimate = saved && canAnimate(shouldReduceMotion);
+  const keyPrefix = fullscreen ? "fullscreen-save" : "save";
+
+  return (
+    <>
+      <motion.span
+        key={`${keyPrefix}-glow-${pulse}`}
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-0",
+          fullscreen ? "rounded-full" : "rounded-[10px]"
+        )}
+        animate={
+          shouldAnimate
+            ? fullscreen
+              ? FULLSCREEN_SAVE_GLOW_ACTIVE_ANIMATION
+              : COLLAPSED_SAVE_GLOW_ACTIVE_ANIMATION
+            : SAVE_GLOW_IDLE_ANIMATION
+        }
+        transition={{ duration: 0.46, ease: "easeOut" }}
+        style={{
+          background: fullscreen
+            ? "radial-gradient(circle at 50% 45%, rgba(255,255,255,0.95) 0%, transparent 66%)"
+            : `radial-gradient(circle at 50% 45%, ${brand} 0%, transparent 66%)`,
+        }}
+      />
+      <motion.span
+        key={`${keyPrefix}-${pulse}`}
+        className={cn(
+          "relative grid place-items-center",
+          fullscreen ? "size-5" : "size-[18px]"
+        )}
+        animate={
+          shouldAnimate
+            ? SAVE_ICON_ACTIVE_ANIMATION
+            : SAVE_ICON_IDLE_ANIMATION
+        }
+        transition={{ duration: 0.38, ease: "easeOut" }}
+      >
+        <Bookmark
+          className={fullscreen ? "size-5" : "size-[18px]"}
+          strokeWidth={2}
+          color={
+            fullscreen
+              ? saved
+                ? "#FFFFFF"
+                : "#06301A"
+              : saved
+                ? brand
+                : TEXT_PRIMARY
+          }
+          fill={
+            fullscreen
+              ? saved
+                ? "#FFFFFF"
+                : brand
+              : saved
+                ? brand
+                : "none"
+          }
+        />
+      </motion.span>
+    </>
+  );
+}
+
 export function EngagementBar({
   post,
   brand,
@@ -814,54 +1002,23 @@ export function EngagementBar({
             type="button"
             aria-pressed={liked}
             onClick={onLikeClick}
-            className="inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent px-3 text-[#15291C] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11"
+            className={FULLSCREEN_ACTION_BUTTON_CLASS}
             style={actionPillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
-            <motion.span
-              key={`fullscreen-like-${likePulse}`}
-              className="relative grid size-[22px] shrink-0 place-items-center"
-              animate={
-                liked && canAnimate(shouldReduceMotion)
-                  ? { scale: [1, 1.24, 0.96, 1], rotate: [0, -7, 4, 0] }
-                  : { scale: 1, rotate: 0 }
-              }
-              transition={{ duration: 0.42, ease: "easeOut" }}
-            >
-              <motion.span
-                aria-hidden="true"
-                className="absolute inset-0 rounded-full border border-[#E5443B]/45"
-                animate={
-                  liked && canAnimate(shouldReduceMotion)
-                    ? { scale: [0.55, 1.85], opacity: [0.45, 0] }
-                    : { scale: 0.55, opacity: 0 }
-                }
-                transition={{ duration: 0.42, ease: "easeOut" }}
-              />
-              <Heart
-                className="relative size-[22px]"
-                strokeWidth={2}
-                color={liked ? HEART_COLOR : TEXT_PRIMARY}
-                fill={liked ? HEART_COLOR : "none"}
-              />
-            </motion.span>
-            <motion.span
-              className="min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]"
-              animate={
-                liked && canAnimate(shouldReduceMotion)
-                  ? { y: [0, -1, 0], opacity: [0.82, 1] }
-                  : { y: 0, opacity: 1 }
-              }
-              transition={{ duration: 0.24, ease: "easeOut" }}
-            >
-              {likeCount.toLocaleString("ru-RU")}
-            </motion.span>
+            <LikeActionContent
+              fullscreen
+              liked={liked}
+              likeCount={likeCount}
+              pulse={likePulse}
+              shouldReduceMotion={shouldReduceMotion}
+            />
           </motion.button>
 
           <motion.button
             type="button"
             onClick={onCommentClick}
-            className="inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent px-3 text-[#15291C] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11"
+            className={FULLSCREEN_ACTION_BUTTON_CLASS}
             style={actionPillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
@@ -883,7 +1040,7 @@ export function EngagementBar({
             title="В избранное"
             aria-label="В избранное"
             onClick={onSaveClick}
-            className="relative grid h-12 min-w-0 cursor-pointer place-items-center overflow-hidden rounded-full border border-white/65 px-4 text-[#06301A] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11"
+            className={FULLSCREEN_SAVE_BUTTON_CLASS}
             style={{
               background: saved
                 ? `linear-gradient(135deg, ${brand}, #1FA85C)`
@@ -892,38 +1049,13 @@ export function EngagementBar({
             }}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
           >
-            <motion.span
-              key={`fullscreen-save-glow-${savePulse}`}
-              aria-hidden="true"
-              className="absolute inset-0 rounded-full"
-              animate={
-                saved && canAnimate(shouldReduceMotion)
-                  ? { opacity: [0, 0.36, 0], scale: [0.72, 1.18, 1.32] }
-                  : { opacity: 0, scale: 0.72 }
-              }
-              transition={{ duration: 0.46, ease: "easeOut" }}
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 45%, rgba(255,255,255,0.95) 0%, transparent 66%)",
-              }}
+            <SaveActionIcon
+              fullscreen
+              brand={brand}
+              pulse={savePulse}
+              saved={saved}
+              shouldReduceMotion={shouldReduceMotion}
             />
-            <motion.span
-              key={`fullscreen-save-${savePulse}`}
-              className="relative grid size-5 place-items-center"
-              animate={
-                saved && canAnimate(shouldReduceMotion)
-                  ? { y: [0, -2, 0], scale: [1, 1.2, 0.98, 1] }
-                  : { y: 0, scale: 1 }
-              }
-              transition={{ duration: 0.38, ease: "easeOut" }}
-            >
-              <Bookmark
-                className="size-5"
-                strokeWidth={2}
-                color={saved ? "#FFFFFF" : "#06301A"}
-                fill={saved ? "#FFFFFF" : brand}
-              />
-            </motion.span>
           </motion.button>
         </div>
       </div>
@@ -936,53 +1068,21 @@ export function EngagementBar({
         type="button"
         aria-pressed={liked}
         onClick={onLikeClick}
-        className="inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0"
+        className={COLLAPSED_ACTION_BUTTON_CLASS}
         whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
       >
-        <motion.span
-          key={`like-${likePulse}`}
-          className="relative grid size-[22px] place-items-center"
-          animate={
-            liked && canAnimate(shouldReduceMotion)
-              ? { scale: [1, 1.24, 0.96, 1], rotate: [0, -7, 4, 0] }
-              : { scale: 1, rotate: 0 }
-          }
-          transition={{ duration: 0.42, ease: "easeOut" }}
-        >
-          <motion.span
-            aria-hidden="true"
-            className="absolute inset-0 rounded-full border border-[#E5443B]/45"
-            animate={
-              liked && canAnimate(shouldReduceMotion)
-                ? { scale: [0.55, 1.85], opacity: [0.45, 0] }
-                : { scale: 0.55, opacity: 0 }
-            }
-            transition={{ duration: 0.42, ease: "easeOut" }}
-          />
-          <Heart
-            className="relative size-[22px]"
-            strokeWidth={2}
-            color={liked ? HEART_COLOR : TEXT_PRIMARY}
-            fill={liked ? HEART_COLOR : "none"}
-          />
-        </motion.span>
-        <motion.span
-          className="text-[13.5px] font-bold tracking-[-0.1px] text-[#15291C]"
-          animate={
-            liked && canAnimate(shouldReduceMotion)
-              ? { y: [0, -1, 0], opacity: [0.82, 1] }
-              : { y: 0, opacity: 1 }
-          }
-          transition={{ duration: 0.24, ease: "easeOut" }}
-        >
-          {likeCount.toLocaleString("ru-RU")}
-        </motion.span>
+        <LikeActionContent
+          liked={liked}
+          likeCount={likeCount}
+          pulse={likePulse}
+          shouldReduceMotion={shouldReduceMotion}
+        />
       </motion.button>
 
       <motion.button
         type="button"
         onClick={onCommentClick}
-        className="inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0"
+        className={COLLAPSED_ACTION_BUTTON_CLASS}
       >
         <motion.span
           key={`comment-${commentPulse}`}
@@ -1007,43 +1107,18 @@ export function EngagementBar({
         title="В избранное"
         aria-label="В избранное"
         onClick={onSaveClick}
-        className="relative ml-auto grid size-9 cursor-pointer place-items-center overflow-hidden rounded-[10px] transition-colors [@media(max-width:430px)_and_(max-height:860px)]:size-8"
+        className={COLLAPSED_SAVE_BUTTON_CLASS}
         style={{
           backgroundColor: saved ? `${brand}22` : "rgba(20,40,28,0.06)",
           color: saved ? brand : TEXT_PRIMARY,
         }}
       >
-        <motion.span
-          key={`save-glow-${savePulse}`}
-          aria-hidden="true"
-          className="absolute inset-0 rounded-[10px]"
-          animate={
-            saved && canAnimate(shouldReduceMotion)
-              ? { opacity: [0, 0.28, 0], scale: [0.72, 1.15, 1.26] }
-              : { opacity: 0, scale: 0.72 }
-          }
-          transition={{ duration: 0.46, ease: "easeOut" }}
-          style={{
-            background: `radial-gradient(circle at 50% 45%, ${brand} 0%, transparent 66%)`,
-          }}
+        <SaveActionIcon
+          brand={brand}
+          pulse={savePulse}
+          saved={saved}
+          shouldReduceMotion={shouldReduceMotion}
         />
-        <motion.span
-          key={`save-${savePulse}`}
-          className="relative grid size-[18px] place-items-center"
-          animate={
-            saved && canAnimate(shouldReduceMotion)
-              ? { y: [0, -2, 0], scale: [1, 1.2, 0.98, 1] }
-              : { y: 0, scale: 1 }
-          }
-          transition={{ duration: 0.38, ease: "easeOut" }}
-        >
-          <Bookmark
-            className="size-[18px]"
-            strokeWidth={2}
-            color={saved ? brand : TEXT_PRIMARY}
-            fill={saved ? brand : "none"}
-          />
-        </motion.span>
       </motion.button>
     </div>
   );
