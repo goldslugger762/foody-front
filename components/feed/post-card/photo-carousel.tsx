@@ -10,6 +10,126 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import type { Post } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
+export type PhotoDirection = 1 | -1;
+
+const PHOTO_SWIPE_DISTANCE_RATIO = 0.04;
+const PHOTO_SWIPE_VELOCITY = 220;
+const PHOTO_DRAG_PREVIEW_RATIO = 0.5;
+const PHOTO_RUBBER_BAND_CONSTANT = 0.55;
+
+export const PHOTO_SWITCH_EASE = [0.22, 1, 0.36, 1] as const;
+export const PHOTO_SWITCH_DURATION = 0.32;
+
+export function getPhotoTrackIndexes(photoIdx: number, lastPhotoIdx: number) {
+  const canDragToPreviousPhoto = photoIdx > 0;
+  const canDragToNextPhoto = photoIdx < lastPhotoIdx;
+
+  return [
+    canDragToPreviousPhoto ? photoIdx - 1 : photoIdx,
+    photoIdx,
+    canDragToNextPhoto ? photoIdx + 1 : photoIdx,
+  ];
+}
+
+export function getPhotoSwitchCenterX(photoWidth: number) {
+  return -photoWidth;
+}
+
+export function getPhotoSwitchStartX(
+  direction: PhotoDirection,
+  photoWidth: number
+) {
+  return direction === 1 ? 0 : -photoWidth * 2;
+}
+
+function getPhotoRubberBandDistance(offset: number, dimension: number) {
+  if (dimension <= 0) {
+    return 0;
+  }
+
+  const distance = Math.abs(offset);
+  const band =
+    (distance * dimension * PHOTO_RUBBER_BAND_CONSTANT) /
+    (dimension + PHOTO_RUBBER_BAND_CONSTANT * distance);
+
+  return Math.sign(offset) * band;
+}
+
+type PhotoDragTrackXOptions = {
+  canDragToNextPhoto: boolean;
+  canDragToPreviousPhoto: boolean;
+  dragBaseX: number;
+  dragOffsetX: number;
+  photoWidth: number;
+};
+
+export function getPhotoDragTrackX({
+  canDragToNextPhoto,
+  canDragToPreviousPhoto,
+  dragBaseX,
+  dragOffsetX,
+  photoWidth,
+}: PhotoDragTrackXOptions) {
+  const centerX = getPhotoSwitchCenterX(photoWidth);
+  const rawOffset = dragBaseX - centerX + dragOffsetX;
+  const canMove =
+    (rawOffset < 0 && canDragToNextPhoto) ||
+    (rawOffset > 0 && canDragToPreviousPhoto);
+
+  if (!canMove) {
+    return centerX;
+  }
+
+  const constrainedOffset = getPhotoRubberBandDistance(
+    rawOffset,
+    photoWidth * PHOTO_DRAG_PREVIEW_RATIO
+  );
+
+  return centerX + constrainedOffset;
+}
+
+type PhotoDragEndOptions = {
+  canDragToNextPhoto: boolean;
+  canDragToPreviousPhoto: boolean;
+  photoIdx: number;
+  photoTrackX: number;
+  photoWidth: number;
+  swipeVelocityX: number;
+};
+
+export function getPhotoDragEndDecision({
+  canDragToNextPhoto,
+  canDragToPreviousPhoto,
+  photoIdx,
+  photoTrackX,
+  photoWidth,
+  swipeVelocityX,
+}: PhotoDragEndOptions) {
+  const visualOffset = photoTrackX - getPhotoSwitchCenterX(photoWidth);
+  const shouldGoNext =
+    canDragToNextPhoto &&
+    (visualOffset < -photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
+      (visualOffset < -photoWidth * 0.015 &&
+        swipeVelocityX < -PHOTO_SWIPE_VELOCITY));
+  const shouldGoPrevious =
+    canDragToPreviousPhoto &&
+    (visualOffset > photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
+      (visualOffset > photoWidth * 0.015 &&
+        swipeVelocityX > PHOTO_SWIPE_VELOCITY));
+  const targetPhotoIdx = shouldGoNext
+    ? photoIdx + 1
+    : shouldGoPrevious
+      ? photoIdx - 1
+      : photoIdx;
+  const nextTrackX = shouldGoNext
+    ? photoTrackX + photoWidth
+    : shouldGoPrevious
+      ? photoTrackX - photoWidth
+      : photoTrackX;
+
+  return { nextTrackX, targetPhotoIdx };
+}
+
 export type PhotoCarouselProps = {
   post: Post;
   photoRatio: number;

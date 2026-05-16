@@ -20,6 +20,15 @@ import {
   CollapsedPostCardView,
   ExpandedPostCardView,
 } from "@/components/feed/post-card-sections";
+import {
+  getPhotoDragEndDecision,
+  getPhotoDragTrackX,
+  getPhotoSwitchCenterX,
+  getPhotoTrackIndexes,
+  PHOTO_SWITCH_DURATION,
+  PHOTO_SWITCH_EASE,
+  type PhotoDirection,
+} from "@/components/feed/post-card/photo-carousel";
 import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
 import type { Density, Post } from "@/lib/mock-data";
 
@@ -29,24 +38,7 @@ type PostCardProps = {
   density: Density;
 };
 
-const PHOTO_SWIPE_DISTANCE_RATIO = 0.04;
-const PHOTO_SWIPE_VELOCITY = 220;
-const PHOTO_DRAG_PREVIEW_RATIO = 0.5;
-const PHOTO_RUBBER_BAND_CONSTANT = 0.55;
 const POST_CARD_EXPANDED_EVENT = "foody:post-card-expanded";
-
-function rubberBandDistance(offset: number, dimension: number) {
-  if (dimension <= 0) {
-    return 0;
-  }
-
-  const distance = Math.abs(offset);
-  const band =
-    (distance * dimension * PHOTO_RUBBER_BAND_CONSTANT) /
-    (dimension + PHOTO_RUBBER_BAND_CONSTANT * distance);
-
-  return Math.sign(offset) * band;
-}
 
 type ViewportSize = {
   height: number;
@@ -130,6 +122,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [photoIndicatorIdx, setPhotoIndicatorIdx] = useState(0);
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
   const [viewerPhotoIdx, setViewerPhotoIdx] = useState(0);
+  const [viewerPhotoDirection, setViewerPhotoDirection] =
+    useState<PhotoDirection>(1);
   const [photoWidth, setPhotoWidth] = useState(0);
   const [sharePulse, triggerSharePulse] = usePulse();
   const [morePulse, triggerMorePulse] = usePulse();
@@ -152,11 +146,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const photoAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
   const photoDragBaseXRef = useRef(0);
   const suppressOpenAfterPhotoDragRef = useRef(false);
-  const trackPhotoIndexes = [
-    canDragToPreviousPhoto ? photoIdx - 1 : photoIdx,
-    photoIdx,
-    canDragToNextPhoto ? photoIdx + 1 : photoIdx,
-  ];
+  const trackPhotoIndexes = getPhotoTrackIndexes(photoIdx, lastPhotoIdx);
 
   useLayoutEffect(() => {
     const viewport = isExpanded
@@ -174,7 +164,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       photoAnimationRef.current?.stop();
       photoAnimationRef.current = null;
       setPhotoWidth(nextWidth);
-      photoTrackX.jump(-nextWidth);
+      photoTrackX.jump(getPhotoSwitchCenterX(nextWidth));
     }
 
     syncPhotoWidth();
@@ -335,7 +325,26 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   function handleViewerPhotoChange(nextPhotoIdx: number) {
     const clampedPhotoIdx = Math.min(Math.max(nextPhotoIdx, 0), lastPhotoIdx);
 
+    if (clampedPhotoIdx === viewerPhotoIdx) {
+      return;
+    }
+
+    setViewerPhotoDirection(clampedPhotoIdx > viewerPhotoIdx ? 1 : -1);
     setViewerPhotoIdx(clampedPhotoIdx);
+  }
+
+  function animatePhotoTrackToCenter() {
+    photoAnimationRef.current = animate(
+      photoTrackX,
+      getPhotoSwitchCenterX(photoWidth),
+      {
+        duration: shouldReduceMotion ? 0.01 : PHOTO_SWITCH_DURATION,
+        ease: PHOTO_SWITCH_EASE,
+        onComplete: () => {
+          photoTrackX.jump(getPhotoSwitchCenterX(photoWidth));
+        },
+      }
+    );
   }
 
   function handlePhotoDrag(
@@ -346,23 +355,15 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       return;
     }
 
-    const centerX = -photoWidth;
-    const rawOffset = photoDragBaseXRef.current - centerX + info.offset.x;
-    const canMove =
-      (rawOffset < 0 && canDragToNextPhoto) ||
-      (rawOffset > 0 && canDragToPreviousPhoto);
-
-    if (!canMove) {
-      photoTrackX.set(centerX);
-      return;
-    }
-
-    const constrainedOffset = rubberBandDistance(
-      rawOffset,
-      photoWidth * PHOTO_DRAG_PREVIEW_RATIO
+    photoTrackX.set(
+      getPhotoDragTrackX({
+        canDragToNextPhoto,
+        canDragToPreviousPhoto,
+        dragBaseX: photoDragBaseXRef.current,
+        dragOffsetX: info.offset.x,
+        photoWidth,
+      })
     );
-
-    photoTrackX.set(centerX + constrainedOffset);
   }
 
   function handlePhotoDragEnd(
@@ -375,29 +376,14 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       return;
     }
 
-    const visualOffset = photoTrackX.get() + photoWidth;
-    const swipeVelocity = info.velocity.x;
-    const shouldGoNext =
-      canDragToNextPhoto &&
-      (visualOffset < -photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
-        (visualOffset < -photoWidth * 0.015 &&
-          swipeVelocity < -PHOTO_SWIPE_VELOCITY));
-    const shouldGoPrevious =
-      canDragToPreviousPhoto &&
-      (visualOffset > photoWidth * PHOTO_SWIPE_DISTANCE_RATIO ||
-        (visualOffset > photoWidth * 0.015 &&
-          swipeVelocity > PHOTO_SWIPE_VELOCITY));
-    const targetPhotoIdx = shouldGoNext
-      ? photoIdx + 1
-      : shouldGoPrevious
-        ? photoIdx - 1
-        : photoIdx;
-    const currentX = photoTrackX.get();
-    const nextTrackX = shouldGoNext
-      ? currentX + photoWidth
-      : shouldGoPrevious
-        ? currentX - photoWidth
-        : currentX;
+    const { nextTrackX, targetPhotoIdx } = getPhotoDragEndDecision({
+      canDragToNextPhoto,
+      canDragToPreviousPhoto,
+      photoIdx,
+      photoTrackX: photoTrackX.get(),
+      photoWidth,
+      swipeVelocityX: info.velocity.x,
+    });
 
     photoAnimationRef.current?.stop();
     setPhotoIndicatorIdx(targetPhotoIdx);
@@ -409,13 +395,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       photoTrackX.jump(nextTrackX);
     }
 
-    photoAnimationRef.current = animate(photoTrackX, -photoWidth, {
-      duration: shouldReduceMotion ? 0.01 : 0.32,
-      ease: [0.22, 1, 0.36, 1],
-      onComplete: () => {
-        photoTrackX.jump(-photoWidth);
-      },
-    });
+    animatePhotoTrackToCenter();
   }
 
   const headerActions = {
@@ -488,6 +468,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       </AnimatePresence>
       <PhotoViewerModal
         activeIndex={viewerPhotoIdx}
+        direction={viewerPhotoDirection}
         onChangeIndex={handleViewerPhotoChange}
         onClose={() => setIsPhotoViewerOpen(false)}
         open={isPhotoViewerOpen}
