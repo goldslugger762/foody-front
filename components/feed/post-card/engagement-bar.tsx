@@ -1,5 +1,6 @@
 import { Bookmark, Heart, MessageCircle } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
 
 import type { Post } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -62,9 +63,7 @@ export type EngagementBarProps = {
   liked: boolean;
   saved: boolean;
   likeCount: number;
-  likePulse: number;
   commentPulse: number;
-  savePulse: number;
   shouldReduceMotion: boolean | null;
   onLikeClick: () => void;
   onCommentClick: () => void;
@@ -78,14 +77,31 @@ export function EngagementBar({
   liked,
   saved,
   likeCount,
-  likePulse,
   commentPulse,
-  savePulse,
   shouldReduceMotion,
   onLikeClick,
   onCommentClick,
   onSaveClick,
 }: EngagementBarProps) {
+  const [likePulse, setLikePulse] = useState(0);
+  const [savePulse, setSavePulse] = useState(0);
+
+  function handleLikeClick() {
+    if (!liked) {
+      setLikePulse((currentPulse) => currentPulse + 1);
+    }
+
+    onLikeClick();
+  }
+
+  function handleSaveClick() {
+    if (!saved) {
+      setSavePulse((currentPulse) => currentPulse + 1);
+    }
+
+    onSaveClick();
+  }
+
   if (fullscreen) {
     const pillStyle = {
       boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)`,
@@ -97,7 +113,7 @@ export function EngagementBar({
           <motion.button
             type="button"
             aria-pressed={liked}
-            onClick={onLikeClick}
+            onClick={handleLikeClick}
             className={cn(FULLSCREEN_ACTION_BUTTON_CLASS, "justify-self-end")}
             style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
@@ -143,7 +159,7 @@ export function EngagementBar({
             aria-pressed={saved}
             title="В избранное"
             aria-label="В избранное"
-            onClick={onSaveClick}
+            onClick={handleSaveClick}
             className={FULLSCREEN_SAVE_BUTTON_CLASS}
             style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
@@ -171,7 +187,7 @@ export function EngagementBar({
       <motion.button
         type="button"
         aria-pressed={liked}
-        onClick={onLikeClick}
+        onClick={handleLikeClick}
         className={COLLAPSED_ACTION_BUTTON_CLASS}
         whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
       >
@@ -210,7 +226,7 @@ export function EngagementBar({
         aria-pressed={saved}
         title="В избранное"
         aria-label="В избранное"
-        onClick={onSaveClick}
+        onClick={handleSaveClick}
         className={COLLAPSED_SAVE_BUTTON_CLASS}
         style={{
           backgroundColor: saved ? `${brand}22` : "rgba(20,40,28,0.06)",
@@ -248,6 +264,7 @@ function FullscreenPillChrome({
       <motion.span
         aria-hidden="true"
         className="absolute inset-0 rounded-full"
+        initial={false}
         animate={{ opacity: active ? 0 : 1 }}
         transition={transition}
         style={{
@@ -257,6 +274,7 @@ function FullscreenPillChrome({
       <motion.span
         aria-hidden="true"
         className="absolute inset-0 rounded-full"
+        initial={false}
         animate={{ opacity: active ? 1 : 0 }}
         transition={transition}
         style={{
@@ -266,6 +284,7 @@ function FullscreenPillChrome({
       <motion.span
         aria-hidden="true"
         className="absolute inset-px rounded-full"
+        initial={false}
         animate={{ opacity: active ? 0 : 1 }}
         transition={transition}
         style={{
@@ -276,6 +295,7 @@ function FullscreenPillChrome({
       <motion.span
         aria-hidden="true"
         className="absolute inset-px rounded-full"
+        initial={false}
         animate={{ opacity: active ? 1 : 0 }}
         transition={transition}
         style={{
@@ -302,7 +322,7 @@ function LikeActionContent({
   shouldReduceMotion,
   fullscreen = false,
 }: LikeActionContentProps) {
-  const shouldAnimate = liked && canAnimate(shouldReduceMotion);
+  const shouldAnimate = pulse > 0 && liked && canAnimate(shouldReduceMotion);
   const keyPrefix = fullscreen ? "fullscreen-like" : "like";
 
   return (
@@ -313,6 +333,7 @@ function LikeActionContent({
           "relative z-[1] grid place-items-center",
           fullscreen ? "size-5 shrink-0" : "size-[22px]"
         )}
+        initial={LIKE_ICON_IDLE_ANIMATION}
         animate={
           shouldAnimate
             ? LIKE_ICON_ACTIVE_ANIMATION
@@ -323,6 +344,7 @@ function LikeActionContent({
         <motion.span
           aria-hidden="true"
           className="absolute inset-0 rounded-full border border-[#E5443B]/45"
+          initial={LIKE_RING_IDLE_ANIMATION}
           animate={
             shouldAnimate
               ? LIKE_RING_ACTIVE_ANIMATION
@@ -343,6 +365,7 @@ function LikeActionContent({
             ? "relative z-[1] min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]"
             : "text-[13.5px] font-bold tracking-[-0.1px] text-[#15291C]"
         }
+        initial={LIKE_COUNT_IDLE_ANIMATION}
         animate={
           shouldAnimate
             ? LIKE_COUNT_ACTIVE_ANIMATION
@@ -371,7 +394,8 @@ function SaveActionIcon({
   shouldReduceMotion,
   fullscreen = false,
 }: SaveActionIconProps) {
-  const shouldAnimate = !fullscreen && saved && canAnimate(shouldReduceMotion);
+  const shouldAnimate =
+    !fullscreen && pulse > 0 && saved && canAnimate(shouldReduceMotion);
   const keyPrefix = fullscreen ? "fullscreen-save" : "save";
 
   return (
@@ -383,6 +407,7 @@ function SaveActionIcon({
           "absolute inset-0",
           fullscreen ? "rounded-full" : "rounded-[10px]"
         )}
+        initial={SAVE_GLOW_IDLE_ANIMATION}
         animate={
           shouldAnimate
             ? fullscreen
@@ -403,6 +428,7 @@ function SaveActionIcon({
           "relative z-[1] grid place-items-center",
           fullscreen ? "size-6" : "size-[18px]"
         )}
+        initial={SAVE_ICON_IDLE_ANIMATION}
         animate={
           shouldAnimate
             ? SAVE_ICON_ACTIVE_ANIMATION

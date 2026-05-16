@@ -127,9 +127,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [photoWidth, setPhotoWidth] = useState(0);
   const [sharePulse, triggerSharePulse] = usePulse();
   const [morePulse, triggerMorePulse] = usePulse();
-  const [likePulse, triggerLikePulse] = usePulse();
   const [commentPulse, triggerCommentPulse] = usePulse();
-  const [savePulse, triggerSavePulse] = usePulse();
   const shouldReduceMotion = useReducedMotion();
 
   const viewportSize = useViewportSize();
@@ -267,19 +265,11 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   }
 
   function handleLikeClick() {
-    const nextLiked = !liked;
-    setLiked(nextLiked);
-    if (nextLiked) {
-      triggerLikePulse();
-    }
+    setLiked((currentLiked) => !currentLiked);
   }
 
   function handleSaveClick() {
-    const nextSaved = !saved;
-    setSaved(nextSaved);
-    if (nextSaved) {
-      triggerSavePulse();
-    }
+    setSaved((currentSaved) => !currentSaved);
   }
 
   function handleCommentClick() {
@@ -421,12 +411,10 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const engagement = {
     commentPulse,
     likeCount,
-    likePulse,
     liked,
     onCommentClick: handleCommentClick,
     onLikeClick: handleLikeClick,
     onSaveClick: handleSaveClick,
-    savePulse,
     saved,
   };
 
