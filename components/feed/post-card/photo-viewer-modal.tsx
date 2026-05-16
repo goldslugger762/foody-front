@@ -81,6 +81,7 @@ export function PhotoViewerModal({
   const shouldAnimate = canAnimate(shouldReduceMotion);
   const photoTrackX = useMotionValue(0);
   const [photoWidth, setPhotoWidth] = useState(0);
+  const [shouldAnimatePhotoDots, setShouldAnimatePhotoDots] = useState(false);
   const photoViewportRef = useRef<HTMLDivElement>(null);
   const photoAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
   const photoDragBaseXRef = useRef(0);
@@ -177,6 +178,22 @@ export function PhotoViewerModal({
       photoAnimationRef.current?.stop();
     };
   }, []);
+
+  useEffect(() => {
+    if (!open || !shouldAnimate) {
+      setShouldAnimatePhotoDots(false);
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      setShouldAnimatePhotoDots(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      setShouldAnimatePhotoDots(false);
+    };
+  }, [open, shouldAnimate]);
 
   useEffect(() => {
     if (!open) {
@@ -344,9 +361,9 @@ export function PhotoViewerModal({
               "max-[430px]:w-[94vw] max-[430px]:rounded-[24px]"
             )}
             style={{ aspectRatio: `${photoRatio} / 1.3` }}
-            initial={shouldAnimate ? { opacity: 0, scale: 0.96 } : { opacity: 1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={shouldAnimate ? { opacity: 0, scale: 0.98 } : { opacity: 0 }}
+            initial={{ opacity: shouldAnimate ? 0 : 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={PHOTO_TRANSITION}
             onClick={(event) => event.stopPropagation()}
           >
@@ -382,7 +399,7 @@ export function PhotoViewerModal({
                         seed={post.seed + trackPhotoIdx}
                         height="100%"
                         label={`${post.dish.toLowerCase()} · ${trackPhotoIdx + 1} / ${post.photos}`}
-                        labelClassName="right-4 bottom-4 left-auto max-w-[calc(100%-2rem)] overflow-hidden rounded-full bg-black/18 px-2.5 py-1 text-right text-ellipsis whitespace-nowrap backdrop-blur-[8px]"
+                        labelClassName="right-4 bottom-4 left-auto max-w-[calc(100%-2rem)] overflow-hidden rounded-full bg-black/18 px-2.5 py-1 text-right text-ellipsis whitespace-nowrap"
                       />
                     </div>
                   </div>
@@ -411,13 +428,15 @@ export function PhotoViewerModal({
           </motion.div>
 
           {hasMultiplePhotos && (
-            <div className="pointer-events-none z-20 mt-4 flex gap-1.5 rounded-full border border-white/15 bg-white/14 p-1.5 shadow-md backdrop-blur-md">
+            <div className="pointer-events-none z-20 mt-4 flex gap-1.5 rounded-full border border-white/25 bg-white/[0.1] p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
               {Array.from({ length: post.photos }).map((_, index) => (
                 <span
                   key={index}
                   aria-hidden="true"
                   className={cn(
-                    "h-1.5 rounded-full transition-[width,background-color] duration-200",
+                    "h-1.5 rounded-full",
+                    shouldAnimatePhotoDots &&
+                      "transition-[width,background-color] duration-200",
                     index === safeActiveIndex ? "w-[22px] bg-white" : "w-1.5 bg-white/45"
                   )}
                 />
