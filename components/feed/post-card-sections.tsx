@@ -44,9 +44,9 @@ const FULLSCREEN_HEADER_GLASS = {
   outer:
     "shrink-0 px-3.5 pt-[calc(env(safe-area-inset-top)+3.625rem)] pb-3 max-[409px]:px-3",
   surface:
-    "rounded-[24px] shadow-[0_8px_22px_rgba(20,40,28,0.08),0_1px_4px_rgba(255,255,255,0.36)]",
+    "rounded-[24px] shadow-[0_16px_28px_rgba(20,40,28,0.14),0_2px_8px_rgba(255,255,255,0.42)]",
   tint:
-    "before:bg-green-50/95 before:backdrop-blur-[30px] before:backdrop-saturate-[220%]",
+    "before:bg-green-100/32 before:backdrop-blur-[30px] before:backdrop-saturate-[220%]",
   highlight:
     "after:border-[0.5px] after:border-white/55 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.76),inset_-1px_-1px_0_rgba(255,255,255,0.98)]",
   content:
