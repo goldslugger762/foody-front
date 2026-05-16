@@ -3,7 +3,6 @@
 import {
   AnimatePresence,
   animate,
-  motion,
   type PanInfo,
   useMotionValue,
   useReducedMotion,
@@ -12,13 +11,9 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import { flushSync } from "react-dom";
 
 import {
-  EngagementBar,
-  PhotoCarousel,
-  PostCardHeader,
-  PostDetails,
-  PostTags,
+  CollapsedPostCardView,
+  ExpandedPostCardView,
 } from "@/components/feed/post-card-sections";
-import { cn } from "@/lib/utils";
 import type { Density, Post } from "@/lib/mock-data";
 
 type PostCardProps = {
@@ -393,147 +388,71 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     });
   }
 
+  const headerActions = {
+    morePulse,
+    onMoreClick: handleMoreClick,
+    onShareClick: handleShareClick,
+    sharePulse,
+  };
+  const photoCarousel = {
+    canDragToNextPhoto,
+    canDragToPreviousPhoto,
+    hasPhotoSlider,
+    onPhotoDrag: handlePhotoDrag,
+    onPhotoDragEnd: handlePhotoDragEnd,
+    onPhotoDragStart: handlePhotoDragStart,
+    photoIndicatorIdx,
+    photoRatio,
+    photoTrackX,
+    photoWidth,
+    trackPhotoIndexes,
+  };
+  const engagement = {
+    commentPulse,
+    likeCount,
+    likePulse,
+    liked,
+    onCommentClick: handleCommentClick,
+    onLikeClick: handleLikeClick,
+    onSaveClick: handleSaveClick,
+    savePulse,
+    saved,
+  };
+
   return (
     <div className="flex h-[calc(100%+5.125rem)] min-h-0 snap-start snap-always flex-col px-3.5 pt-2 pb-[5.75rem] [scroll-snap-stop:always] [@media(max-width:430px)_and_(max-height:860px)]:h-[calc(100%+4.25rem)] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-[5rem]">
-      <article
-        onClick={handleCardClick}
-        className={cn(
-          "flex flex-1 cursor-pointer flex-col overflow-hidden rounded-[26px]",
-          "border border-green-50/92 bg-white/75",
-          "shadow-[0_8px_20px_rgba(20,40,28,0.12),0_1px_3px_rgba(20,40,28,0.08),inset_0_1px_0_rgba(255,255,255,0.92),inset_0_0_0_1px_rgba(255,255,255,0.34)]",
-          "backdrop-blur-[28px] backdrop-saturate-[190%]"
-        )}
-      >
-        <PostCardHeader
-          morePulse={morePulse}
-          onMoreClick={handleMoreClick}
-          onShareClick={handleShareClick}
-          post={post}
-          brand={brand}
-          sharePulse={sharePulse}
-          shouldReduceMotion={shouldReduceMotion}
-        />
-
-        <PhotoCarousel
-          canDragToNextPhoto={canDragToNextPhoto}
-          canDragToPreviousPhoto={canDragToPreviousPhoto}
-          hasPhotoSlider={hasPhotoSlider}
-          onPhotoDrag={handlePhotoDrag}
-          onPhotoDragEnd={handlePhotoDragEnd}
-          onPhotoDragStart={handlePhotoDragStart}
-          photoIndicatorIdx={photoIndicatorIdx}
-          photoRatio={photoRatio}
-          photoTrackX={photoTrackX}
-          photoViewportRef={feedPhotoViewportRef}
-          photoWidth={photoWidth}
-          post={post}
-          trackPhotoIndexes={trackPhotoIndexes}
-        />
-
-        <EngagementBar
-          brand={brand}
-          commentPulse={commentPulse}
-          likeCount={likeCount}
-          likePulse={likePulse}
-          liked={liked}
-          onCommentClick={handleCommentClick}
-          onLikeClick={handleLikeClick}
-          onSaveClick={handleSaveClick}
-          post={post}
-          savePulse={savePulse}
-          saved={saved}
-          shouldReduceMotion={shouldReduceMotion}
-        />
-
-        <PostDetails brand={brand} post={post} />
-
-        <PostTags
-          brand={brand}
-          mainTag={mainTag}
-          onTagClick={handleTagClick}
-          restTags={restTags}
-          shouldReduceMotion={shouldReduceMotion}
-        />
-      </article>
+      <CollapsedPostCardView
+        brand={brand}
+        engagement={engagement}
+        headerActions={headerActions}
+        mainTag={mainTag}
+        onCardClick={handleCardClick}
+        onTagClick={handleTagClick}
+        photoCarousel={{
+          ...photoCarousel,
+          photoViewportRef: feedPhotoViewportRef,
+        }}
+        post={post}
+        restTags={restTags}
+        shouldReduceMotion={shouldReduceMotion}
+      />
       <AnimatePresence>
         {isExpanded && (
-          <motion.article
-            role="dialog"
-            aria-modal="true"
-            aria-label={post.dish}
-            className={cn(
-              "fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden",
-              "border-0 bg-white/82 text-[#15291C]",
-              "shadow-[0_18px_42px_rgba(20,40,28,0.22),inset_0_1px_0_rgba(255,255,255,0.88)]",
-              "backdrop-blur-[30px] backdrop-saturate-[190%]"
-            )}
-            initial={
-              shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 18, scale: 0.98 }
-            }
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={
-              shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.985 }
-            }
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <PostCardHeader
-              expanded
-              brand={brand}
-              morePulse={morePulse}
-              onBackClick={() => setIsExpanded(false)}
-              onMoreClick={handleMoreClick}
-              onShareClick={handleShareClick}
-              post={post}
-              sharePulse={sharePulse}
-              shouldReduceMotion={shouldReduceMotion}
-            />
-
-            <div className="hide-scroll min-h-0 flex-1 overflow-y-auto px-3.5 pb-3 [@media(max-width:430px)_and_(max-height:860px)]:px-3">
-              <PhotoCarousel
-                canDragToNextPhoto={canDragToNextPhoto}
-                canDragToPreviousPhoto={canDragToPreviousPhoto}
-                hasPhotoSlider={hasPhotoSlider}
-                onPhotoDrag={handlePhotoDrag}
-                onPhotoDragEnd={handlePhotoDragEnd}
-                onPhotoDragStart={handlePhotoDragStart}
-                photoIndicatorIdx={photoIndicatorIdx}
-                photoRatio={photoRatio}
-                photoTrackX={photoTrackX}
-                photoViewportRef={expandedPhotoViewportRef}
-                photoWidth={photoWidth}
-                post={post}
-                trackPhotoIndexes={trackPhotoIndexes}
-              />
-
-              <div className="pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pt-1.5">
-                <PostDetails expanded brand={brand} post={post} />
-              </div>
-
-              <PostTags
-                brand={brand}
-                mainTag={mainTag}
-                onTagClick={handleTagClick}
-                restTags={restTags}
-                shouldReduceMotion={shouldReduceMotion}
-              />
-            </div>
-
-            <EngagementBar
-              fullscreen
-              brand={brand}
-              commentPulse={commentPulse}
-              likeCount={likeCount}
-              likePulse={likePulse}
-              liked={liked}
-              onCommentClick={handleCommentClick}
-              onLikeClick={handleLikeClick}
-              onSaveClick={handleSaveClick}
-              post={post}
-              savePulse={savePulse}
-              saved={saved}
-              shouldReduceMotion={shouldReduceMotion}
-            />
-          </motion.article>
+          <ExpandedPostCardView
+            brand={brand}
+            engagement={engagement}
+            headerActions={headerActions}
+            mainTag={mainTag}
+            onBackClick={() => setIsExpanded(false)}
+            onTagClick={handleTagClick}
+            photoCarousel={{
+              ...photoCarousel,
+              photoViewportRef: expandedPhotoViewportRef,
+            }}
+            post={post}
+            restTags={restTags}
+            shouldReduceMotion={shouldReduceMotion}
+          />
         )}
       </AnimatePresence>
     </div>
