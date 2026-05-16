@@ -1,5 +1,9 @@
 import { type MotionValue, type PanInfo, motion } from "motion/react";
-import type { RefObject } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+  RefObject,
+} from "react";
 
 import { DishPhoto } from "@/components/feed/dish-photo";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -17,6 +21,7 @@ export type PhotoCarouselProps = {
   photoTrackX: MotionValue<number>;
   photoViewportRef: RefObject<HTMLDivElement | null>;
   trackPhotoIndexes: number[];
+  onPhotoOpen: () => void;
   onPhotoDragStart: () => void;
   onPhotoDrag: (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void;
   onPhotoDragEnd: (
@@ -36,18 +41,42 @@ export function PhotoCarousel({
   photoTrackX,
   photoViewportRef,
   trackPhotoIndexes,
+  onPhotoOpen,
   onPhotoDragStart,
   onPhotoDrag,
   onPhotoDragEnd,
 }: PhotoCarouselProps) {
+  function handlePhotoOpenClick(event: ReactMouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    onPhotoOpen();
+  }
+
+  function handlePhotoOpenKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    onPhotoOpen();
+  }
+
   return (
-    <div className="relative mx-3 overflow-hidden rounded-[18px] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5">
+    <div
+      data-card-interactive
+      className="relative mx-3 overflow-hidden rounded-[18px] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5"
+    >
       <AspectRatio
         ref={photoViewportRef}
         ratio={photoRatio}
+        role="button"
+        tabIndex={0}
+        aria-label={`Открыть фото ${photoIndicatorIdx + 1} из ${post.photos}`}
+        onClick={handlePhotoOpenClick}
+        onKeyDown={handlePhotoOpenKeyDown}
         className={cn(
-          "select-none overflow-hidden",
-          hasPhotoSlider && "cursor-grab active:cursor-grabbing"
+          "select-none overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+          hasPhotoSlider ? "cursor-grab active:cursor-grabbing" : "cursor-zoom-in"
         )}
       >
         <motion.div

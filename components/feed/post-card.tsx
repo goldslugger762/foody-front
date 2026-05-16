@@ -20,6 +20,7 @@ import {
   CollapsedPostCardView,
   ExpandedPostCardView,
 } from "@/components/feed/post-card-sections";
+import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
 import type { Density, Post } from "@/lib/mock-data";
 
 type PostCardProps = {
@@ -127,6 +128,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [photoIndicatorIdx, setPhotoIndicatorIdx] = useState(0);
+  const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
+  const [viewerPhotoIdx, setViewerPhotoIdx] = useState(0);
   const [photoWidth, setPhotoWidth] = useState(0);
   const [sharePulse, triggerSharePulse] = usePulse();
   const [morePulse, triggerMorePulse] = usePulse();
@@ -196,6 +199,10 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     }
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if (isPhotoViewerOpen) {
+        return;
+      }
+
       if (event.key === "Escape") {
         setIsExpanded(false);
       }
@@ -206,7 +213,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isExpanded]);
+  }, [isExpanded, isPhotoViewerOpen]);
 
   useEffect(() => {
     window.dispatchEvent(
@@ -253,7 +260,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   }
 
   function handleCardClick(event: ReactMouseEvent<HTMLElement>) {
-    if (isExpanded || suppressOpenAfterPhotoDragRef.current) {
+    if (isExpanded || isPhotoViewerOpen || suppressOpenAfterPhotoDragRef.current) {
       return;
     }
 
@@ -314,6 +321,21 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     window.setTimeout(() => {
       suppressOpenAfterPhotoDragRef.current = false;
     }, 80);
+  }
+
+  function handlePhotoOpen() {
+    if (suppressOpenAfterPhotoDragRef.current) {
+      return;
+    }
+
+    setViewerPhotoIdx(photoIdx);
+    setIsPhotoViewerOpen(true);
+  }
+
+  function handleViewerPhotoChange(nextPhotoIdx: number) {
+    const clampedPhotoIdx = Math.min(Math.max(nextPhotoIdx, 0), lastPhotoIdx);
+
+    setViewerPhotoIdx(clampedPhotoIdx);
   }
 
   function handlePhotoDrag(
@@ -409,6 +431,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     onPhotoDrag: handlePhotoDrag,
     onPhotoDragEnd: handlePhotoDragEnd,
     onPhotoDragStart: handlePhotoDragStart,
+    onPhotoOpen: handlePhotoOpen,
     photoIndicatorIdx,
     photoRatio,
     photoTrackX,
@@ -463,6 +486,15 @@ export function PostCard({ post, brand, density }: PostCardProps) {
           />
         )}
       </AnimatePresence>
+      <PhotoViewerModal
+        activeIndex={viewerPhotoIdx}
+        onChangeIndex={handleViewerPhotoChange}
+        onClose={() => setIsPhotoViewerOpen(false)}
+        open={isPhotoViewerOpen}
+        photoRatio={photoRatio}
+        post={post}
+        shouldReduceMotion={shouldReduceMotion}
+      />
     </div>
   );
 }
