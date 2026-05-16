@@ -563,7 +563,7 @@ function SubscribeButton({
         animate={{ opacity: subscribed ? 0 : 1 }}
         transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
         style={{
-          background: `linear-gradient(135deg, ${brand}A8 0%, rgba(189,247,208,0.88) 52%, ${brand}78 100%)`,
+          background: `linear-gradient(135deg, ${brand}72 0%, rgba(189,247,208,0.68) 85%, ${brand}35 100%)`,
         }}
       />
       <motion.span
