@@ -14,6 +14,7 @@ import { motion, type MotionValue, type PanInfo } from "motion/react";
 import {
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
   type RefObject,
 } from "react";
 
@@ -38,6 +39,50 @@ const ICON_PULSE_TRANSITION = { duration: 0.28, ease: "easeOut" } as const;
 const FULLSCREEN_COMPACT_AUTHOR_LENGTH = 11;
 const FULLSCREEN_SMALL_COMPACT_AUTHOR_LENGTH = 10;
 
+// Single source of truth for the full-screen header glass layers.
+const FULLSCREEN_HEADER_GLASS = {
+  outer:
+    "shrink-0 px-3.5 pt-[calc(env(safe-area-inset-top)+3.625rem)] pb-3 max-[409px]:px-3",
+  surface:
+    "rounded-[24px] shadow-[0_8px_22px_rgba(20,40,28,0.08),0_1px_4px_rgba(255,255,255,0.36)]",
+  tint:
+    "before:bg-green-50/95 before:backdrop-blur-[30px] before:backdrop-saturate-[220%]",
+  highlight:
+    "after:border-[0.5px] after:border-white/55 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.76),inset_-1px_-1px_0_rgba(255,255,255,0.98)]",
+  content:
+    "flex min-h-13 items-center gap-2.5 px-2.5 py-2 max-[380px]:gap-2 max-[380px]:px-2",
+} as const;
+
+const FULLSCREEN_SUBSCRIBE_BUTTON = {
+  base:
+    "h-7 shrink-0 cursor-pointer rounded-full border border-transparent pt-px leading-none font-extrabold tracking-[0px] text-[#0B2F1D] outline-none backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+  regular: "px-2.5 text-[10.5px]",
+  compact: "px-2 text-[9.75px]",
+  smallRegular: "max-[380px]:h-6 max-[380px]:px-1.5 max-[380px]:text-[8.75px]",
+  smallCompact: "max-[380px]:h-6.5 max-[380px]:px-2 max-[380px]:text-[9px]",
+  proCompact:
+    "[@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:h-7 [@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:px-2 [@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:text-[9px]",
+  largeCompact:
+    "[@media(min-width:401px)_and_(min-height:880px)]:h-7 [@media(min-width:401px)_and_(min-height:880px)]:px-1.75 [@media(min-width:401px)_and_(min-height:880px)]:text-[10.5px]",
+} as const;
+
+const FULLSCREEN_AUTHOR_TEXT = {
+  usernameBase:
+    "block max-w-full font-bold tracking-[-0.2px] whitespace-nowrap text-[#15291C]",
+  usernameRegular: "text-sm",
+  usernameCompact: "text-[13px]",
+  usernameSmallCompact: "max-[380px]:text-[11.25px]",
+  usernameProCompact:
+    "[@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:text-[11.5px]",
+  metaBase:
+    "mt-px block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[#5C6B62]",
+  metaRegular: "text-[11.5px]",
+  metaCompact: "text-[10.75px]",
+  metaSmallCompact: "max-[380px]:text-[10px]",
+  metaProCompact:
+    "[@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:text-[10.25px]",
+} as const;
+
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
 }
@@ -50,10 +95,25 @@ function formatFullscreenAuthorMeta(when: string) {
   }
 
   if (/^\d+\s*(?:с|сек|м|мин|ч|д|дн|нед|мес|г|год)(?:\s|$)/i.test(normalizedWhen)) {
-    return `${normalizedWhen} · назад`;
+    return `${normalizedWhen} назад`;
   }
 
   return normalizedWhen;
+}
+
+function FullscreenHeaderGlass({ children }: { children: ReactNode }) {
+  return (
+    <div className={FULLSCREEN_HEADER_GLASS.outer}>
+      <GlassSurface
+        className={FULLSCREEN_HEADER_GLASS.surface}
+        contentClassName={FULLSCREEN_HEADER_GLASS.content}
+        highlightClassName={FULLSCREEN_HEADER_GLASS.highlight}
+        tintClassName={FULLSCREEN_HEADER_GLASS.tint}
+      >
+        {children}
+      </GlassSurface>
+    </div>
+  );
 }
 
 type SharedPostCardViewProps = {
@@ -250,18 +310,28 @@ export function PostCardHeader({
       <div className="flex min-w-0 flex-1 flex-col items-start text-left">
         <div
           className={cn(
-            "block max-w-full font-bold tracking-[-0.2px] whitespace-nowrap text-[#15291C]",
-            shouldCompactAuthor ? "text-[13px]" : "text-sm",
-            shouldCompactAuthorOnSmallScreen && "max-[360px]:text-[12.5px]"
+            FULLSCREEN_AUTHOR_TEXT.usernameBase,
+            shouldCompactAuthor
+              ? FULLSCREEN_AUTHOR_TEXT.usernameCompact
+              : FULLSCREEN_AUTHOR_TEXT.usernameRegular,
+            shouldCompactAuthorOnSmallScreen &&
+              FULLSCREEN_AUTHOR_TEXT.usernameSmallCompact,
+            shouldCompactAuthor &&
+              FULLSCREEN_AUTHOR_TEXT.usernameProCompact
           )}
         >
           <span>{post.user}</span>
         </div>
         <div
           className={cn(
-            "mt-px block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[#5C6B62]",
-            shouldCompactAuthor ? "text-[10.75px]" : "text-[11.5px]",
-            shouldCompactAuthorOnSmallScreen && "max-[360px]:text-[10.25px]"
+            FULLSCREEN_AUTHOR_TEXT.metaBase,
+            shouldCompactAuthor
+              ? FULLSCREEN_AUTHOR_TEXT.metaCompact
+              : FULLSCREEN_AUTHOR_TEXT.metaRegular,
+            shouldCompactAuthorOnSmallScreen &&
+              FULLSCREEN_AUTHOR_TEXT.metaSmallCompact,
+            shouldCompactAuthor &&
+              FULLSCREEN_AUTHOR_TEXT.metaProCompact
           )}
         >
           {authorMeta}
@@ -271,12 +341,17 @@ export function PostCardHeader({
         <motion.button
           type="button"
           className={cn(
-            "h-7 shrink-0 cursor-pointer rounded-full border border-transparent pt-px leading-none font-extrabold tracking-[0px] text-[#0B2F1D] outline-none",
-            "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
-            shouldCompactAuthor ? "px-2 text-[9.75px]" : "px-2.5 text-[10.5px]",
-            "max-[376px]:h-7 max-[376px]:px-2 max-[376px]:text-[8.75px]",
-            shouldCompactAuthorOnSmallScreen &&
-              "max-[380px]:h-4.5 max-[380px]:px-0.5 max-[380px]:text-[7.75px]"
+            FULLSCREEN_SUBSCRIBE_BUTTON.base,
+            shouldCompactAuthor
+              ? FULLSCREEN_SUBSCRIBE_BUTTON.compact
+              : FULLSCREEN_SUBSCRIBE_BUTTON.regular,
+            shouldCompactAuthorOnSmallScreen
+              ? FULLSCREEN_SUBSCRIBE_BUTTON.smallCompact
+              : FULLSCREEN_SUBSCRIBE_BUTTON.smallRegular,
+            shouldCompactAuthor &&
+              FULLSCREEN_SUBSCRIBE_BUTTON.proCompact,
+            shouldCompactAuthor &&
+              FULLSCREEN_SUBSCRIBE_BUTTON.largeCompact
           )}
           style={{
             background: `linear-gradient(rgba(255,255,255,0.44), rgba(255,255,255,0.24)) padding-box, linear-gradient(135deg, ${brand}B3, rgba(255,255,255,0.72)) border-box`,
@@ -352,21 +427,7 @@ export function PostCardHeader({
   );
 
   if (expanded) {
-    return (
-      <div className="shrink-0 px-3.5 pt-[calc(env(safe-area-inset-top)+3.625rem)] pb-3 max-[409px]:px-3">
-        <GlassSurface
-          className={cn(
-            "rounded-[24px] shadow-[0_8px_22px_rgba(20,40,28,0.08),0_1px_4px_rgba(255,255,255,0.36)]",
-            "before:bg-white/28 before:backdrop-blur-[30px] before:backdrop-saturate-[220%]",
-            "after:border-white/55 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.76),inset_-1px_-1px_0_rgba(255,255,255,0.18)]"
-          )}
-        >
-          <div className="flex min-h-13 items-center gap-2.5 px-2.5 py-2 max-[380px]:gap-2 max-[380px]:px-2">
-            {headerContent}
-          </div>
-        </GlassSurface>
-      </div>
-    );
+    return <FullscreenHeaderGlass>{headerContent}</FullscreenHeaderGlass>;
   }
 
   return (
