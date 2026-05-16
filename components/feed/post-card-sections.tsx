@@ -4,7 +4,7 @@ import {
   Heart,
   MapPin,
   MessageCircle,
-  MoreHorizontal,
+  MoreVertical,
   Share2,
   Star,
   type LucideIcon,
@@ -96,7 +96,7 @@ export function PostCardHeader({
               }
               transition={ICON_PULSE_TRANSITION}
             >
-              <MoreHorizontal className="size-4" strokeWidth={2} />
+              <MoreVertical className="size-4" strokeWidth={2} />
             </motion.span>
           </button>
         </DropdownMenuTrigger>
