@@ -356,9 +356,9 @@ export function PostCardHeader({
       <div className="shrink-0 px-3.5 pt-[calc(env(safe-area-inset-top)+3.625rem)] pb-3 max-[409px]:px-3">
         <GlassSurface
           className={cn(
-            "rounded-[24px] shadow-[0_14px_34px_rgba(20,40,28,0.14),0_2px_10px_rgba(255,255,255,0.45)]",
-            "before:bg-white/48 before:backdrop-blur-[28px] before:backdrop-saturate-[210%]",
-            "after:border-white/70 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.9),inset_-1px_-1px_0_rgba(255,255,255,0.28)]"
+            "rounded-[24px] shadow-[0_8px_22px_rgba(20,40,28,0.08),0_1px_4px_rgba(255,255,255,0.36)]",
+            "before:bg-white/28 before:backdrop-blur-[30px] before:backdrop-saturate-[220%]",
+            "after:border-white/55 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.76),inset_-1px_-1px_0_rgba(255,255,255,0.18)]"
           )}
         >
           <div className="flex min-h-13 items-center gap-2.5 px-2.5 py-2 max-[380px]:gap-2 max-[380px]:px-2">
