@@ -618,22 +618,13 @@ export function EngagementBar({
             style={actionPillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
-            <motion.span
-              key={`fullscreen-comment-${commentPulse}`}
-              className="grid size-5 shrink-0 place-items-center"
-              animate={
-                commentPulse > 0 && canAnimate(shouldReduceMotion)
-                  ? ICON_PULSE_ANIMATION
-                  : { scale: 1 }
-              }
-              transition={ICON_PULSE_TRANSITION}
-            >
+            <span className="grid size-5 shrink-0 place-items-center">
               <MessageCircle
                 className="size-5"
                 strokeWidth={2}
                 color={TEXT_PRIMARY}
               />
-            </motion.span>
+            </span>
             <span className="min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]">
               {post.comments}
             </span>
