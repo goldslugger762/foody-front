@@ -354,8 +354,8 @@ export function PostCardHeader({
               FULLSCREEN_SUBSCRIBE_BUTTON.largeCompact
           )}
           style={{
-            background: `linear-gradient(rgba(255,255,255,0.44), rgba(255,255,255,0.24)) padding-box, linear-gradient(135deg, ${brand}B3, rgba(255,255,255,0.72)) border-box`,
-            boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(255,255,255,0.22)`,
+            background: `linear-gradient(rgba(255,255,255,0.12), rgba(255,255,255,0.02)) padding-box, linear-gradient(145deg, ${brand}53, rgba(0,150,0,0.35)) border-box`,
+            boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0), inset -1px -1px 0 rgba(255,255,255,0)`,
           }}
           whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
         >
