@@ -253,10 +253,10 @@ export function PostCardHeader({
         </motion.button>
       )}
       <UserAvatar name={post.user} size={34} />
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col items-start text-left">
         <div
           className={cn(
-            "flex items-center gap-1.5 font-bold tracking-[-0.2px] whitespace-nowrap text-[#15291C]",
+            "block max-w-full font-bold tracking-[-0.2px] whitespace-nowrap text-[#15291C]",
             shouldCompactAuthor ? "text-[13px]" : "text-sm",
             shouldCompactAuthorOnSmallScreen && "max-[360px]:text-[12.5px]"
           )}
@@ -265,7 +265,7 @@ export function PostCardHeader({
         </div>
         <div
           className={cn(
-            "mt-px overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[#5C6B62]",
+            "mt-px block max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[#5C6B62]",
             shouldCompactAuthor ? "text-[10.75px]" : "text-[11.5px]",
             shouldCompactAuthorOnSmallScreen && "max-[360px]:text-[10.25px]"
           )}
