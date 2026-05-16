@@ -43,11 +43,11 @@ const COLLAPSED_SAVE_GLOW_ACTIVE_ANIMATION = {
 const SAVE_GLOW_IDLE_ANIMATION = { opacity: 0, scale: 0.72 };
 
 const FULLSCREEN_ACTION_BUTTON_CLASS =
-  "inline-flex h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-transparent px-3 text-[#15291C] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11";
+  "relative inline-flex h-[50px] w-[92%] min-w-0 cursor-pointer items-center justify-center gap-2.5 overflow-hidden rounded-full border border-transparent px-2.5 text-[#0B2F1D] outline-none backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [-webkit-tap-highlight-color:transparent] [@media(max-width:430px)_and_(max-height:860px)]:h-11";
 const COLLAPSED_ACTION_BUTTON_CLASS =
   "inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0";
 const FULLSCREEN_SAVE_BUTTON_CLASS =
-  "relative grid h-12 min-w-0 cursor-pointer place-items-center overflow-hidden rounded-full border border-white/65 px-4 text-[#06301A] outline-none backdrop-blur-[20px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [@media(max-width:430px)_and_(max-height:860px)]:h-11";
+  "relative grid h-[50px] w-full min-w-0 cursor-pointer place-items-center overflow-hidden rounded-full border border-transparent px-5 text-[#0B2F1D] outline-none backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [-webkit-tap-highlight-color:transparent] [@media(max-width:430px)_and_(max-height:860px)]:h-11";
 const COLLAPSED_SAVE_BUTTON_CLASS =
   "relative ml-auto grid size-9 cursor-pointer place-items-center overflow-hidden rounded-[10px] transition-colors [@media(max-width:430px)_and_(max-height:860px)]:size-8";
 
@@ -83,22 +83,22 @@ export function EngagementBar({
   onSaveClick,
 }: EngagementBarProps) {
   if (fullscreen) {
-    const actionPillStyle = {
-      background: `linear-gradient(rgba(255,255,255,0.62), rgba(255,255,255,0.36)) padding-box, linear-gradient(135deg, ${brand}D9, rgba(255,255,255,0.86), ${brand}70) border-box`,
-      boxShadow: `0 12px 28px rgba(20,40,28,0.14), 0 4px 16px ${brand}18, inset 1px 1px 0 rgba(255,255,255,0.82), inset -1px -1px 0 rgba(255,255,255,0.2)`,
+    const pillStyle = {
+      boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)`,
     };
 
     return (
-      <div className="shrink-0 px-3.5 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.875rem)] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-[calc(env(safe-area-inset-bottom)+0.625rem)]">
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_58px] items-center gap-2.5 max-[360px]:gap-2">
+      <div className="shrink-0 px-3.5 pt-0 pb-[calc(env(safe-area-inset-bottom)+18px)] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-[calc(env(safe-area-inset-bottom)+12px)]">
+        <div className="grid h-16 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(76px,0.92fr)] items-center gap-2.5 max-[360px]:gap-2 [@media(max-width:430px)_and_(max-height:860px)]:h-14">
           <motion.button
             type="button"
             aria-pressed={liked}
             onClick={onLikeClick}
-            className={FULLSCREEN_ACTION_BUTTON_CLASS}
-            style={actionPillStyle}
+            className={cn(FULLSCREEN_ACTION_BUTTON_CLASS, "justify-self-end")}
+            style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
+            <FullscreenPillChrome brand={brand} />
             <LikeActionContent
               fullscreen
               liked={liked}
@@ -111,18 +111,19 @@ export function EngagementBar({
           <motion.button
             type="button"
             onClick={onCommentClick}
-            className={FULLSCREEN_ACTION_BUTTON_CLASS}
-            style={actionPillStyle}
+            className={cn(FULLSCREEN_ACTION_BUTTON_CLASS, "justify-self-start")}
+            style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
-            <span className="grid size-5 shrink-0 place-items-center">
+            <FullscreenPillChrome brand={brand} />
+            <span className="relative z-[1] grid size-[18px] shrink-0 place-items-center">
               <MessageCircle
-                className="size-5"
+                className="size-[18px]"
                 strokeWidth={2}
                 color={TEXT_PRIMARY}
               />
             </span>
-            <span className="min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]">
+            <span className="relative z-[1] min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]">
               {post.comments}
             </span>
           </motion.button>
@@ -134,14 +135,10 @@ export function EngagementBar({
             aria-label="В избранное"
             onClick={onSaveClick}
             className={FULLSCREEN_SAVE_BUTTON_CLASS}
-            style={{
-              background: saved
-                ? `linear-gradient(135deg, ${brand}, #1FA85C)`
-                : `linear-gradient(135deg, ${brand}4D, rgba(255,255,255,0.66))`,
-              boxShadow: `0 12px 28px ${brand}30, inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(11,47,29,0.08)`,
-            }}
+            style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
           >
+            <FullscreenPillChrome brand={brand} />
             <SaveActionIcon
               fullscreen
               brand={brand}
@@ -217,6 +214,28 @@ export function EngagementBar({
   );
 }
 
+function FullscreenPillChrome({ brand }: { brand: string }) {
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `linear-gradient(140deg, color-mix(in srgb, ${brand} 70%, transparent), rgba(122,236,164,0.70), rgba(100,218,189,0.50), color-mix(in srgb, ${brand} 90%, transparent))`,
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute inset-px rounded-full"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(255,255,255,0.82), rgba(226,255,235,0.78))",
+        }}
+      />
+    </>
+  );
+}
+
 type LikeActionContentProps = {
   liked: boolean;
   likeCount: number;
@@ -240,8 +259,8 @@ function LikeActionContent({
       <motion.span
         key={`${keyPrefix}-${pulse}`}
         className={cn(
-          "relative grid size-[22px] place-items-center",
-          fullscreen && "shrink-0"
+          "relative z-[1] grid place-items-center",
+          fullscreen ? "size-5 shrink-0" : "size-[22px]"
         )}
         animate={
           shouldAnimate
@@ -261,7 +280,7 @@ function LikeActionContent({
           transition={{ duration: 0.42, ease: "easeOut" }}
         />
         <Heart
-          className="relative size-[22px]"
+          className={cn("relative", fullscreen ? "size-5" : "size-[22px]")}
           strokeWidth={2}
           color={liked ? HEART_COLOR : TEXT_PRIMARY}
           fill={liked ? HEART_COLOR : "none"}
@@ -270,7 +289,7 @@ function LikeActionContent({
       <motion.span
         className={
           fullscreen
-            ? "min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]"
+            ? "relative z-[1] min-w-0 truncate text-[13.5px] font-extrabold tracking-[-0.1px] tabular-nums text-[#15291C]"
             : "text-[13.5px] font-bold tracking-[-0.1px] text-[#15291C]"
         }
         animate={
@@ -330,8 +349,8 @@ function SaveActionIcon({
       <motion.span
         key={`${keyPrefix}-${pulse}`}
         className={cn(
-          "relative grid place-items-center",
-          fullscreen ? "size-5" : "size-[18px]"
+          "relative z-[1] grid place-items-center",
+          fullscreen ? "size-6" : "size-[18px]"
         )}
         animate={
           shouldAnimate
@@ -341,12 +360,12 @@ function SaveActionIcon({
         transition={{ duration: 0.38, ease: "easeOut" }}
       >
         <Bookmark
-          className={fullscreen ? "size-5" : "size-[18px]"}
+          className={fullscreen ? "size-6" : "size-[18px]"}
           strokeWidth={2}
           color={
             fullscreen
               ? saved
-                ? "#FFFFFF"
+                ? brand
                 : "#06301A"
               : saved
                 ? brand
@@ -354,9 +373,7 @@ function SaveActionIcon({
           }
           fill={
             fullscreen
-              ? saved
-                ? "#FFFFFF"
-                : brand
+              ? "none"
               : saved
                 ? brand
                 : "none"
