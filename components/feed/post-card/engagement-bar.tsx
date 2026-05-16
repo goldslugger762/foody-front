@@ -41,6 +41,10 @@ const COLLAPSED_SAVE_GLOW_ACTIVE_ANIMATION = {
   scale: [0.72, 1.15, 1.26],
 };
 const SAVE_GLOW_IDLE_ANIMATION = { opacity: 0, scale: 0.72 };
+const FULLSCREEN_PILL_STATE_TRANSITION = {
+  duration: 0.24,
+  ease: [0.22, 1, 0.36, 1],
+} as const;
 
 const FULLSCREEN_ACTION_BUTTON_CLASS =
   "relative inline-flex h-[50px] w-[92%] min-w-0 cursor-pointer items-center justify-center gap-2.5 overflow-hidden rounded-full border border-transparent px-2.5 text-[#0B2F1D] outline-none backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [-webkit-tap-highlight-color:transparent] [@media(max-width:430px)_and_(max-height:860px)]:h-11";
@@ -98,7 +102,10 @@ export function EngagementBar({
             style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
-            <FullscreenPillChrome brand={brand} />
+            <FullscreenPillChrome
+              brand={brand}
+              shouldReduceMotion={shouldReduceMotion}
+            />
             <LikeActionContent
               fullscreen
               liked={liked}
@@ -115,7 +122,10 @@ export function EngagementBar({
             style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
-            <FullscreenPillChrome brand={brand} />
+            <FullscreenPillChrome
+              brand={brand}
+              shouldReduceMotion={shouldReduceMotion}
+            />
             <span className="relative z-[1] grid size-[18px] shrink-0 place-items-center">
               <MessageCircle
                 className="size-[18px]"
@@ -138,7 +148,11 @@ export function EngagementBar({
             style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
           >
-            <FullscreenPillChrome brand={brand} />
+            <FullscreenPillChrome
+              active={saved}
+              brand={brand}
+              shouldReduceMotion={shouldReduceMotion}
+            />
             <SaveActionIcon
               fullscreen
               brand={brand}
@@ -214,22 +228,59 @@ export function EngagementBar({
   );
 }
 
-function FullscreenPillChrome({ brand }: { brand: string }) {
+type FullscreenPillChromeProps = {
+  brand: string;
+  active?: boolean;
+  shouldReduceMotion: boolean | null;
+};
+
+function FullscreenPillChrome({
+  brand,
+  active = false,
+  shouldReduceMotion,
+}: FullscreenPillChromeProps) {
+  const transition = canAnimate(shouldReduceMotion)
+    ? FULLSCREEN_PILL_STATE_TRANSITION
+    : { duration: 0 };
+
   return (
     <>
-      <span
+      <motion.span
         aria-hidden="true"
         className="absolute inset-0 rounded-full"
+        animate={{ opacity: active ? 0 : 1 }}
+        transition={transition}
         style={{
           background: `linear-gradient(140deg, color-mix(in srgb, ${brand} 70%, transparent), rgba(122,236,164,0.70), rgba(100,218,189,0.50), color-mix(in srgb, ${brand} 90%, transparent))`,
         }}
       />
-      <span
+      <motion.span
+        aria-hidden="true"
+        className="absolute inset-0 rounded-full"
+        animate={{ opacity: active ? 1 : 0 }}
+        transition={transition}
+        style={{
+          background: `linear-gradient(220deg, color-mix(in srgb, ${brand} 92%, transparent), rgba(100,218,189,0.48), rgba(122,236,164,0.74), color-mix(in srgb, ${brand} 68%, transparent))`,
+        }}
+      />
+      <motion.span
         aria-hidden="true"
         className="absolute inset-px rounded-full"
+        animate={{ opacity: active ? 0 : 1 }}
+        transition={transition}
         style={{
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.82), rgba(226,255,235,0.78))",
+        }}
+      />
+      <motion.span
+        aria-hidden="true"
+        className="absolute inset-px rounded-full"
+        animate={{ opacity: active ? 1 : 0 }}
+        transition={transition}
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(232,255,239,0.76), rgba(184,242,204,0.72))",
         }}
       />
     </>
@@ -320,7 +371,7 @@ function SaveActionIcon({
   shouldReduceMotion,
   fullscreen = false,
 }: SaveActionIconProps) {
-  const shouldAnimate = saved && canAnimate(shouldReduceMotion);
+  const shouldAnimate = !fullscreen && saved && canAnimate(shouldReduceMotion);
   const keyPrefix = fullscreen ? "fullscreen-save" : "save";
 
   return (
@@ -360,7 +411,10 @@ function SaveActionIcon({
         transition={{ duration: 0.38, ease: "easeOut" }}
       >
         <Bookmark
-          className={fullscreen ? "size-6" : "size-[18px]"}
+          className={cn(
+            fullscreen ? "size-6" : "size-[18px]",
+            fullscreen && saved && "drop-shadow-[0_4px_8px_rgba(11,47,29,0.15)]"
+          )}
           strokeWidth={2}
           color={
             fullscreen
@@ -371,13 +425,7 @@ function SaveActionIcon({
                 ? brand
                 : TEXT_PRIMARY
           }
-          fill={
-            fullscreen
-              ? "none"
-              : saved
-                ? brand
-                : "none"
-          }
+          fill={saved ? brand : "none"}
         />
       </motion.span>
     </>
