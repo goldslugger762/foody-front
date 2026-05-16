@@ -7,7 +7,13 @@ import {
   useMotionValue,
   useReducedMotion,
 } from "motion/react";
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { flushSync } from "react-dom";
 
 import {
@@ -149,7 +155,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     canDragToNextPhoto ? photoIdx + 1 : photoIdx,
   ];
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const viewport = isExpanded
       ? expandedPhotoViewportRef.current
       : feedPhotoViewportRef.current;
@@ -162,6 +168,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
     function syncPhotoWidth() {
       const nextWidth = viewportElement.getBoundingClientRect().width;
+      photoAnimationRef.current?.stop();
+      photoAnimationRef.current = null;
       setPhotoWidth(nextWidth);
       photoTrackX.jump(-nextWidth);
     }

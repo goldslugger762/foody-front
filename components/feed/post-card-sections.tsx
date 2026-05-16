@@ -34,9 +34,25 @@ const HEART_COLOR = "#E5443B";
 const STAR_COLOR = "#FFB400";
 const ICON_PULSE_ANIMATION = { scale: [1, 0.86, 1.08, 1] };
 const ICON_PULSE_TRANSITION = { duration: 0.28, ease: "easeOut" } as const;
+const FULLSCREEN_COMPACT_AUTHOR_LENGTH = 11;
+const FULLSCREEN_SMALL_COMPACT_AUTHOR_LENGTH = 10;
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
+}
+
+function formatFullscreenAuthorMeta(when: string) {
+  const normalizedWhen = when.trim();
+
+  if (normalizedWhen.toLowerCase().includes("назад")) {
+    return normalizedWhen;
+  }
+
+  if (/^\d+\s*(?:с|сек|м|мин|ч|д|дн|нед|мес|г|год)(?:\s|$)/i.test(normalizedWhen)) {
+    return `${normalizedWhen} · назад`;
+  }
+
+  return normalizedWhen;
 }
 
 type SharedPostCardViewProps = {
@@ -203,6 +219,14 @@ export function PostCardHeader({
   onMoreClick,
   onBackClick,
 }: PostCardHeaderProps) {
+  const shouldCompactAuthor =
+    expanded && post.user.length >= FULLSCREEN_COMPACT_AUTHOR_LENGTH;
+  const shouldCompactAuthorOnSmallScreen =
+    expanded && post.user.length >= FULLSCREEN_SMALL_COMPACT_AUTHOR_LENGTH;
+  const authorMeta = expanded
+    ? formatFullscreenAuthorMeta(post.when)
+    : `${post.realName} · ${post.when}`;
+
   return (
     <div
       className={cn(
@@ -230,20 +254,35 @@ export function PostCardHeader({
       )}
       <UserAvatar name={post.user} size={34} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 overflow-hidden text-sm font-bold tracking-[-0.2px] text-ellipsis whitespace-nowrap text-[#15291C]">
+        <div
+          className={cn(
+            "flex items-center gap-1.5 font-bold tracking-[-0.2px] whitespace-nowrap text-[#15291C]",
+            shouldCompactAuthor ? "text-[13px]" : "text-sm",
+            shouldCompactAuthorOnSmallScreen && "max-[360px]:text-[12.5px]"
+          )}
+        >
           <span>{post.user}</span>
         </div>
-        <div className="mt-px text-[11.5px] font-medium text-[#5C6B62]">
-          {post.realName} · {post.when}
+        <div
+          className={cn(
+            "mt-px overflow-hidden text-ellipsis whitespace-nowrap font-medium text-[#5C6B62]",
+            shouldCompactAuthor ? "text-[10.75px]" : "text-[11.5px]",
+            shouldCompactAuthorOnSmallScreen && "max-[360px]:text-[10.25px]"
+          )}
+        >
+          {authorMeta}
         </div>
       </div>
       {expanded && (
         <motion.button
           type="button"
           className={cn(
-            "h-7 shrink-0 cursor-pointer rounded-full border border-transparent px-2.5 pt-px text-[10.5px] leading-none font-extrabold tracking-[0px] text-[#0B2F1D] outline-none",
+            "h-7 shrink-0 cursor-pointer rounded-full border border-transparent pt-px leading-none font-extrabold tracking-[0px] text-[#0B2F1D] outline-none",
             "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
-            "max-[360px]:px-2 max-[360px]:text-[9.75px]"
+            shouldCompactAuthor ? "px-2 text-[9.75px]" : "px-2.5 text-[10.5px]",
+            "max-[376px]:h-7 max-[376px]:px-2 max-[376px]:text-[8.75px]",
+            shouldCompactAuthorOnSmallScreen &&
+              "max-[380px]:h-4.5 max-[380px]:px-0.5 max-[380px]:text-[7.75px]"
           )}
           style={{
             background: `linear-gradient(rgba(255,255,255,0.44), rgba(255,255,255,0.24)) padding-box, linear-gradient(135deg, ${brand}B3, rgba(255,255,255,0.72)) border-box`,
@@ -420,14 +459,20 @@ export function PhotoCarousel({
           onDragStart={onPhotoDragStart}
           onDrag={onPhotoDrag}
           onDragEnd={onPhotoDragEnd}
-          className="absolute inset-y-0 left-0 flex h-full w-[300%] [touch-action:pan-y]"
+          className="absolute inset-y-0 left-0 h-full w-[300%] [touch-action:pan-y]"
           style={{ x: photoTrackX }}
         >
           {trackPhotoIndexes.map((trackPhotoIdx, trackPosition) => (
             <div
               key={`${trackPosition}-${trackPhotoIdx}`}
               aria-hidden={trackPosition !== 1}
-              className="-mr-px h-full w-[calc(100%/3+1px)] shrink-0 overflow-hidden"
+              className={cn(
+                "absolute inset-y-0 overflow-hidden",
+                trackPosition === 0 && "left-0 z-0 w-1/3",
+                trackPosition === 1 &&
+                  "left-[calc(100%/3-4px)] z-10 w-[calc(100%/3+8px)]",
+                trackPosition === 2 && "left-[calc(200%/3)] z-0 w-1/3"
+              )}
             >
               <DishPhoto
                 seed={post.seed + trackPhotoIdx}
