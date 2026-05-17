@@ -7,7 +7,7 @@ import { AnimatePresence, motion, type Variants } from "motion/react";
 const TAB_ORDER: Record<string, number> = {
   "/": 0,
   "/search": 1,
-  "/search/results": 1,
+  "/search/results": 2,
   "/saved": 3,
   "/me": 4,
 };
@@ -33,6 +33,13 @@ type Snap = {
   direction: number;
 };
 
+function isPathnameSettling(pathname: string) {
+  return (
+    typeof window !== "undefined" &&
+    window.location.pathname !== pathname
+  );
+}
+
 export function PageTransition({
   children,
 }: {
@@ -51,7 +58,7 @@ export function PageTransition({
       children,
       direction: getDirection(snap.pathname, pathname),
     });
-  } else if (snap.children !== children) {
+  } else if (snap.children !== children && !isPathnameSettling(pathname)) {
     setSnap({
       pathname,
       children,
