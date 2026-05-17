@@ -58,8 +58,12 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
     };
   }, []);
 
-  const isActiveTab = (t: TabItem) =>
-    t.href !== undefined && pathname === t.href;
+  const isActiveTab = (t: TabItem) => {
+    if (t.href === undefined) return false;
+    if (t.href === "/") return pathname === "/";
+
+    return pathname === t.href || pathname.startsWith(`${t.href}/`);
+  };
 
   if (isPostCardExpanded) {
     return null;

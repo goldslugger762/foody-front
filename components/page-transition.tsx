@@ -7,6 +7,7 @@ import { AnimatePresence, motion, type Variants } from "motion/react";
 const TAB_ORDER: Record<string, number> = {
   "/": 0,
   "/search": 1,
+  "/search/results": 1,
   "/saved": 3,
   "/me": 4,
 };
@@ -22,7 +23,7 @@ function getDirection(prev: string | null, current: string): number {
 const exitVariants: Variants = {
   exit: (d: number) => ({
     x: d === 0 ? 0 : `${d * -100}%`,
-    opacity: d === 0 ? 0 : 1,
+    opacity: 1,
   }),
 };
 
@@ -50,11 +51,17 @@ export function PageTransition({
       children,
       direction: getDirection(snap.pathname, pathname),
     });
+  } else if (snap.children !== children) {
+    setSnap({
+      pathname,
+      children,
+      direction: 0,
+    });
   }
 
   const initialX =
     snap.direction === 0 ? 0 : `${snap.direction * 100}%`;
-  const initialOpacity = snap.direction === 0 ? 0 : 1;
+  const initialOpacity = 1;
 
   return (
     <div className="relative h-screen overflow-hidden">
@@ -66,7 +73,10 @@ export function PageTransition({
           initial={{ x: initialX, opacity: initialOpacity }}
           animate={{ x: 0, opacity: 1 }}
           exit="exit"
-          transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+          transition={{
+            duration: snap.direction === 0 ? 0 : 0.32,
+            ease: [0.32, 0.72, 0, 1],
+          }}
           className="absolute inset-0"
           style={{ willChange: "transform" }}
         >

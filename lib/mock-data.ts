@@ -79,6 +79,22 @@ export const POSTS: Post[] = [
     comments: 41,
     seed: 2,
   },
+  {
+    id: 4,
+    user: "@nikita.grill",
+    realName: "Никита",
+    when: "1 д",
+    dish: "Стейки на углях с перечным соусом",
+    place: "Firewood · Покровка, 31",
+    rating: 4.9,
+    price: "₽1450",
+    text: "Медиум rare попали идеально: дымный край, сочная середина и соус, который хочется забрать домой.",
+    tags: ["#стейки", "#мясо", "#ужин"],
+    photos: 3,
+    likes: 1186,
+    comments: 73,
+    seed: 8,
+  },
 ];
 
 export const POPULAR_TAGS: string[] = [
