@@ -40,6 +40,8 @@ const SHEET_TRANSITION = {
   ease: [0.22, 1, 0.36, 1],
 } as const;
 const OVERLAY_TRANSITION = { duration: 0.22, ease: "easeOut" } as const;
+// MVP: timestamps are hidden in the sheet, but can be restored by flipping this.
+const SHOW_COMMENT_TIMESTAMPS = false;
 const CURRENT_USER: PostComment = {
   id: 0,
   user: "@you",
@@ -356,9 +358,11 @@ function CommentRow({
           <span className="truncate text-[15.5px] leading-tight font-extrabold tracking-normal text-black">
             {comment.realName}
           </span>
-          <span className="shrink-0 text-[12px] leading-tight font-bold text-[#99A1AB]">
-            {comment.when}
-          </span>
+          {SHOW_COMMENT_TIMESTAMPS && (
+            <span className="shrink-0 text-[12px] leading-tight font-bold text-[#99A1AB]">
+              {comment.when}
+            </span>
+          )}
         </div>
 
         <p className="mt-1 font-[family-name:var(--font-roboto)] text-[15.5px] leading-[1.46] font-medium text-black">
