@@ -20,6 +20,7 @@ import {
   CollapsedPostCardView,
   ExpandedPostCardView,
 } from "@/components/feed/post-card-sections";
+import { CommentsSheet } from "@/components/feed/comments-sheet";
 import {
   getPhotoDragEndDecision,
   getPhotoDragTrackX,
@@ -31,7 +32,7 @@ import {
 } from "@/components/feed/post-card/photo-carousel";
 import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
 import { useSearchSubmit } from "@/components/search/use-search-submit";
-import type { Density, Post } from "@/lib/mock-data";
+import { COMMENTS_BY_POST_ID, type Density, type Post } from "@/lib/mock-data";
 
 type PostCardProps = {
   post: Post;
@@ -126,6 +127,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [viewerPhotoDirection, setViewerPhotoDirection] =
     useState<PhotoDirection>(1);
   const [viewerOpenKey, setViewerOpenKey] = useState(0);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [photoWidth, setPhotoWidth] = useState(0);
   const [sharePulse, triggerSharePulse] = usePulse();
   const [morePulse, triggerMorePulse] = usePulse();
@@ -190,7 +192,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     }
 
     function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (isPhotoViewerOpen) {
+      if (isPhotoViewerOpen || isCommentsOpen) {
         return;
       }
 
@@ -204,7 +206,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isExpanded, isPhotoViewerOpen]);
+  }, [isCommentsOpen, isExpanded, isPhotoViewerOpen]);
 
   useEffect(() => {
     window.dispatchEvent(
@@ -278,6 +280,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
 
   function handleCommentClick() {
     triggerCommentPulse();
+    setIsCommentsOpen(true);
   }
 
   function handleShareClick() {
@@ -481,6 +484,14 @@ export function PostCard({ post, brand, density }: PostCardProps) {
         openKey={viewerOpenKey}
         photoRatio={photoRatio}
         post={post}
+        shouldReduceMotion={shouldReduceMotion}
+      />
+      <CommentsSheet
+        open={isCommentsOpen}
+        brand={brand}
+        comments={COMMENTS_BY_POST_ID[post.id] ?? []}
+        commentsCount={post.comments}
+        onClose={() => setIsCommentsOpen(false)}
         shouldReduceMotion={shouldReduceMotion}
       />
     </div>

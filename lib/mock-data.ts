@@ -15,6 +15,17 @@ export type Post = {
   seed: number;
 };
 
+export type PostComment = {
+  id: number;
+  user: string;
+  realName: string;
+  when: string;
+  text: string;
+  likes: number;
+  liked?: boolean;
+  replyTo?: string;
+};
+
 export type Palette = "fresh" | "citrus" | "dusk";
 export type Density = "comfortable" | "cozy";
 
@@ -96,6 +107,95 @@ export const POSTS: Post[] = [
     seed: 8,
   },
 ];
+
+export const COMMENTS_BY_POST_ID: Record<number, PostComment[]> = {
+  1: [
+    {
+      id: 101,
+      user: "@mike.ross",
+      realName: "Mike Ross",
+      when: "2 ч",
+      text: "Выглядит просто потрясающе! Обязательно зайду на выходных попробовать 😋 🍹",
+      likes: 14,
+      liked: true,
+    },
+    {
+      id: 102,
+      user: "@anna.kim",
+      realName: "Anna Kim",
+      when: "5 ч",
+      text: "Была там вчера, лапша действительно ручной работы, бульон очень наваристый. Рекомендую брать яйцо дополнительно!",
+      likes: 8,
+    },
+    {
+      id: 103,
+      user: "@sarah.chen",
+      realName: "Sarah Chen",
+      when: "1 ч",
+      replyTo: "@anna.kim",
+      text: "Да, яйцо у них просто отпад!",
+      likes: 2,
+    },
+  ],
+  2: [
+    {
+      id: 201,
+      user: "@dasha.taste",
+      realName: "Даша",
+      when: "18 мин",
+      text: "Маття прям насыщенная или скорее нежная? Хочу без лишней сладости.",
+      likes: 5,
+    },
+    {
+      id: 202,
+      user: "@masha.eats",
+      realName: "Маша Петрова",
+      when: "12 мин",
+      replyTo: "@dasha.taste",
+      text: "Скорее нежная, но вкус чая хорошо чувствуется. Сладость очень аккуратная.",
+      likes: 11,
+      liked: true,
+    },
+  ],
+  3: [
+    {
+      id: 301,
+      user: "@nino.food",
+      realName: "Нино",
+      when: "3 ч",
+      text: "Подтверждаю, тесто у них одно из лучших в городе.",
+      likes: 16,
+      liked: true,
+    },
+    {
+      id: 302,
+      user: "@ilya.walks",
+      realName: "Илья",
+      when: "2 ч",
+      text: "После такого фото придется менять планы на ужин.",
+      likes: 7,
+    },
+  ],
+  4: [
+    {
+      id: 401,
+      user: "@vera.meat",
+      realName: "Вера",
+      when: "1 д",
+      text: "У них еще картофель с розмарином отличный, если брать гарнир.",
+      likes: 9,
+    },
+    {
+      id: 402,
+      user: "@nikita.grill",
+      realName: "Никита",
+      when: "23 ч",
+      replyTo: "@vera.meat",
+      text: "Да, картофель тоже взял. Соус к нему отдельно просить обязательно.",
+      likes: 4,
+    },
+  ],
+};
 
 export const POPULAR_TAGS: string[] = [
   "Рамён",
