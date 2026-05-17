@@ -19,6 +19,7 @@ export type PostComment = {
   id: number;
   user: string;
   realName: string;
+  avatarUrl?: string;
   when: string;
   text: string;
   likes: number;

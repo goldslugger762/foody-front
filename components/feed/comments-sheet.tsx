@@ -13,7 +13,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { UserAvatar } from "@/components/feed/user-avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { PostComment } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,14 @@ const SHEET_TRANSITION = {
 const OVERLAY_TRANSITION = { duration: 0.22, ease: "easeOut" } as const;
 // MVP: timestamps are hidden in the sheet, but can be restored by flipping this.
 const SHOW_COMMENT_TIMESTAMPS = false;
+const AVATAR_PALETTES: ReadonlyArray<readonly [string, string]> = [
+  ["#FFD6A5", "#FF8FAB"],
+  ["#A7C957", "#386641"],
+  ["#FFC25C", "#E76F51"],
+  ["#90DBF4", "#A78BFA"],
+  ["#F2CC8F", "#81B29A"],
+  ["#CDB4DB", "#FFAFCC"],
+];
 const CURRENT_USER: PostComment = {
   id: 0,
   user: "@you",
@@ -53,6 +61,46 @@ const CURRENT_USER: PostComment = {
 
 function getDisplayHandle(user: string) {
   return user.startsWith("@") ? user : `@${user}`;
+}
+
+function getAvatarInitial(name: string) {
+  return (name || "?").replace("@", "").slice(0, 1).toUpperCase();
+}
+
+function CommentAvatar({
+  comment,
+  size = 42,
+  className,
+}: {
+  comment: PostComment;
+  size?: number;
+  className?: string;
+}) {
+  const seed = comment.user.charCodeAt(1) || 7;
+  const [from, to] = AVATAR_PALETTES[seed % AVATAR_PALETTES.length];
+
+  return (
+    <Avatar
+      className={cn(
+        "shrink-0 shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.55)] after:hidden",
+        className
+      )}
+      style={{ width: size, height: size }}
+    >
+      {comment.avatarUrl && (
+        <AvatarImage src={comment.avatarUrl} alt={comment.realName} />
+      )}
+      <AvatarFallback
+        className="font-extrabold tracking-tight text-white"
+        style={{
+          backgroundImage: `linear-gradient(135deg, ${from}, ${to})`,
+          fontSize: size * 0.42,
+        }}
+      >
+        {getAvatarInitial(comment.user)}
+      </AvatarFallback>
+    </Avatar>
+  );
 }
 
 export function CommentsSheet({
@@ -276,8 +324,8 @@ export function CommentsSheet({
               </AnimatePresence>
 
               <form className="flex items-end gap-2.5" onSubmit={handleSubmit}>
-                <UserAvatar
-                  name={CURRENT_USER.user}
+                <CommentAvatar
+                  comment={CURRENT_USER}
                   size={40}
                   className="mb-0.5"
                 />
@@ -351,7 +399,7 @@ function CommentRow({
         comment.replyTo && "pl-11 max-[430px]:pl-8"
       )}
     >
-      <UserAvatar name={comment.user} size={42} className="mt-0.5" />
+      <CommentAvatar comment={comment} size={42} className="mt-0.5" />
 
       <div className="min-w-0">
         <div className="flex min-w-0 items-baseline gap-2">
@@ -378,9 +426,9 @@ function CommentRow({
 
         <motion.button
           type="button"
-          className="mt-2 origin-left cursor-pointer border-0 bg-transparent p-0 text-[12.5px] leading-tight font-extrabold text-[#65707A] outline-none transition-colors hover:text-[#15291C] focus-visible:ring-2 focus-visible:ring-black/10"
-          whileHover={shouldAnimate ? { x: 2 } : undefined}
-          whileTap={shouldAnimate ? { scale: 0.94, x: 4 } : undefined}
+          className="mt-2 cursor-pointer border-0 bg-transparent p-0 text-[12.5px] leading-tight font-extrabold text-[#65707A] outline-none transition-colors hover:text-[#15291C] focus-visible:ring-2 focus-visible:ring-black/10"
+          whileHover={shouldAnimate ? { y: 1 } : undefined}
+          whileTap={shouldAnimate ? { scale: 0.96, y: 4 } : undefined}
           transition={{ duration: 0.16, ease: "easeOut" }}
           onClick={() => onReply(comment)}
         >
