@@ -15,6 +15,10 @@ import {
 import { createPortal } from "react-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  requestCommentLikeMutation,
+  requestCommentLikes,
+} from "@/lib/feed-api";
 import type { PostComment } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +36,9 @@ type CommentsSheetProps = {
 type CommentRowProps = {
   brand: string;
   comment: PostComment;
+  liked: boolean;
+  likePending: boolean;
+  onLikeToggle: (comment: PostComment, nextLiked: boolean) => void;
   onReply: (comment: PostComment) => void;
   shouldReduceMotion: boolean | null;
 };
@@ -185,6 +192,12 @@ function createOptimisticComment(payload: CreateCommentPayload): PostComment {
   };
 }
 
+function getPersistedCommentIds(comments: PostComment[]) {
+  return comments
+    .filter((comment) => !comment.clientId)
+    .map((comment) => comment.id);
+}
+
 function CommentAvatar({
   comment,
   size = 42,
@@ -230,6 +243,14 @@ export function CommentsSheet({
   onClose,
 }: CommentsSheetProps) {
   const [draft, setDraft] = useState("");
+  const [likedCommentIds, setLikedCommentIds] = useState<string[]>([]);
+  const [commentLikesLoaded, setCommentLikesLoaded] = useState(false);
+  const [localLikedCommentIds, setLocalLikedCommentIds] = useState<string[]>(
+    []
+  );
+  const [pendingLikedCommentIds, setPendingLikedCommentIds] = useState<
+    Set<string>
+  >(() => new Set());
   const [replyTarget, setReplyTarget] = useState<PostComment | null>(null);
   const [submittedComments, setSubmittedComments] = useState<PostComment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -250,6 +271,54 @@ export function CommentsSheet({
     commentsCount + unsyncedSubmittedCommentsCount,
     visibleComments.length
   );
+  const likedCommentIdsSet = useMemo(
+    () => new Set(likedCommentIds),
+    [likedCommentIds]
+  );
+  const localLikedCommentIdsSet = useMemo(
+    () => new Set(localLikedCommentIds),
+    [localLikedCommentIds]
+  );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const commentIds = getPersistedCommentIds(visibleComments);
+
+    if (commentIds.length === 0) {
+      return;
+    }
+
+    let isActive = true;
+
+    void requestCommentLikes(commentIds)
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+
+        setLikedCommentIds(response.likedCommentIds);
+        setCommentLikesLoaded(true);
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setLikedCommentIds(
+          visibleComments
+            .filter((comment) => comment.liked)
+            .map((comment) => getCommentIdKey(comment.id))
+        );
+        setCommentLikesLoaded(true);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [open, visibleComments]);
 
   useEffect(() => {
     if (!open) {
@@ -323,6 +392,51 @@ export function CommentsSheet({
   function handleReply(comment: PostComment) {
     setReplyTarget(comment);
     textareaRef.current?.focus();
+  }
+
+  async function handleLikeToggle(comment: PostComment, nextLiked: boolean) {
+    const commentId = getCommentIdKey(comment.id);
+
+    if (comment.clientId) {
+      setLocalLikedCommentIds((currentCommentIds) => {
+        const nextCommentIds = new Set(currentCommentIds);
+
+        if (nextLiked) {
+          nextCommentIds.add(commentId);
+        } else {
+          nextCommentIds.delete(commentId);
+        }
+
+        return Array.from(nextCommentIds);
+      });
+      return;
+    }
+
+    if (pendingLikedCommentIds.has(commentId)) {
+      return;
+    }
+
+    setPendingLikedCommentIds((currentCommentIds) => {
+      const nextCommentIds = new Set(currentCommentIds);
+      nextCommentIds.add(commentId);
+
+      return nextCommentIds;
+    });
+
+    try {
+      const result = await requestCommentLikeMutation(comment.id, nextLiked);
+
+      setLikedCommentIds(result.likedCommentIds);
+    } catch {
+      return;
+    } finally {
+      setPendingLikedCommentIds((currentCommentIds) => {
+        const nextCommentIds = new Set(currentCommentIds);
+        nextCommentIds.delete(commentId);
+
+        return nextCommentIds;
+      });
+    }
   }
 
   function handleSubmit(event?: FormEvent<HTMLFormElement>) {
@@ -416,6 +530,17 @@ export function CommentsSheet({
                     key={comment.id}
                     brand={brand}
                     comment={comment}
+                    liked={
+                      comment.clientId
+                        ? localLikedCommentIdsSet.has(getCommentIdKey(comment.id))
+                        : commentLikesLoaded
+                          ? likedCommentIdsSet.has(getCommentIdKey(comment.id))
+                          : Boolean(comment.liked)
+                    }
+                    likePending={pendingLikedCommentIds.has(
+                      getCommentIdKey(comment.id)
+                    )}
+                    onLikeToggle={handleLikeToggle}
                     onReply={handleReply}
                     shouldReduceMotion={shouldReduceMotion}
                   />
@@ -516,16 +641,14 @@ export function CommentsSheet({
 function CommentRow({
   brand,
   comment,
+  liked,
+  likePending,
+  onLikeToggle,
   onReply,
   shouldReduceMotion,
 }: CommentRowProps) {
   const shouldAnimate = canAnimate(shouldReduceMotion);
-  const [liked, setLiked] = useState(Boolean(comment.liked));
   const likeCount = comment.likes + (liked ? 1 : 0) - (comment.liked ? 1 : 0);
-
-  function handleLikeClick() {
-    setLiked((currentLiked) => !currentLiked);
-  }
 
   return (
     <article
@@ -574,9 +697,11 @@ function CommentRow({
       <button
         type="button"
         aria-label="Нравится комментарий"
+        aria-busy={likePending}
         aria-pressed={liked}
-        className="mt-1 flex h-11 w-8 cursor-pointer flex-col items-center justify-start rounded-full border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-black/10"
-        onClick={handleLikeClick}
+        disabled={likePending}
+        className="mt-1 flex h-11 w-8 cursor-pointer flex-col items-center justify-start rounded-full border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-black/10 disabled:cursor-not-allowed disabled:opacity-60"
+        onClick={() => onLikeToggle(comment, !liked)}
       >
         <motion.span
           className="grid size-5 place-items-center"

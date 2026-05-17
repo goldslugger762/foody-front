@@ -8,6 +8,8 @@ import type {
   FollowMutationResponse,
 } from "@/lib/feed-api";
 import { POSTS } from "@/lib/mock-data";
+import { getSavedPostIds } from "@/lib/server/bookmark-store";
+import { getLikedPostIds } from "@/lib/server/like-store";
 
 type FollowRecord = {
   createdAt: string;
@@ -188,6 +190,8 @@ export async function isFollowingUser(targetUser: string) {
 
 export async function getFeedSnapshot(scope: FeedScope) {
   const followingUsers = await getFollowedUsers();
+  const likedPostIds = await getLikedPostIds();
+  const savedPostIds = await getSavedPostIds();
   const posts =
     scope === "subs"
       ? POSTS.filter((post) => followingUsers.includes(post.user))
@@ -196,7 +200,9 @@ export async function getFeedSnapshot(scope: FeedScope) {
   return {
     currentUser: CURRENT_USER.handle,
     followingUsers,
+    likedPostIds,
     posts,
+    savedPostIds,
     scope,
   };
 }

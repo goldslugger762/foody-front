@@ -61,7 +61,9 @@ export type EngagementBarProps = {
   brand: string;
   fullscreen?: boolean;
   liked: boolean;
+  likePending?: boolean;
   saved: boolean;
+  savePending?: boolean;
   likeCount: number;
   commentPulse: number;
   shouldReduceMotion: boolean | null;
@@ -75,7 +77,9 @@ export function EngagementBar({
   brand,
   fullscreen = false,
   liked,
+  likePending = false,
   saved,
+  savePending = false,
   likeCount,
   commentPulse,
   shouldReduceMotion,
@@ -87,6 +91,10 @@ export function EngagementBar({
   const [savePulse, setSavePulse] = useState(0);
 
   function handleLikeClick() {
+    if (likePending) {
+      return;
+    }
+
     if (!liked) {
       setLikePulse((currentPulse) => currentPulse + 1);
     }
@@ -95,6 +103,10 @@ export function EngagementBar({
   }
 
   function handleSaveClick() {
+    if (savePending) {
+      return;
+    }
+
     if (!saved) {
       setSavePulse((currentPulse) => currentPulse + 1);
     }
@@ -112,9 +124,14 @@ export function EngagementBar({
         <div className="grid h-16 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(76px,0.92fr)] items-center gap-2.5 max-[360px]:gap-2 [@media(max-width:430px)_and_(max-height:860px)]:h-14">
           <motion.button
             type="button"
+            aria-busy={likePending}
             aria-pressed={liked}
+            disabled={likePending}
             onClick={handleLikeClick}
-            className={cn(FULLSCREEN_ACTION_BUTTON_CLASS, "justify-self-end")}
+            className={cn(
+              FULLSCREEN_ACTION_BUTTON_CLASS,
+              "justify-self-end disabled:cursor-not-allowed disabled:opacity-70"
+            )}
             style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
           >
@@ -156,11 +173,16 @@ export function EngagementBar({
 
           <motion.button
             type="button"
+            aria-busy={savePending}
             aria-pressed={saved}
+            disabled={savePending}
             title="В избранное"
             aria-label="В избранное"
             onClick={handleSaveClick}
-            className={FULLSCREEN_SAVE_BUTTON_CLASS}
+            className={cn(
+              FULLSCREEN_SAVE_BUTTON_CLASS,
+              "disabled:cursor-not-allowed disabled:opacity-70"
+            )}
             style={pillStyle}
             whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
           >
@@ -186,9 +208,14 @@ export function EngagementBar({
     <div className="flex items-center gap-4 px-4 pt-3 pb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5 [@media(max-width:430px)_and_(max-height:860px)]:pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-1.5">
       <motion.button
         type="button"
+        aria-busy={likePending}
         aria-pressed={liked}
+        disabled={likePending}
         onClick={handleLikeClick}
-        className={COLLAPSED_ACTION_BUTTON_CLASS}
+        className={cn(
+          COLLAPSED_ACTION_BUTTON_CLASS,
+          "disabled:cursor-not-allowed disabled:opacity-70"
+        )}
         whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
       >
         <LikeActionContent
@@ -223,11 +250,16 @@ export function EngagementBar({
 
       <motion.button
         type="button"
+        aria-busy={savePending}
         aria-pressed={saved}
+        disabled={savePending}
         title="В избранное"
         aria-label="В избранное"
         onClick={handleSaveClick}
-        className={COLLAPSED_SAVE_BUTTON_CLASS}
+        className={cn(
+          COLLAPSED_SAVE_BUTTON_CLASS,
+          "disabled:cursor-not-allowed disabled:opacity-70"
+        )}
         style={{
           backgroundColor: saved ? `${brand}22` : "rgba(20,40,28,0.06)",
           color: saved ? brand : TEXT_PRIMARY,

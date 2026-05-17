@@ -18,7 +18,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { CURRENT_USER } from "@/lib/current-user";
 import {
   requestFeed,
+  requestBookmarkMutation,
   requestFollowMutation,
+  requestLikeMutation,
   type FeedResponse,
 } from "@/lib/feed-api";
 import { DEFAULT_TWEAKS, type Post, type Tweaks } from "@/lib/mock-data";
@@ -41,7 +43,7 @@ function FeedStatusCard({
 }) {
   return (
     <div className="flex h-full snap-start snap-always flex-col px-3.5 pt-2 pb-[5.75rem] [scroll-snap-stop:always] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-[5rem]">
-      <GlassSurface className="mt-2 flex flex-1 items-center justify-center rounded-[26px] border border-green-50/92 bg-white/45">
+      <GlassSurface className="flex flex-1 items-center justify-center rounded-[26px] border border-green-50/92 bg-white/45">
         <div className="max-w-[282px] px-6 text-center">
           <p className="text-[20px] leading-tight font-extrabold tracking-[-0.35px] text-[#15291C]">
             {title}
@@ -123,8 +125,16 @@ export default function FeedPage() {
   const [feedLoadState, setFeedLoadState] =
     useState<FeedLoadState>("loading");
   const [followingUsers, setFollowingUsers] = useState<string[]>([]);
+  const [likedPostIds, setLikedPostIds] = useState<number[]>([]);
+  const [savedPostIds, setSavedPostIds] = useState<number[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [pendingAuthors, setPendingAuthors] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [pendingLikePostIds, setPendingLikePostIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [pendingSavePostIds, setPendingSavePostIds] = useState<Set<number>>(
     () => new Set()
   );
   const loadingOverlayEnabled = useLoadingOverlayEnabled();
@@ -132,6 +142,14 @@ export default function FeedPage() {
   const followingUsersSet = useMemo(
     () => new Set(followingUsers),
     [followingUsers]
+  );
+  const likedPostIdsSet = useMemo(
+    () => new Set(likedPostIds),
+    [likedPostIds]
+  );
+  const savedPostIdsSet = useMemo(
+    () => new Set(savedPostIds),
+    [savedPostIds]
   );
 
   const scrollFeedToTop = useCallback(() => {
@@ -144,6 +162,8 @@ export default function FeedPage() {
   const applyFeedResponse = useCallback((response: FeedResponse) => {
     setCurrentUser(response.currentUser);
     setFollowingUsers(response.followingUsers);
+    setLikedPostIds(response.likedPostIds);
+    setSavedPostIds(response.savedPostIds);
     setPosts(response.posts);
   }, []);
 
@@ -261,6 +281,70 @@ export default function FeedPage() {
     [currentUser, feedTab, pendingAuthors]
   );
 
+  const toggleLike = useCallback(
+    async (postId: number, nextLiked: boolean) => {
+      if (!currentUser || pendingLikePostIds.has(postId)) {
+        return;
+      }
+
+      setNotice(null);
+      setPendingLikePostIds((currentPostIds) => {
+        const nextPostIds = new Set(currentPostIds);
+        nextPostIds.add(postId);
+
+        return nextPostIds;
+      });
+
+      try {
+        const result = await requestLikeMutation(postId, nextLiked);
+
+        setLikedPostIds(result.likedPostIds);
+      } catch {
+        setNotice("Не удалось обновить лайк. Попробуйте ещё раз.");
+      } finally {
+        setPendingLikePostIds((currentPostIds) => {
+          const nextPostIds = new Set(currentPostIds);
+          nextPostIds.delete(postId);
+
+          return nextPostIds;
+        });
+      }
+    },
+    [currentUser, pendingLikePostIds]
+  );
+
+  const toggleSave = useCallback(
+    async (postId: number, nextSaved: boolean) => {
+      if (!currentUser || pendingSavePostIds.has(postId)) {
+        return;
+      }
+
+      setNotice(null);
+      setPendingSavePostIds((currentPostIds) => {
+        const nextPostIds = new Set(currentPostIds);
+        nextPostIds.add(postId);
+
+        return nextPostIds;
+      });
+
+      try {
+        const result = await requestBookmarkMutation(postId, nextSaved);
+
+        setSavedPostIds(result.savedPostIds);
+      } catch {
+        setNotice("Не удалось обновить избранное. Попробуйте ещё раз.");
+      } finally {
+        setPendingSavePostIds((currentPostIds) => {
+          const nextPostIds = new Set(currentPostIds);
+          nextPostIds.delete(postId);
+
+          return nextPostIds;
+        });
+      }
+    },
+    [currentUser, pendingSavePostIds]
+  );
+
   const retryButton = (
     <Button
       type="button"
@@ -303,7 +387,13 @@ export default function FeedPage() {
                 currentUser={currentUser}
                 isAuthorFollowed={followingUsersSet.has(post.user)}
                 isFollowPending={pendingAuthors.has(post.user)}
+                isLiked={likedPostIdsSet.has(post.id)}
+                isLikePending={pendingLikePostIds.has(post.id)}
+                isSaved={savedPostIdsSet.has(post.id)}
+                isSavePending={pendingSavePostIds.has(post.id)}
                 onFollowToggle={toggleFollow}
+                onLikeToggle={toggleLike}
+                onSaveToggle={toggleSave}
               />
             ))
           ) : feedLoadState === "ready" ? (

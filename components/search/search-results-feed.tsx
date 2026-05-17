@@ -3,7 +3,11 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { PostCard } from "@/components/feed/post-card";
-import { requestFollowMutation } from "@/lib/feed-api";
+import {
+  requestBookmarkMutation,
+  requestFollowMutation,
+  requestLikeMutation,
+} from "@/lib/feed-api";
 import type { Density, Post } from "@/lib/mock-data";
 
 type SearchResultsFeedProps = {
@@ -11,6 +15,8 @@ type SearchResultsFeedProps = {
   currentUser: string | null;
   density: Density;
   initialFollowingUsers: string[];
+  initialLikedPostIds: number[];
+  initialSavedPostIds: number[];
   posts: Post[];
 };
 
@@ -19,16 +25,34 @@ export function SearchResultsFeed({
   currentUser,
   density,
   initialFollowingUsers,
+  initialLikedPostIds,
+  initialSavedPostIds,
   posts,
 }: SearchResultsFeedProps) {
   const [followingUsers, setFollowingUsers] = useState(initialFollowingUsers);
+  const [likedPostIds, setLikedPostIds] = useState(initialLikedPostIds);
+  const [savedPostIds, setSavedPostIds] = useState(initialSavedPostIds);
   const [pendingAuthors, setPendingAuthors] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [pendingLikePostIds, setPendingLikePostIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [pendingSavePostIds, setPendingSavePostIds] = useState<Set<number>>(
     () => new Set()
   );
   const [notice, setNotice] = useState<string | null>(null);
   const followingUsersSet = useMemo(
     () => new Set(followingUsers),
     [followingUsers]
+  );
+  const likedPostIdsSet = useMemo(
+    () => new Set(likedPostIds),
+    [likedPostIds]
+  );
+  const savedPostIdsSet = useMemo(
+    () => new Set(savedPostIds),
+    [savedPostIds]
   );
 
   const toggleFollow = useCallback(
@@ -63,6 +87,70 @@ export function SearchResultsFeed({
     [currentUser, pendingAuthors]
   );
 
+  const toggleLike = useCallback(
+    async (postId: number, nextLiked: boolean) => {
+      if (!currentUser || pendingLikePostIds.has(postId)) {
+        return;
+      }
+
+      setNotice(null);
+      setPendingLikePostIds((currentPostIds) => {
+        const nextPostIds = new Set(currentPostIds);
+        nextPostIds.add(postId);
+
+        return nextPostIds;
+      });
+
+      try {
+        const result = await requestLikeMutation(postId, nextLiked);
+
+        setLikedPostIds(result.likedPostIds);
+      } catch {
+        setNotice("Не удалось обновить лайк. Попробуйте ещё раз.");
+      } finally {
+        setPendingLikePostIds((currentPostIds) => {
+          const nextPostIds = new Set(currentPostIds);
+          nextPostIds.delete(postId);
+
+          return nextPostIds;
+        });
+      }
+    },
+    [currentUser, pendingLikePostIds]
+  );
+
+  const toggleSave = useCallback(
+    async (postId: number, nextSaved: boolean) => {
+      if (!currentUser || pendingSavePostIds.has(postId)) {
+        return;
+      }
+
+      setNotice(null);
+      setPendingSavePostIds((currentPostIds) => {
+        const nextPostIds = new Set(currentPostIds);
+        nextPostIds.add(postId);
+
+        return nextPostIds;
+      });
+
+      try {
+        const result = await requestBookmarkMutation(postId, nextSaved);
+
+        setSavedPostIds(result.savedPostIds);
+      } catch {
+        setNotice("Не удалось обновить избранное. Попробуйте ещё раз.");
+      } finally {
+        setPendingSavePostIds((currentPostIds) => {
+          const nextPostIds = new Set(currentPostIds);
+          nextPostIds.delete(postId);
+
+          return nextPostIds;
+        });
+      }
+    },
+    [currentUser, pendingSavePostIds]
+  );
+
   return (
     <>
       {posts.map((post) => (
@@ -74,7 +162,13 @@ export function SearchResultsFeed({
           density={density}
           isAuthorFollowed={followingUsersSet.has(post.user)}
           isFollowPending={pendingAuthors.has(post.user)}
+          isLiked={likedPostIdsSet.has(post.id)}
+          isLikePending={pendingLikePostIds.has(post.id)}
+          isSaved={savedPostIdsSet.has(post.id)}
+          isSavePending={pendingSavePostIds.has(post.id)}
           onFollowToggle={toggleFollow}
+          onLikeToggle={toggleLike}
+          onSaveToggle={toggleSave}
         />
       ))}
 

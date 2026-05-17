@@ -41,7 +41,13 @@ type PostCardProps = {
   density: Density;
   isAuthorFollowed: boolean;
   isFollowPending?: boolean;
+  isLiked: boolean;
+  isLikePending?: boolean;
+  isSaved: boolean;
+  isSavePending?: boolean;
   onFollowToggle: (author: string, nextFollowing: boolean) => Promise<void>;
+  onLikeToggle: (postId: number, nextLiked: boolean) => Promise<void>;
+  onSaveToggle: (postId: number, nextSaved: boolean) => Promise<void>;
 };
 
 const POST_CARD_EXPANDED_EVENT = "foody:post-card-expanded";
@@ -127,11 +133,15 @@ export function PostCard({
   density,
   isAuthorFollowed,
   isFollowPending = false,
+  isLiked,
+  isLikePending = false,
+  isSaved,
+  isSavePending = false,
   onFollowToggle,
+  onLikeToggle,
+  onSaveToggle,
 }: PostCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [photoIndicatorIdx, setPhotoIndicatorIdx] = useState(0);
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
@@ -150,7 +160,7 @@ export function PostCard({
   const viewportSize = useViewportSize();
   const photoRatio = getPhotoRatio(density, viewportSize);
   const [mainTag, ...restTags] = post.tags;
-  const likeCount = post.likes + (liked ? 1 : 0);
+  const likeCount = post.likes + (isLiked ? 1 : 0);
   const hasPhotoSlider = post.photos > 1;
   const lastPhotoIdx = post.photos - 1;
   const canDragToPreviousPhoto = photoIdx > 0;
@@ -283,11 +293,11 @@ export function PostCard({
   }
 
   function handleLikeClick() {
-    setLiked((currentLiked) => !currentLiked);
+    void onLikeToggle(post.id, !isLiked);
   }
 
   function handleSaveClick() {
-    setSaved((currentSaved) => !currentSaved);
+    void onSaveToggle(post.id, !isSaved);
   }
 
   function handleCommentClick() {
@@ -449,12 +459,14 @@ export function PostCard({
   };
   const engagement = {
     commentPulse,
+    likePending: isLikePending,
     likeCount,
-    liked,
+    liked: isLiked,
+    savePending: isSavePending,
     onCommentClick: handleCommentClick,
     onLikeClick: handleLikeClick,
     onSaveClick: handleSaveClick,
-    saved,
+    saved: isSaved,
   };
 
   return (

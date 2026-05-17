@@ -13,7 +13,9 @@ import {
   getSingleSearchParam,
   normalizeSearchQuery,
 } from "@/lib/search";
+import { getSavedPostIds } from "@/lib/server/bookmark-store";
 import { getFollowedUsers } from "@/lib/server/follow-store";
+import { getLikedPostIds } from "@/lib/server/like-store";
 
 const TWEAKS: Tweaks = DEFAULT_TWEAKS;
 
@@ -31,6 +33,8 @@ export default async function SearchResultsPage({
   const normalizedQuery = normalizeSearchQuery(query);
   const matchingPosts = filterPostsBySearchQuery(POSTS, query);
   const followingUsers = await getFollowedUsers(CURRENT_USER.handle);
+  const likedPostIds = await getLikedPostIds(CURRENT_USER.handle);
+  const savedPostIds = await getSavedPostIds(CURRENT_USER.handle);
 
   return (
     <main className="absolute inset-0 overflow-hidden">
@@ -48,6 +52,8 @@ export default async function SearchResultsPage({
               currentUser={CURRENT_USER.handle}
               density={TWEAKS.density}
               initialFollowingUsers={followingUsers}
+              initialLikedPostIds={likedPostIds}
+              initialSavedPostIds={savedPostIds}
               posts={matchingPosts}
             />
           ) : (
