@@ -195,7 +195,7 @@ export function CommentsSheet({
             aria-modal="true"
             aria-labelledby="comments-sheet-title"
             className={cn(
-              "flex h-[min(86dvh,46rem)] w-full max-w-[33rem] flex-col overflow-hidden rounded-t-[30px] bg-white text-[#020403]",
+              "flex h-[min(86dvh,46rem)] w-full max-w-[33rem] flex-col overflow-hidden rounded-t-[30px] bg-white font-sans text-[#020403]",
               "shadow-[0_-18px_54px_rgba(0,0,0,0.24)] ring-1 ring-black/[0.04]",
               "max-[430px]:h-[88dvh] max-[430px]:rounded-t-[28px]"
             )}
@@ -213,10 +213,10 @@ export function CommentsSheet({
               <div className="flex items-center justify-between gap-4">
                 <h2
                   id="comments-sheet-title"
-                  className="min-w-0 text-[22px] leading-tight font-extrabold tracking-normal text-black"
+                  className="min-w-0 text-[20px] leading-tight font-extrabold tracking-normal text-black"
                 >
                   Комментарии{" "}
-                  <span className="align-baseline text-[15px] font-extrabold text-[#98A1AA] tabular-nums">
+                  <span className="align-baseline text-[11px] font-extrabold text-[#98A1AA] tabular-nums">
                     {visibleCommentsCount}
                   </span>
                 </h2>
@@ -279,14 +279,14 @@ export function CommentsSheet({
                   size={40}
                   className="mb-0.5"
                 />
-                <div className="flex min-h-10 flex-1 items-center rounded-full bg-[#F3F5F6] px-4 py-2 transition-colors focus-within:bg-[#EFF2F0]">
+                <div className="flex min-h-10 min-w-0 flex-1 items-start overflow-hidden rounded-[20px] bg-[#F3F5F6] px-4 py-2 transition-colors focus-within:bg-[#EFF2F0]">
                   <textarea
                     ref={textareaRef}
                     rows={1}
                     value={draft}
                     aria-label="Добавить комментарий"
                     placeholder="Добавить комментарий..."
-                    className="hide-scroll max-h-[7.5rem] min-h-6 w-full resize-none bg-transparent p-0 font-[family-name:var(--font-roboto)] text-[16px] leading-6 font-medium text-[#15291C] outline-none placeholder:text-[#8F98A3]"
+                    className="hide-scroll block max-h-[7.5rem] min-h-6 w-full min-w-0 resize-none overflow-x-hidden bg-transparent p-0 font-[family-name:var(--font-roboto)] text-[15px] leading-6 font-medium break-words whitespace-pre-wrap text-[#15291C] outline-none placeholder:text-[#8F98A3]"
                     onChange={(event) => setDraft(event.target.value)}
                     onKeyDown={handleDraftKeyDown}
                   />
@@ -318,6 +318,12 @@ function CommentRow({
   shouldReduceMotion,
 }: CommentRowProps) {
   const shouldAnimate = canAnimate(shouldReduceMotion);
+  const [liked, setLiked] = useState(Boolean(comment.liked));
+  const likeCount = comment.likes + (liked ? 1 : 0) - (comment.liked ? 1 : 0);
+
+  function handleLikeClick() {
+    setLiked((currentLiked) => !currentLiked);
+  }
 
   return (
     <article
@@ -330,15 +336,15 @@ function CommentRow({
 
       <div className="min-w-0">
         <div className="flex min-w-0 items-baseline gap-2">
-          <span className="truncate text-[17px] leading-tight font-extrabold tracking-normal text-black">
+          <span className="truncate text-[15.5px] leading-tight font-extrabold tracking-normal text-black">
             {comment.realName}
           </span>
-          <span className="shrink-0 text-[13px] leading-tight font-bold text-[#99A1AB]">
+          <span className="shrink-0 text-[12px] leading-tight font-bold text-[#99A1AB]">
             {comment.when}
           </span>
         </div>
 
-        <p className="mt-1 font-[family-name:var(--font-roboto)] text-[17px] leading-[1.42] font-medium text-black">
+        <p className="mt-1 font-[family-name:var(--font-roboto)] text-[15.5px] leading-[1.46] font-medium text-black">
           {comment.replyTo && (
             <>
               <span className="font-bold" style={{ color: brand }}>
@@ -349,31 +355,42 @@ function CommentRow({
           {comment.text}
         </p>
 
-        <button
+        <motion.button
           type="button"
-          className="mt-2 cursor-pointer border-0 bg-transparent p-0 text-[13.5px] leading-tight font-extrabold text-[#65707A] outline-none transition-colors hover:text-[#15291C] focus-visible:ring-2 focus-visible:ring-black/10"
+          className="mt-2 origin-left cursor-pointer border-0 bg-transparent p-0 text-[12.5px] leading-tight font-extrabold text-[#65707A] outline-none transition-colors hover:text-[#15291C] focus-visible:ring-2 focus-visible:ring-black/10"
+          whileHover={shouldAnimate ? { x: 2 } : undefined}
+          whileTap={shouldAnimate ? { scale: 0.94, x: 4 } : undefined}
+          transition={{ duration: 0.16, ease: "easeOut" }}
           onClick={() => onReply(comment)}
         >
           Ответить
-        </button>
+        </motion.button>
       </div>
 
-      <motion.button
+      <button
         type="button"
         aria-label="Нравится комментарий"
+        aria-pressed={liked}
         className="mt-1 flex h-11 w-8 cursor-pointer flex-col items-center justify-start rounded-full border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-black/10"
-        whileTap={shouldAnimate ? { scale: 0.9 } : undefined}
+        onClick={handleLikeClick}
       >
-        <Heart
-          className="size-5"
-          strokeWidth={2}
-          color={comment.liked ? HEART_COLOR : "#8B949E"}
-          fill={comment.liked ? HEART_COLOR : "none"}
-        />
-        <span className="mt-0.5 text-[12px] leading-none font-bold text-[#65707A] tabular-nums">
-          {comment.likes}
+        <motion.span
+          className="grid size-5 place-items-center"
+          whileTap={shouldAnimate ? { scale: 0.84 } : undefined}
+          animate={liked ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+        >
+          <Heart
+            className="size-5"
+            strokeWidth={2}
+            color={liked ? HEART_COLOR : "#8B949E"}
+            fill={liked ? HEART_COLOR : "none"}
+          />
+        </motion.span>
+        <span className="mt-0.5 text-[11px] leading-none font-bold text-[#65707A] tabular-nums">
+          {likeCount}
         </span>
-      </motion.button>
+      </button>
     </article>
   );
 }
