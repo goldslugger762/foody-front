@@ -33,7 +33,7 @@ type SharedPostCardViewProps = {
     EngagementBarProps,
     "brand" | "fullscreen" | "post" | "shouldReduceMotion"
   >;
-  onTagClick: () => void;
+  onTagClick: (tag: string) => void;
 };
 
 type CollapsedPostCardViewProps = SharedPostCardViewProps & {

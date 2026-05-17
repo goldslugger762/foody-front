@@ -1,5 +1,3 @@
-import type { KeyboardEvent } from "react";
-
 import { cn } from "@/lib/utils";
 
 import { canAnimate } from "./post-card-shared";
@@ -9,7 +7,7 @@ type PostTagsProps = {
   restTags: string[];
   brand: string;
   shouldReduceMotion: boolean | null;
-  onTagClick: () => void;
+  onTagClick: (tag: string) => void;
 };
 
 export function PostTags({
@@ -30,7 +28,7 @@ export function PostTags({
           <TagButton
             isMain
             brand={brand}
-            onClick={onTagClick}
+            onClick={() => onTagClick(mainTag)}
             shouldReduceMotion={shouldReduceMotion}
           >
             {mainTag}
@@ -40,7 +38,7 @@ export function PostTags({
           <TagButton
             key={tag}
             brand={brand}
-            onClick={onTagClick}
+            onClick={() => onTagClick(tag)}
             shouldReduceMotion={shouldReduceMotion}
           >
             {tag}
@@ -66,18 +64,10 @@ function TagButton({
   shouldReduceMotion,
   onClick,
 }: TagButtonProps) {
-  function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      onClick();
-    }
-  }
-
   return (
     <button
       type="button"
       onClick={onClick}
-      onKeyDown={handleKeyDown}
       className={cn(
         "origin-center cursor-pointer select-none border-0 outline-none",
         "inline-flex items-center justify-center rounded-full",

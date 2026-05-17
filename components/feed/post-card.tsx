@@ -30,6 +30,7 @@ import {
   type PhotoDirection,
 } from "@/components/feed/post-card/photo-carousel";
 import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
+import { useSearchSubmit } from "@/components/search/use-search-submit";
 import type { Density, Post } from "@/lib/mock-data";
 
 type PostCardProps = {
@@ -130,6 +131,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
   const [morePulse, triggerMorePulse] = usePulse();
   const [commentPulse, triggerCommentPulse] = usePulse();
   const shouldReduceMotion = useReducedMotion();
+  const submitSearchQuery = useSearchSubmit();
 
   const viewportSize = useViewportSize();
   const photoRatio = getPhotoRatio(density, viewportSize);
@@ -287,8 +289,8 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     triggerMorePulse();
   }
 
-  function handleTagClick() {
-    // Future search navigation will attach here.
+  function handleTagClick(tag: string) {
+    submitSearchQuery(tag);
   }
 
   function handlePhotoDragStart() {
