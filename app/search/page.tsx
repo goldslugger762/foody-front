@@ -16,7 +16,7 @@ export default function SearchPage() {
     <main className="absolute inset-0 overflow-hidden">
       <div className="absolute inset-0 flex flex-col pt-12.5">
         <div className="hide-scroll flex-1 overflow-y-auto pb-25">
-          <SearchHeader brand={TWEAKS.brand} />
+          <SearchHeader />
           <CategoryPicker brand={TWEAKS.brand} />
           <RecentSearches initial={RECENT_SEARCHES} />
           <PopularTags tags={POPULAR_TAGS} brand={TWEAKS.brand} />

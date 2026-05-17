@@ -7,14 +7,10 @@ import { GlassSurface } from "@/components/feed/glass-surface";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type SearchHeaderProps = {
-  brand: string;
-};
-
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 
-export function SearchHeader({ brand }: SearchHeaderProps) {
+export function SearchHeader() {
   const [query, setQuery] = useState("");
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -34,7 +30,7 @@ export function SearchHeader({ brand }: SearchHeaderProps) {
         className="h-[50px] rounded-[18px] ring-0 ring-transparent transition-shadow duration-150 focus-within:ring-2 focus-within:ring-[var(--search-focus-ring)] focus-within:after:border-[rgba(21,41,28,0.16)]"
         style={
           {
-            "--search-focus-ring": `${brand}2B`,
+            "--search-focus-ring": "rgba(34,139,34,0.18)",
           } as CSSProperties
         }
         highlight
