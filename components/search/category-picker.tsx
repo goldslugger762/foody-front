@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, UtensilsCrossed } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -26,11 +26,11 @@ export function CategoryPicker({ brand }: CategoryPickerProps) {
           aria-hidden="true"
           className="grid size-8 place-items-center rounded-[10px] text-[17px] leading-none"
           style={{
-            background: brand,
+            background: `${brand}66`,
             boxShadow: `0 4px 12px ${brand}55`,
           }}
         >
-          ✨
+          <UtensilsCrossed size={17} strokeWidth={2.4} color="#15291C" />
         </span>
         <span className="flex flex-1 flex-col">
           <span className="text-[11px] leading-tight font-semibold tracking-[0.3px] text-[#5C6B62] uppercase">
