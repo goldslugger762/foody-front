@@ -28,7 +28,13 @@ type TabItem = {
 const TABS: TabItem[] = [
   { id: "feed", label: "Лента", icon: Rows3, href: "/" },
   { id: "search", label: "Поиск", icon: Search, href: "/search" },
-  { id: "add", label: "Создать пост", icon: Plus, primary: true, href: "/new-review" },
+  {
+    id: "add",
+    label: "Создать пост",
+    icon: Plus,
+    primary: true,
+    href: "/new-review",
+  },
   { id: "saved", label: "Избранное", icon: Bookmark },
   { id: "me", label: "Профиль", icon: User },
 ];
@@ -65,7 +71,7 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
     return pathname === t.href || pathname.startsWith(`${t.href}/`);
   };
 
-  if (isPostCardExpanded) {
+  if (isPostCardExpanded || pathname === "/new-review") {
     return null;
   }
 

@@ -33,7 +33,7 @@ const FIELD_SURFACE_CLASSES = cn(
   "focus-within:ring-2 focus-within:ring-[#15291C]/12 focus-within:shadow-[0_10px_24px_rgba(20,40,28,0.1),inset_1px_1px_0_rgba(255,255,255,0.78)]"
 );
 const FIELD_INPUT_CLASSES =
-  "h-full border-0 bg-transparent px-3.5 py-0 text-[15.5px] font-semibold text-[#15291C] shadow-none outline-none placeholder:text-[#8A958E] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15.5px]";
+  "h-full border-0 bg-transparent px-3.5 py-0 text-[15.5px] leading-[50px] font-semibold text-[#15291C] shadow-none outline-none placeholder:text-[#8A958E] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15.5px]";
 
 type NewReviewFormProps = {
   brand: string;
@@ -65,6 +65,7 @@ function ReviewField({
       </span>
       <GlassSurface
         className={FIELD_SURFACE_CLASSES}
+        contentClassName="h-full"
         tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
         highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
       >
@@ -359,8 +360,8 @@ export function NewReviewForm({ brand }: NewReviewFormProps) {
   }
 
   return (
-    <main className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 flex flex-col pt-12.5">
+    <main className="absolute inset-0 overflow-hidden bg-[#F3F6F2]">
+      <div className="absolute inset-0 flex flex-col bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(239,245,240,0.96))] pt-12.5">
         <section
           aria-label="Новый отзыв"
           className="hide-scroll flex-1 overflow-y-auto px-[18px] pb-25"
@@ -408,6 +409,7 @@ export function NewReviewForm({ brand }: NewReviewFormProps) {
               <div className="space-y-1.5">
                 <GlassSurface
                   className={FIELD_SURFACE_CLASSES}
+                  contentClassName="h-full"
                   tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
                 >
@@ -421,6 +423,7 @@ export function NewReviewForm({ brand }: NewReviewFormProps) {
                 </GlassSurface>
                 <GlassSurface
                   className={FIELD_SURFACE_CLASSES}
+                  contentClassName="h-full"
                   tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
                 >
