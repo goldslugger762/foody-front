@@ -101,12 +101,11 @@ export function FeedHeader({
           {isLoggedIn ? (
             <button
               type="button"
-              className="inline-flex h-9 max-w-[140px] cursor-pointer items-center gap-[7px] rounded-full bg-[rgba(20,40,28,0.06)] py-0 pr-2.5 pl-1 text-[12.5px] font-bold tracking-[-0.1px] text-[#15291C] max-[409px]:max-w-[96px] max-[409px]:gap-1.5 max-[409px]:pr-2 max-[409px]:text-[11px]"
+              aria-label={currentUser}
+              title={currentUser}
+              className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-transparent p-0 text-[#15291C] outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
             >
-              <UserAvatar name={currentUser} size={28} />
-              <span className="overflow-hidden text-ellipsis whitespace-nowrap">
-                {currentUser}
-              </span>
+              <UserAvatar name={currentUser} size={32} className="shadow-none" />
             </button>
           ) : (
             <Button
@@ -118,7 +117,7 @@ export function FeedHeader({
                 canAnimate(shouldReduceMotion) && "active:scale-[0.94]"
               )}
               style={{
-                background: `linear-gradient(rgba(255,255,255,0.10), rgba(255,255,255,0.05)) padding-box, linear-gradient(135deg, ${brand}99, #00800095   ) border-box`,
+                background: `linear-gradient(rgba(255,255,255,0.10), rgba(255,255,255,0.0)) padding-box, linear-gradient(135deg, ${brand}99, #00800095   ) border-box`,
                 boxShadow:
                   "0 8px 18px rgba(8,58,33,0.17), inset 0 1px 0 rgba(255,255,255,0.58), inset 0 -1px 0 rgba(255,255,255,0.18)",
               }}
