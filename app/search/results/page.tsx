@@ -1,6 +1,7 @@
 import { SearchResultsHeader } from "@/components/search/search-results-header";
 import { GlassSurface } from "@/components/feed/glass-surface";
 import { PostCard } from "@/components/feed/post-card";
+import { SaveRecentSearchQuery } from "@/components/search/save-recent-search-query";
 import {
   DEFAULT_TWEAKS,
   POSTS,
@@ -30,6 +31,7 @@ export default async function SearchResultsPage({
 
   return (
     <main className="absolute inset-0 overflow-hidden">
+      <SaveRecentSearchQuery query={query} />
       <div className="absolute inset-0 flex flex-col pt-12.5">
         <SearchResultsHeader key={query.trim()} initialQuery={query.trim()} />
 

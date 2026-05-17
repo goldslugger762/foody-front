@@ -21,10 +21,7 @@ export function SearchHistory({ brand, popularTags }: SearchHistoryProps) {
   const [query, setQuery] = useState("");
   const recentQueries = useRecentSearchQueries();
 
-  const handleSubmitted = useCallback((nextQuery: string) => {
-    setQuery(nextQuery);
-  }, []);
-  const handleSubmitQuery = useSearchSubmit({ onSubmitted: handleSubmitted });
+  const handleSubmitQuery = useSearchSubmit();
 
   const handleChangeRecentQueries = useCallback((queries: string[]) => {
     saveRecentQueries(queries);
