@@ -49,9 +49,8 @@ export function SearchResultsHeader({
           title="Назад"
           onClick={handleBackClick}
           className={cn(
-            "grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-white/55 bg-transparent p-0 text-[#15291C] outline-none",
-            "shadow-[inset_1px_1px_0_rgba(255,255,255,0.76),inset_-1px_-1px_0_rgba(255,255,255,0.26),0_8px_20px_rgba(20,40,28,0.08)]",
-            "backdrop-blur-[18px] backdrop-saturate-[180%] transition-colors duration-150 hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+            "grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(20,40,28,0.11)] p-0 text-[#3A4A40] outline-none",
+            "transition-transform duration-150 ease-out active:scale-[0.94] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [-webkit-tap-highlight-color:transparent]"
           )}
           whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
         >
