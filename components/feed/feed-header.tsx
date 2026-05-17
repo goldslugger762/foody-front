@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 
 import { GlassSurface } from "@/components/feed/glass-surface";
@@ -40,16 +41,15 @@ export function FeedHeader({
       <GlassSurface className="h-13">
         <div className="flex h-13 items-center gap-2 pr-2 pl-3 max-[409px]:gap-1 max-[409px]:pr-1.5 max-[409px]:pl-2">
           <div className="flex shrink-0 items-center gap-1.5 pr-0.5 max-[409px]:gap-1 max-[409px]:pr-0">
-            <span
+            <Image
+              src="/Foody_LOGO.webp"
+              alt=""
               aria-hidden="true"
-              className="grid size-6 place-items-center rounded-[8px] text-[13px] leading-none max-[409px]:size-5 max-[409px]:rounded-[7px] max-[409px]:text-[11px]"
-              style={{
-                background: `linear-gradient(135deg, ${brand}, #1FA85C)`,
-                boxShadow: `0 4px 12px ${brand}55`,
-              }}
-            >
-              🍴
-            </span>
+              width={36}
+              height={36}
+              className="size-9 shrink-0 object-contain max-[409px]:size-7.5"
+              priority
+            />
             <span className="font-sans text-[18px] font-black tracking-[-0.2px] text-[#15291C] max-[409px]:text-[14.5px]">
               Foody
             </span>
