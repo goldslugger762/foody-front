@@ -364,7 +364,7 @@ function CommentRow({
         <p className="mt-1 font-[family-name:var(--font-roboto)] text-[15.5px] leading-[1.46] font-medium text-black">
           {comment.replyTo && (
             <>
-              <span className="font-bold" style={{ color: brand }}>
+              <span className="font-medium" style={{ color: brand }}>
                 {getDisplayHandle(comment.replyTo)}
               </span>{" "}
             </>
