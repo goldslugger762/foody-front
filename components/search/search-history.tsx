@@ -20,6 +20,10 @@ type SearchHistoryProps = {
   popularTags: string[];
 };
 
+function getQueryKey(query: string) {
+  return query.trim().toLowerCase();
+}
+
 function normalizeQueries(queries: unknown): string[] {
   if (!Array.isArray(queries)) return [];
 
@@ -28,7 +32,14 @@ function normalizeQueries(queries: unknown): string[] {
     if (recent.length >= MAX_RECENT_QUERIES) return recent;
 
     const query = value.trim();
-    if (query.length === 0 || recent.includes(query)) return recent;
+    const queryKey = getQueryKey(query);
+
+    if (
+      queryKey.length === 0 ||
+      recent.some((item) => getQueryKey(item) === queryKey)
+    ) {
+      return recent;
+    }
 
     return [...recent, query];
   }, []);
@@ -38,7 +49,10 @@ function getNextRecentQueries(current: string[], query: string) {
   const trimmedQuery = query.trim();
   if (trimmedQuery.length === 0) return current;
 
-  const withoutDuplicate = current.filter((item) => item !== trimmedQuery);
+  const queryKey = getQueryKey(trimmedQuery);
+  const withoutDuplicate = current.filter(
+    (item) => getQueryKey(item) !== queryKey
+  );
 
   return [trimmedQuery, ...withoutDuplicate].slice(0, MAX_RECENT_QUERIES);
 }
