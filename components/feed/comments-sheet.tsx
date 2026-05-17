@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Reply, SendHorizontal, X } from "lucide-react";
+import { ArrowRight, Heart, Reply, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   useEffect,
@@ -295,11 +295,28 @@ export function CommentsSheet({
                   type="submit"
                   aria-label="Отправить комментарий"
                   disabled={draft.trim().length === 0}
-                  className="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border-0 text-white shadow-[0_10px_20px_rgba(46,204,113,0.28)] outline-none transition-opacity disabled:cursor-default disabled:opacity-45"
-                  style={{ backgroundColor: brand }}
-                  whileTap={shouldAnimate && draft.trim() ? { scale: 0.9 } : undefined}
+                  className="relative grid size-11 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-full border border-transparent text-[#0B2F1D] shadow-[inset_1px_1px_0_rgba(255,255,255,0.18),inset_-1px_-1px_0_rgba(11,47,29,0.05)] outline-none backdrop-blur-[18px] backdrop-saturate-[180%] transition-opacity focus-visible:ring-2 focus-visible:ring-[#15291C]/18 disabled:cursor-default disabled:opacity-45 [-webkit-tap-highlight-color:transparent]"
+                  style={{
+                    boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)`,
+                  }}
+                  whileTap={shouldAnimate && draft.trim() ? { scale: 0.92 } : undefined}
                 >
-                  <SendHorizontal className="size-5" strokeWidth={2.4} />
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: `linear-gradient(140deg, color-mix(in srgb, ${brand} 92%, transparent), rgba(122,236,164,0.92), rgba(100,218,189,0.70), color-mix(in srgb, ${brand} 100%, transparent))`,
+                    }}
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-px rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.36),rgba(226,255,235,0.22))]"
+                  />
+                  <ArrowRight
+                    className="relative z-[1] size-5"
+                    color="#020403"
+                    strokeWidth={2.8}
+                  />
                 </motion.button>
               </form>
             </div>
