@@ -6,12 +6,14 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 
 import { FeedHeader, type FeedTab } from "@/components/feed/feed-header";
 import { GlassSurface } from "@/components/feed/glass-surface";
 import { PostCard } from "@/components/feed/post-card";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { CURRENT_USER } from "@/lib/current-user";
 import {
   requestFeed,
@@ -21,6 +23,9 @@ import {
 import { DEFAULT_TWEAKS, type Post, type Tweaks } from "@/lib/mock-data";
 
 const TWEAKS: Tweaks = DEFAULT_TWEAKS;
+const FEED_LOADING_OVERLAY_ENABLED = false;
+const FEED_LOADING_OVERLAY_STORAGE_KEY = "foody:feed-loading-overlay";
+const FEED_LOADING_OVERLAY_CHANGE_EVENT = "foody:feed-loading-overlay-change";
 
 type FeedLoadState = "loading" | "ready" | "error";
 
@@ -50,6 +55,64 @@ function FeedStatusCard({
   );
 }
 
+function getLoadingOverlayEnabledSnapshot() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  return window.localStorage.getItem(FEED_LOADING_OVERLAY_STORAGE_KEY) !== "off";
+}
+
+function subscribeToLoadingOverlayPreference(listener: () => void) {
+  window.addEventListener("storage", listener);
+  window.addEventListener(FEED_LOADING_OVERLAY_CHANGE_EVENT, listener);
+
+  return () => {
+    window.removeEventListener("storage", listener);
+    window.removeEventListener(FEED_LOADING_OVERLAY_CHANGE_EVENT, listener);
+  };
+}
+
+function useLoadingOverlayEnabled() {
+  return useSyncExternalStore(
+    subscribeToLoadingOverlayPreference,
+    getLoadingOverlayEnabledSnapshot,
+    () => true
+  );
+}
+
+function FeedLoadingOverlay({
+  onDisable,
+}: {
+  onDisable: () => void;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-13 bottom-24 z-20 grid place-items-center px-3.5">
+      <GlassSurface
+        aria-live="polite"
+        role="status"
+        className="pointer-events-auto w-full max-w-[260px] rounded-[20px] border border-white/68 bg-white/22 shadow-[0_14px_34px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.72)]"
+        contentClassName="flex items-center justify-between gap-3 px-4 py-3"
+        tintClassName="before:bg-white/28 before:backdrop-blur-[20px] before:backdrop-saturate-[180%]"
+      >
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Spinner className="size-5 shrink-0 text-[#1B7F45]" />
+          <span className="whitespace-nowrap text-[14px] font-extrabold tracking-[0px] text-[#15291C]">
+            Загрузка...
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onDisable}
+          className="shrink-0 cursor-pointer rounded-full bg-white/42 px-2.5 py-1 text-[10px] leading-none font-extrabold text-[#5C6B62] outline-none transition-colors hover:bg-white/62 focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+        >
+          Скрыть
+        </button>
+      </GlassSurface>
+    </div>
+  );
+}
+
 export default function FeedPage() {
   const [feedTab, setFeedTab] = useState<FeedTab>("new");
   const [currentUser, setCurrentUser] = useState<string | null>(
@@ -62,6 +125,7 @@ export default function FeedPage() {
   const [pendingAuthors, setPendingAuthors] = useState<Set<string>>(
     () => new Set()
   );
+  const loadingOverlayEnabled = useLoadingOverlayEnabled();
   const [notice, setNotice] = useState<string | null>(null);
   const followingUsersSet = useMemo(
     () => new Set(followingUsers),
@@ -142,6 +206,11 @@ export default function FeedPage() {
     void syncFeed(feedTab);
   }, [feedTab, syncFeed]);
 
+  const disableLoadingOverlay = useCallback(() => {
+    window.localStorage.setItem(FEED_LOADING_OVERLAY_STORAGE_KEY, "off");
+    window.dispatchEvent(new Event(FEED_LOADING_OVERLAY_CHANGE_EVENT));
+  }, []);
+
   const toggleFollow = useCallback(
     async (author: string, nextFollowing: boolean) => {
       if (!currentUser || pendingAuthors.has(author)) {
@@ -205,12 +274,7 @@ export default function FeedPage() {
           aria-label="Лента"
           className="hide-scroll flex-1 snap-y snap-mandatory overflow-y-auto pb-24"
         >
-          {feedLoadState === "loading" ? (
-            <FeedStatusCard
-              title="Загружаем ленту"
-              body="Собираем свежие посты и ваши подписки."
-            />
-          ) : feedLoadState === "error" ? (
+          {feedLoadState === "error" ? (
             <FeedStatusCard
               title="Лента не загрузилась"
               body="Можно попробовать ещё раз — состояние подписок не потеряется."
@@ -229,7 +293,7 @@ export default function FeedPage() {
                 onFollowToggle={toggleFollow}
               />
             ))
-          ) : (
+          ) : feedLoadState === "ready" ? (
             <FeedStatusCard
               title={feedTab === "subs" ? "Подписок пока нет" : "Постов пока нет"}
               body={
@@ -238,8 +302,12 @@ export default function FeedPage() {
                   : "Свежие рекомендации появятся здесь чуть позже."
               }
             />
-          )}
+          ) : null}
         </section>
+
+        {FEED_LOADING_OVERLAY_ENABLED && feedLoadState === "loading" && loadingOverlayEnabled ? (
+          <FeedLoadingOverlay onDisable={disableLoadingOverlay} />
+        ) : null}
 
         {notice && (
           <div className="pointer-events-none absolute right-4 bottom-[6.25rem] left-4 z-30 rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 text-center text-[13px] leading-tight font-bold text-[#15291C] shadow-[0_12px_24px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.8)] backdrop-blur-[20px]">
