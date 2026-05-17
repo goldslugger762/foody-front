@@ -4,10 +4,14 @@ import { useState } from "react";
 import { Clock, X } from "lucide-react";
 
 import { SectionHeader } from "@/components/search/section-header";
+import { cn } from "@/lib/utils";
 
 type RecentSearchesProps = {
   initial: string[];
 };
+
+const PRESS_CLASSES =
+  "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 
 export function RecentSearches({ initial }: RecentSearchesProps) {
   const [items, setItems] = useState(initial);
@@ -23,7 +27,10 @@ export function RecentSearches({ initial }: RecentSearchesProps) {
           <button
             type="button"
             onClick={() => setItems([])}
-            className="cursor-pointer border-0 bg-transparent p-1 text-[13px] font-semibold text-[#3A4A40]"
+            className={cn(
+              "cursor-pointer border-0 bg-transparent p-1 text-[13px] font-semibold text-[#3A4A40]",
+              PRESS_CLASSES
+            )}
           >
             Очистить
           </button>
@@ -35,7 +42,10 @@ export function RecentSearches({ initial }: RecentSearchesProps) {
           <div
             key={q}
             onClick={() => console.log("recent pick:", q)}
-            className="inline-flex h-[34px] cursor-pointer items-center gap-2 rounded-full border-[0.5px] border-white/60 bg-white/55 pr-1.5 pl-3 text-[13.5px] font-medium text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.6)] backdrop-blur-[20px] backdrop-saturate-[180%]"
+            className={cn(
+              "inline-flex h-[34px] cursor-pointer items-center gap-2 rounded-full border-[0.5px] border-white/70 bg-white/75 pr-1.5 pl-3 text-[13.5px] font-medium text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.72)] backdrop-blur-[20px] backdrop-saturate-[180%]",
+              PRESS_CLASSES
+            )}
           >
             <span>{q}</span>
             <button
@@ -45,7 +55,10 @@ export function RecentSearches({ initial }: RecentSearchesProps) {
                 e.stopPropagation();
                 setItems((prev) => prev.filter((x) => x !== q));
               }}
-              className="grid size-[22px] cursor-pointer place-items-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] text-[#3A4A40]"
+              className={cn(
+                "grid size-[22px] cursor-pointer place-items-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] text-[#3A4A40]",
+                PRESS_CLASSES
+              )}
             >
               <X size={10} strokeWidth={2.4} />
             </button>

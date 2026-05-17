@@ -2,9 +2,14 @@
 
 import { ChevronRight } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 type CategoryPickerProps = {
   brand: string;
 };
+
+const PRESS_CLASSES =
+  "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 
 export function CategoryPicker({ brand }: CategoryPickerProps) {
   return (
@@ -12,7 +17,10 @@ export function CategoryPicker({ brand }: CategoryPickerProps) {
       <button
         type="button"
         onClick={() => console.log("TODO: open categories screen")}
-        className="flex h-[52px] w-full cursor-pointer items-center gap-3 rounded-[18px] border-[0.5px] border-white/70 bg-white/60 px-4 text-left text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.7),inset_-1px_-1px_0_rgba(255,255,255,0.3),0_4px_14px_rgba(20,40,28,0.06)] backdrop-blur-[20px] backdrop-saturate-[180%]"
+        className={cn(
+          "flex h-[52px] w-full cursor-pointer items-center gap-3 rounded-[18px] border-[0.5px] border-white/70 bg-white/60 px-4 text-left text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.7),inset_-1px_-1px_0_rgba(255,255,255,0.3),0_4px_14px_rgba(20,40,28,0.06)] backdrop-blur-[20px] backdrop-saturate-[180%]",
+          PRESS_CLASSES
+        )}
       >
         <span
           aria-hidden="true"
