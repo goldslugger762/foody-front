@@ -50,11 +50,11 @@ export function SearchHeader() {
               aria-label="Очистить"
               onClick={() => setQuery("")}
               className={cn(
-                "grid size-[22px] cursor-pointer place-items-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] text-[#3A4A40]",
+                "flex size-[22px] shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] p-0 text-[#3A4A40]",
                 PRESS_CLASSES
               )}
             >
-              <X size={11} strokeWidth={2.4} />
+              <X className="size-[11px] shrink-0" strokeWidth={2.4} />
             </button>
           )}
         </div>
