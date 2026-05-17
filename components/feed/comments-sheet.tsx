@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -33,6 +34,12 @@ type CommentRowProps = {
   comment: PostComment;
   onReply: (comment: PostComment) => void;
   shouldReduceMotion: boolean | null;
+};
+
+type CreateCommentPayload = {
+  text: string;
+  replyToCommentId?: PostComment["id"];
+  replyToUser?: string;
 };
 
 const SHEET_TRANSITION = {
@@ -65,6 +72,117 @@ function getDisplayHandle(user: string) {
 
 function getAvatarInitial(name: string) {
   return (name || "?").replace("@", "").slice(0, 1).toUpperCase();
+}
+
+function getCommentIdKey(id: PostComment["id"]) {
+  return String(id);
+}
+
+function isSameComment(left: PostComment, right: PostComment) {
+  return (
+    getCommentIdKey(left.id) === getCommentIdKey(right.id) ||
+    (Boolean(left.clientId) && left.clientId === right.clientId)
+  );
+}
+
+function isCommentDescendantOf(
+  comment: PostComment,
+  ancestorId: PostComment["id"],
+  commentsById: Map<string, PostComment>
+) {
+  const ancestorKey = getCommentIdKey(ancestorId);
+  const visitedCommentIds = new Set<string>();
+  let currentParentId = comment.replyToCommentId;
+
+  while (currentParentId !== undefined) {
+    const currentParentKey = getCommentIdKey(currentParentId);
+
+    if (currentParentKey === ancestorKey) {
+      return true;
+    }
+
+    if (visitedCommentIds.has(currentParentKey)) {
+      return false;
+    }
+
+    visitedCommentIds.add(currentParentKey);
+    currentParentId = commentsById.get(currentParentKey)?.replyToCommentId;
+  }
+
+  return false;
+}
+
+function mergeCommentsWithSubmitted(
+  comments: PostComment[],
+  submittedComments: PostComment[]
+) {
+  const orderedComments = [...comments];
+
+  for (const submittedComment of submittedComments) {
+    if (
+      orderedComments.some((comment) => isSameComment(comment, submittedComment))
+    ) {
+      continue;
+    }
+
+    const parentCommentId = submittedComment.replyToCommentId;
+
+    if (parentCommentId === undefined) {
+      orderedComments.push(submittedComment);
+      continue;
+    }
+
+    const parentCommentIndex = orderedComments.findIndex(
+      (comment) => getCommentIdKey(comment.id) === getCommentIdKey(parentCommentId)
+    );
+
+    if (parentCommentIndex === -1) {
+      orderedComments.push(submittedComment);
+      continue;
+    }
+
+    const commentsById = new Map(
+      orderedComments.map((comment) => [getCommentIdKey(comment.id), comment])
+    );
+    let insertIndex = parentCommentIndex;
+
+    while (
+      insertIndex + 1 < orderedComments.length &&
+      isCommentDescendantOf(
+        orderedComments[insertIndex + 1],
+        parentCommentId,
+        commentsById
+      )
+    ) {
+      insertIndex += 1;
+    }
+
+    orderedComments.splice(insertIndex + 1, 0, submittedComment);
+  }
+
+  return orderedComments;
+}
+
+function createClientCommentId() {
+  if (globalThis.crypto?.randomUUID) {
+    return `local-${globalThis.crypto.randomUUID()}`;
+  }
+
+  return `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function createOptimisticComment(payload: CreateCommentPayload): PostComment {
+  const clientId = createClientCommentId();
+
+  return {
+    ...CURRENT_USER,
+    id: clientId,
+    clientId,
+    replyTo: payload.replyToUser,
+    replyToCommentId: payload.replyToCommentId,
+    status: "sent",
+    text: payload.text,
+  };
 }
 
 function CommentAvatar({
@@ -116,9 +234,20 @@ export function CommentsSheet({
   const [submittedComments, setSubmittedComments] = useState<PostComment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const shouldAnimate = canAnimate(shouldReduceMotion);
-  const visibleComments = [...comments, ...submittedComments];
+  const visibleComments = useMemo(
+    () => mergeCommentsWithSubmitted(comments, submittedComments),
+    [comments, submittedComments]
+  );
+  const unsyncedSubmittedCommentsCount = useMemo(
+    () =>
+      submittedComments.filter(
+        (submittedComment) =>
+          !comments.some((comment) => isSameComment(comment, submittedComment))
+      ).length,
+    [comments, submittedComments]
+  );
   const visibleCommentsCount = Math.max(
-    commentsCount + submittedComments.length,
+    commentsCount + unsyncedSubmittedCommentsCount,
     visibleComments.length
   );
 
@@ -205,15 +334,13 @@ export function CommentsSheet({
       return;
     }
 
-    setSubmittedComments((currentComments) => [
-      ...currentComments,
-      {
-        ...CURRENT_USER,
-        id: Date.now(),
-        replyTo: replyTarget?.user,
-        text,
-      },
-    ]);
+    const nextComment = createOptimisticComment({
+      text,
+      replyToCommentId: replyTarget?.id,
+      replyToUser: replyTarget?.user,
+    });
+
+    setSubmittedComments((currentComments) => [...currentComments, nextComment]);
     setDraft("");
     setReplyTarget(null);
   }
@@ -334,8 +461,16 @@ export function CommentsSheet({
                     ref={textareaRef}
                     rows={1}
                     value={draft}
-                    aria-label="Добавить комментарий"
-                    placeholder="Добавить комментарий..."
+                    aria-label={
+                      replyTarget
+                        ? `Ответить ${getDisplayHandle(replyTarget.user)}`
+                        : "Добавить комментарий"
+                    }
+                    placeholder={
+                      replyTarget
+                        ? `Ответить ${getDisplayHandle(replyTarget.user)}...`
+                        : "Добавить комментарий..."
+                    }
                     className="hide-scroll block max-h-[7.5rem] min-h-6 w-full min-w-0 resize-none overflow-x-hidden bg-transparent p-0 font-[family-name:var(--font-roboto)] text-[15px] leading-6 font-medium break-words whitespace-pre-wrap text-[#15291C] outline-none placeholder:text-[#8F98A3]"
                     onChange={(event) => setDraft(event.target.value)}
                     onKeyDown={handleDraftKeyDown}

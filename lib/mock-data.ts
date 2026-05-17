@@ -16,7 +16,7 @@ export type Post = {
 };
 
 export type PostComment = {
-  id: number;
+  id: number | string;
   user: string;
   realName: string;
   avatarUrl?: string;
@@ -25,6 +25,9 @@ export type PostComment = {
   likes: number;
   liked?: boolean;
   replyTo?: string;
+  replyToCommentId?: PostComment["id"];
+  clientId?: string;
+  status?: "sending" | "sent" | "failed";
 };
 
 export type Palette = "fresh" | "citrus" | "dusk";
@@ -134,6 +137,7 @@ export const COMMENTS_BY_POST_ID: Record<number, PostComment[]> = {
       realName: "Sarah Chen",
       when: "1 ч",
       replyTo: "@anna.kim",
+      replyToCommentId: 102,
       text: "Да, яйцо у них просто отпад!",
       likes: 2,
     },
@@ -153,6 +157,7 @@ export const COMMENTS_BY_POST_ID: Record<number, PostComment[]> = {
       realName: "Маша Петрова",
       when: "12 мин",
       replyTo: "@dasha.taste",
+      replyToCommentId: 201,
       text: "Скорее нежная, но вкус чая хорошо чувствуется. Сладость очень аккуратная.",
       likes: 11,
       liked: true,
@@ -192,6 +197,7 @@ export const COMMENTS_BY_POST_ID: Record<number, PostComment[]> = {
       realName: "Никита",
       when: "23 ч",
       replyTo: "@vera.meat",
+      replyToCommentId: 401,
       text: "Да, картофель тоже взял. Соус к нему отдельно просить обязательно.",
       likes: 4,
     },
