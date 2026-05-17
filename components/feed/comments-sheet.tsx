@@ -305,7 +305,7 @@ export function CommentsSheet({
                     aria-hidden="true"
                     className="absolute inset-0 rounded-full"
                     style={{
-                      background: `linear-gradient(140deg, color-mix(in srgb, ${brand} 92%, transparent), rgba(122,236,164,0.92), rgba(100,218,189,0.70), color-mix(in srgb, ${brand} 100%, transparent))`,
+                      background: `linear-gradient(140deg, color-mix(in srgb, ${brand} 60%, transparent), rgba(122,236,164,0.92), rgba(100,218,189,0.60), color-mix(in srgb, ${brand} 88%, transparent))`,
                     }}
                   />
                   <span
