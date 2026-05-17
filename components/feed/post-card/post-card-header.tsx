@@ -5,10 +5,14 @@ import {
   Share2,
   type LucideIcon,
 } from "lucide-react";
-import { motion, useAnimationControls } from "motion/react";
-import { type KeyboardEvent, type ReactNode, useState } from "react";
+import { motion } from "motion/react";
+import { type ReactNode } from "react";
 
 import { GlassSurface } from "@/components/feed/glass-surface";
+import {
+  FULLSCREEN_SUBSCRIBE_BUTTON,
+  SubscribeStyleButton,
+} from "@/components/feed/subscribe-style-button";
 import { UserAvatar } from "@/components/feed/user-avatar";
 import {
   DropdownMenu,
@@ -25,18 +29,10 @@ import {
   canAnimate,
 } from "./post-card-shared";
 
-const SUBSCRIBE_PRESS_TRANSITION = { duration: 0.08, ease: "easeOut" } as const;
-const SUBSCRIBE_RETURN_TRANSITION = {
-  damping: 28,
-  mass: 0.55,
-  stiffness: 520,
-  type: "spring",
-} as const;
 const SUBSCRIBE_STATE_TRANSITION = {
   duration: 0.24,
   ease: [0.22, 1, 0.36, 1],
 } as const;
-const SUBSCRIBE_STATE_SETTLE_MS = 240;
 const FULLSCREEN_COMPACT_AUTHOR_LENGTH = 11;
 const FULLSCREEN_SMALL_COMPACT_AUTHOR_LENGTH = 10;
 
@@ -51,19 +47,6 @@ const FULLSCREEN_HEADER_GLASS = {
     "after:border-[0.5px] after:border-white/55 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.76),inset_-1px_-1px_0_rgba(255,255,255,0.98)]",
   content:
     "flex min-h-13 items-center gap-2.5 px-2.5 py-2 max-[380px]:gap-2 max-[380px]:px-2",
-} as const;
-
-const FULLSCREEN_SUBSCRIBE_BUTTON = {
-  base:
-    "relative h-7 shrink-0 cursor-pointer select-none overflow-hidden rounded-full border border-transparent pt-px leading-none font-extrabold tracking-[0px] text-[#0B2F1D] outline-none backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [-webkit-tap-highlight-color:transparent]",
-  regular: "px-2.5 text-[10.5px]",
-  compact: "px-2 text-[9.75px]",
-  smallRegular: "max-[380px]:h-6 max-[380px]:px-1.5 max-[380px]:text-[8.75px]",
-  smallCompact: "max-[380px]:h-6.5 max-[380px]:px-2 max-[380px]:text-[9px]",
-  proCompact:
-    "[@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:h-7 [@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:px-2 [@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:text-[9px]",
-  largeCompact:
-    "[@media(min-width:401px)_and_(min-height:880px)]:h-7 [@media(min-width:401px)_and_(min-height:880px)]:px-1.75 [@media(min-width:401px)_and_(min-height:880px)]:text-[10.5px]",
 } as const;
 
 const FULLSCREEN_AUTHOR_TEXT = {
@@ -310,91 +293,20 @@ function SubscribeButton({
   subscribed,
   onToggle,
 }: SubscribeButtonProps) {
-  const scaleControls = useAnimationControls();
-  const [isAnimating, setIsAnimating] = useState(false);
   const shouldAnimate = canAnimate(shouldReduceMotion);
-  const isBusy = pending || isAnimating;
   const label = subscribed ? "Отписаться" : "Подписаться";
 
-  function pressSubscribeButton() {
-    if (!shouldAnimate || isBusy) {
-      return;
-    }
-
-    void scaleControls.start({
-      scale: 0.94,
-      transition: SUBSCRIBE_PRESS_TRANSITION,
-    });
-  }
-
-  function releaseSubscribeButton() {
-    if (!shouldAnimate) {
-      return;
-    }
-
-    void scaleControls.start({
-      scale: 1,
-      transition: SUBSCRIBE_RETURN_TRANSITION,
-    });
-  }
-
-  async function handleSubscribeClick() {
-    if (isBusy) {
-      return;
-    }
-
-    setIsAnimating(true);
-
-    if (!shouldAnimate) {
-      try {
-        await onToggle(author, !subscribed);
-      } finally {
-        setIsAnimating(false);
-      }
-
-      return;
-    }
-
-    try {
-      await scaleControls.start({
-        scale: 1,
-        transition: SUBSCRIBE_RETURN_TRANSITION,
-      });
-      await onToggle(author, !subscribed);
-    } finally {
-      window.setTimeout(() => {
-        setIsAnimating(false);
-      }, SUBSCRIBE_STATE_SETTLE_MS);
-    }
-  }
-
-  function handleSubscribeKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.repeat || (event.key !== "Enter" && event.key !== " ")) {
-      return;
-    }
-
-    pressSubscribeButton();
-  }
-
-  function handleSubscribeKeyUp(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    releaseSubscribeButton();
-  }
-
   return (
-    <motion.button
-      type="button"
-      aria-label={label}
-      aria-busy={pending}
-      aria-pressed={subscribed}
-      disabled={isBusy}
+    <SubscribeStyleButton
+      active={subscribed}
+      ariaBusy={pending}
+      ariaLabel={label}
+      ariaPressed={subscribed}
+      brand={brand}
+      disabled={pending}
+      shouldReduceMotion={shouldReduceMotion}
       title={label}
       className={cn(
-        FULLSCREEN_SUBSCRIBE_BUTTON.base,
-        "disabled:cursor-not-allowed disabled:opacity-70",
         shouldCompactAuthor
           ? FULLSCREEN_SUBSCRIBE_BUTTON.compact
           : FULLSCREEN_SUBSCRIBE_BUTTON.regular,
@@ -406,50 +318,11 @@ function SubscribeButton({
         shouldCompactAuthor &&
           FULLSCREEN_SUBSCRIBE_BUTTON.largeCompact
       )}
-      animate={scaleControls}
-      initial={{ scale: 1 }}
-      onClick={handleSubscribeClick}
-      onKeyDown={handleSubscribeKeyDown}
-      onKeyUp={handleSubscribeKeyUp}
-      onPointerCancel={releaseSubscribeButton}
-      onPointerDown={pressSubscribeButton}
-      onPointerLeave={releaseSubscribeButton}
-      onPointerUp={releaseSubscribeButton}
-      style={{
-        boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)`,
-      }}
+      onClick={() => onToggle(author, !subscribed)}
     >
-      <motion.span
-        aria-hidden="true"
-        className="absolute inset-0 rounded-full"
-        animate={{ opacity: subscribed ? 1 : 0 }}
-        transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
-        style={{
-          background: `linear-gradient(120deg, ${brand}E6, rgba(122,236,164,0.78), rgba(100,218,189,0.66), ${brand}A8)`,
-        }}
-      />
-      <motion.span
-        aria-hidden="true"
-        className="absolute inset-px rounded-full"
-        animate={{ opacity: subscribed ? 0 : 1 }}
-        transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
-        style={{
-          background: `linear-gradient(135deg, ${brand}72 0%, rgba(189,247,208,0.68) 85%, ${brand}35 100%)`,
-        }}
-      />
-      <motion.span
-        aria-hidden="true"
-        className="absolute inset-px rounded-full"
-        animate={{ opacity: subscribed ? 1 : 0 }}
-        transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.82), rgba(226,255,235,0.78))",
-        }}
-      />
       <span
         aria-hidden="true"
-        className="relative z-[1] grid place-items-center"
+        className="grid place-items-center"
       >
         <motion.span
           className="[grid-area:1/1] whitespace-nowrap"
@@ -472,7 +345,7 @@ function SubscribeButton({
           Отписаться
         </motion.span>
       </span>
-    </motion.button>
+    </SubscribeStyleButton>
   );
 }
 

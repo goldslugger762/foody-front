@@ -28,7 +28,7 @@ type TabItem = {
 const TABS: TabItem[] = [
   { id: "feed", label: "Лента", icon: Rows3, href: "/" },
   { id: "search", label: "Поиск", icon: Search, href: "/search" },
-  { id: "add", label: "Создать пост", icon: Plus, primary: true },
+  { id: "add", label: "Создать пост", icon: Plus, primary: true, href: "/new-review" },
   { id: "saved", label: "Избранное", icon: Bookmark },
   { id: "me", label: "Профиль", icon: User },
 ];
@@ -80,50 +80,70 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
             const isActive = isActiveTab(t);
 
             if (t.primary) {
+              const primaryIcon = (
+                <svg
+                  width="50"
+                  height="50"
+                  viewBox="0 0 50 50"
+                  className="block [@media(max-width:430px)_and_(max-height:860px)]:size-11"
+                  aria-hidden="true"
+                >
+                  <defs>
+                    <linearGradient
+                      id="plusRingF"
+                      x1="0"
+                      y1="0"
+                      x2="1"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor={brand} />
+                      <stop offset="100%" stopColor="#1FA85C" />
+                    </linearGradient>
+                  </defs>
+                  <circle
+                    cx="25"
+                    cy="25"
+                    r="23"
+                    fill="none"
+                    stroke="url(#plusRingF)"
+                    strokeWidth="2.5"
+                  />
+                  <path
+                    d="M25 16v18M16 25h18"
+                    stroke="url(#plusRingF)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              );
+
               return (
                 <li key={t.id} className="grid min-w-0 place-items-center">
-                  <motion.button
-                    type="button"
-                    aria-label={t.label}
-                    whileTap={{ scale: 0.85 }}
-                    className="grid size-[50px] cursor-pointer place-items-center border-0 bg-transparent p-0 [@media(max-width:430px)_and_(max-height:860px)]:size-11"
-                    style={{ filter: `drop-shadow(0 6px 14px ${brand}55)` }}
-                  >
-                    <svg
-                      width="50"
-                      height="50"
-                      viewBox="0 0 50 50"
-                      className="block [@media(max-width:430px)_and_(max-height:860px)]:size-11"
-                      aria-hidden="true"
+                  {t.href ? (
+                    <Link
+                      href={t.href}
+                      aria-label={t.label}
+                      className="grid size-[50px] cursor-pointer place-items-center border-0 bg-transparent p-0 [@media(max-width:430px)_and_(max-height:860px)]:size-11"
+                      style={{ filter: `drop-shadow(0 6px 14px ${brand}55)` }}
                     >
-                      <defs>
-                        <linearGradient
-                          id="plusRingF"
-                          x1="0"
-                          y1="0"
-                          x2="1"
-                          y2="1"
-                        >
-                          <stop offset="0%" stopColor={brand} />
-                          <stop offset="100%" stopColor="#1FA85C" />
-                        </linearGradient>
-                      </defs>
-                      <circle
-                        cx="25"
-                        cy="25"
-                        r="23"
-                        fill="none"
-                        stroke="url(#plusRingF)"
-                        strokeWidth="2.5"
-                      />
-                      <path
-                        d="M25 16v18M16 25h18"
-                        stroke="url(#plusRingF)"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </motion.button>
+                      <motion.span
+                        className="grid place-items-center"
+                        whileTap={{ scale: 0.85 }}
+                      >
+                        {primaryIcon}
+                      </motion.span>
+                    </Link>
+                  ) : (
+                    <motion.button
+                      type="button"
+                      aria-label={t.label}
+                      whileTap={{ scale: 0.85 }}
+                      className="grid size-[50px] cursor-pointer place-items-center border-0 bg-transparent p-0 [@media(max-width:430px)_and_(max-height:860px)]:size-11"
+                      style={{ filter: `drop-shadow(0 6px 14px ${brand}55)` }}
+                    >
+                      {primaryIcon}
+                    </motion.button>
+                  )}
                 </li>
               );
             }
