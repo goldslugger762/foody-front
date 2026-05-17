@@ -8,12 +8,13 @@ import { cn } from "@/lib/utils";
 type PopularTagsProps = {
   tags: string[];
   brand: string;
+  onSubmitQuery: (query: string) => void;
 };
 
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 
-export function PopularTags({ tags, brand }: PopularTagsProps) {
+export function PopularTags({ tags, brand, onSubmitQuery }: PopularTagsProps) {
   return (
     <div className="px-[18px] pb-7">
       <SectionHeader
@@ -28,7 +29,7 @@ export function PopularTags({ tags, brand }: PopularTagsProps) {
           <button
             key={tag}
             type="button"
-            onClick={() => console.log("popular tag:", tag)}
+            onClick={() => onSubmitQuery(tag)}
             className={cn(
               "inline-flex h-[30px] cursor-pointer items-center justify-center rounded-full border-[0.5px] border-transparent px-3 text-[12.5px] font-bold tracking-[0px] text-[#0E8A4F] outline-none backdrop-blur-[20px] backdrop-saturate-[180%]",
               "focus-visible:ring-2 focus-visible:ring-[#15291C]/18",

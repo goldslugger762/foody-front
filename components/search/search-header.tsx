@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type KeyboardEvent, useState } from "react";
+import { type CSSProperties, type KeyboardEvent } from "react";
 import { Search, X } from "lucide-react";
 
 import { GlassSurface } from "@/components/feed/glass-surface";
@@ -10,14 +10,29 @@ import { cn } from "@/lib/utils";
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 
-export function SearchHeader() {
-  const [query, setQuery] = useState("");
+type SearchHeaderProps = {
+  query: string;
+  onQueryChange: (query: string) => void;
+  onSubmitQuery: (query: string) => void;
+};
 
+export function SearchHeader({
+  query,
+  onQueryChange,
+  onSubmitQuery,
+}: SearchHeaderProps) {
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Enter" && query.trim().length === 0) {
+    if (event.key !== "Enter") return;
+
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length === 0) {
       event.preventDefault();
       event.stopPropagation();
+      return;
     }
+
+    onSubmitQuery(trimmedQuery);
   }
 
   return (
@@ -39,7 +54,7 @@ export function SearchHeader() {
           <Search size={20} strokeWidth={2} color="#5C6B62" />
           <Input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => onQueryChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Найти блюдо или ресторан"
             className="h-auto flex-1 border-0 bg-transparent p-0 text-[15.5px] font-medium text-[#15291C] shadow-none outline-none placeholder:text-[#5C6B62] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15.5px]"
@@ -48,7 +63,7 @@ export function SearchHeader() {
             <button
               type="button"
               aria-label="Очистить"
-              onClick={() => setQuery("")}
+              onClick={() => onQueryChange("")}
               className={cn(
                 "flex size-[22px] shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] p-0 text-[#3A4A40]",
                 PRESS_CLASSES
