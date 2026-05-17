@@ -5,6 +5,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -114,6 +115,7 @@ function FeedLoadingOverlay({
 }
 
 export default function FeedPage() {
+  const feedScrollRef = useRef<HTMLElement>(null);
   const [feedTab, setFeedTab] = useState<FeedTab>("new");
   const [currentUser, setCurrentUser] = useState<string | null>(
     CURRENT_USER.handle
@@ -132,6 +134,13 @@ export default function FeedPage() {
     [followingUsers]
   );
 
+  const scrollFeedToTop = useCallback(() => {
+    feedScrollRef.current?.scrollTo({
+      behavior: "auto",
+      top: 0,
+    });
+  }, []);
+
   const applyFeedResponse = useCallback((response: FeedResponse) => {
     setCurrentUser(response.currentUser);
     setFollowingUsers(response.followingUsers);
@@ -149,6 +158,7 @@ export default function FeedPage() {
 
         applyFeedResponse(response);
         setFeedLoadState("ready");
+        requestAnimationFrame(scrollFeedToTop);
       } catch {
         if (!isCurrent()) {
           return;
@@ -158,7 +168,7 @@ export default function FeedPage() {
         setNotice("Не удалось загрузить ленту. Проверьте соединение.");
       }
     },
-    [applyFeedResponse]
+    [applyFeedResponse, scrollFeedToTop]
   );
 
   useEffect(() => {
@@ -172,6 +182,7 @@ export default function FeedPage() {
 
         applyFeedResponse(response);
         setFeedLoadState("ready");
+        requestAnimationFrame(scrollFeedToTop);
       })
       .catch(() => {
         if (!isActive) {
@@ -185,7 +196,7 @@ export default function FeedPage() {
     return () => {
       isActive = false;
     };
-  }, [applyFeedResponse, feedTab]);
+  }, [applyFeedResponse, feedTab, scrollFeedToTop]);
 
   const handleTabChange = useCallback(
     (nextTab: FeedTab) => {
@@ -196,8 +207,9 @@ export default function FeedPage() {
       setFeedTab(nextTab);
       setFeedLoadState("loading");
       setNotice(null);
+      scrollFeedToTop();
     },
-    [feedTab]
+    [feedTab, scrollFeedToTop]
   );
 
   const retryFeed = useCallback(() => {
@@ -271,6 +283,7 @@ export default function FeedPage() {
         />
 
         <section
+          ref={feedScrollRef}
           aria-label="Лента"
           className="hide-scroll flex-1 snap-y snap-mandatory overflow-y-auto pb-24"
         >
