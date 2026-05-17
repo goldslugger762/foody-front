@@ -11,7 +11,7 @@ type RecentSearchesProps = {
 };
 
 const PRESS_CLASSES =
-  "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
+  "origin-center transition-transform duration-150 ease-out active:scale-[0.94] will-change-transform [-webkit-tap-highlight-color:transparent]";
 
 export function RecentSearches({ initial }: RecentSearchesProps) {
   const [items, setItems] = useState(initial);
@@ -28,7 +28,7 @@ export function RecentSearches({ initial }: RecentSearchesProps) {
             type="button"
             onClick={() => setItems([])}
             className={cn(
-              "cursor-pointer border-0 bg-transparent p-1 text-[13px] font-semibold text-[#3A4A40]",
+              "inline-flex cursor-pointer border-0 bg-transparent p-1 text-[13px] font-semibold text-[#3A4A40]",
               PRESS_CLASSES
             )}
           >
@@ -43,7 +43,7 @@ export function RecentSearches({ initial }: RecentSearchesProps) {
             key={q}
             onClick={() => console.log("recent pick:", q)}
             className={cn(
-              "inline-flex h-[34px] cursor-pointer items-center gap-2 rounded-full border-[0.5px] border-white/70 bg-white/75 pr-1.5 pl-3 text-[13.5px] font-medium text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.72)] backdrop-blur-[20px] backdrop-saturate-[180%]",
+              "inline-flex h-[34px] cursor-pointer items-center gap-2 rounded-full border-[0.5px] border-white/70 bg-neutral-100/69 pr-1.5 pl-3 text-[13.5px] font-medium text-[#15291C] shadow-[0_4px_12px_rgba(20,40,28,0.09),inset_1px_1px_0_rgba(255,255,255,0.72)] backdrop-blur-[20px] backdrop-saturate-[180%]",
               PRESS_CLASSES
             )}
           >

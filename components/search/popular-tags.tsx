@@ -18,13 +18,7 @@ export function PopularTags({ tags, brand }: PopularTagsProps) {
     <div className="px-[18px] pb-7">
       <SectionHeader
         icon={
-          <Flame
-            size={17}
-            strokeWidth={2.25}
-            color={brand}
-            fill={brand}
-            fillOpacity={0.18}
-          />
+          <Flame size={17} strokeWidth={2.25} color={brand} />
         }
         title="Популярное"
       />
@@ -42,7 +36,8 @@ export function PopularTags({ tags, brand }: PopularTagsProps) {
             )}
             style={{
               background: `linear-gradient(rgba(46,204,113,0.14), rgba(46,204,113,0.14)) padding-box, linear-gradient(135deg, ${brand}A8, rgba(115,232,159,0.72), rgba(100,218,189,0.46)) border-box`,
-              boxShadow: "inset 1px 1px 0 rgba(255,255,255,0.66)",
+              boxShadow:
+                "0 4px 12px rgba(20,40,28,0.09), inset 1px 1px 0 rgba(255,255,255,0.66)",
             }}
           >
             <span>#{tag}</span>
