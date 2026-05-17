@@ -28,6 +28,10 @@ type SharedPostCardViewProps = {
     PostCardHeaderProps,
     "morePulse" | "onMoreClick" | "onShareClick" | "sharePulse"
   >;
+  follow: Pick<
+    PostCardHeaderProps,
+    "currentUser" | "isAuthorFollowed" | "isFollowPending" | "onFollowToggle"
+  >;
   photoCarousel: Omit<PhotoCarouselProps, "post">;
   engagement: Omit<
     EngagementBarProps,
@@ -49,6 +53,7 @@ export function CollapsedPostCardView({
   headerActions,
   photoCarousel,
   engagement,
+  follow,
   onCardClick,
   onTagClick,
 }: CollapsedPostCardViewProps) {
@@ -64,6 +69,7 @@ export function CollapsedPostCardView({
     >
       <PostCardHeader
         {...headerActions}
+        {...follow}
         post={post}
         brand={brand}
         shouldReduceMotion={shouldReduceMotion}
@@ -104,6 +110,7 @@ export function ExpandedPostCardView({
   headerActions,
   photoCarousel,
   engagement,
+  follow,
   onBackClick,
   onTagClick,
 }: ExpandedPostCardViewProps) {
@@ -125,6 +132,7 @@ export function ExpandedPostCardView({
     >
       <PostCardHeader
         {...headerActions}
+        {...follow}
         expanded
         brand={brand}
         onBackClick={onBackClick}

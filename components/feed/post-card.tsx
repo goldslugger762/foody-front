@@ -37,7 +37,11 @@ import { COMMENTS_BY_POST_ID, type Density, type Post } from "@/lib/mock-data";
 type PostCardProps = {
   post: Post;
   brand: string;
+  currentUser: string | null;
   density: Density;
+  isAuthorFollowed: boolean;
+  isFollowPending?: boolean;
+  onFollowToggle: (author: string, nextFollowing: boolean) => Promise<void>;
 };
 
 const POST_CARD_EXPANDED_EVENT = "foody:post-card-expanded";
@@ -116,7 +120,15 @@ function getPhotoRatio(density: Density, viewportSize: ViewportSize) {
   return density === "cozy" ? 1.12 : 1.26;
 }
 
-export function PostCard({ post, brand, density }: PostCardProps) {
+export function PostCard({
+  post,
+  brand,
+  currentUser,
+  density,
+  isAuthorFollowed,
+  isFollowPending = false,
+  onFollowToggle,
+}: PostCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -415,6 +427,12 @@ export function PostCard({ post, brand, density }: PostCardProps) {
     onShareClick: handleShareClick,
     sharePulse,
   };
+  const follow = {
+    currentUser,
+    isAuthorFollowed,
+    isFollowPending,
+    onFollowToggle,
+  };
   const photoCarousel = {
     canDragToNextPhoto,
     canDragToPreviousPhoto,
@@ -444,6 +462,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
       <CollapsedPostCardView
         brand={brand}
         engagement={engagement}
+        follow={follow}
         headerActions={headerActions}
         mainTag={mainTag}
         onCardClick={handleCardClick}
@@ -461,6 +480,7 @@ export function PostCard({ post, brand, density }: PostCardProps) {
           <ExpandedPostCardView
             brand={brand}
             engagement={engagement}
+            follow={follow}
             headerActions={headerActions}
             mainTag={mainTag}
             onBackClick={() => setIsExpanded(false)}

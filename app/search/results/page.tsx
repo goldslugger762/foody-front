@@ -1,7 +1,8 @@
 import { SearchResultsHeader } from "@/components/search/search-results-header";
 import { GlassSurface } from "@/components/feed/glass-surface";
-import { PostCard } from "@/components/feed/post-card";
 import { SaveRecentSearchQuery } from "@/components/search/save-recent-search-query";
+import { SearchResultsFeed } from "@/components/search/search-results-feed";
+import { CURRENT_USER } from "@/lib/current-user";
 import {
   DEFAULT_TWEAKS,
   POSTS,
@@ -12,6 +13,7 @@ import {
   getSingleSearchParam,
   normalizeSearchQuery,
 } from "@/lib/search";
+import { getFollowedUsers } from "@/lib/server/follow-store";
 
 const TWEAKS: Tweaks = DEFAULT_TWEAKS;
 
@@ -28,6 +30,7 @@ export default async function SearchResultsPage({
   const query = getSingleSearchParam(params.q);
   const normalizedQuery = normalizeSearchQuery(query);
   const matchingPosts = filterPostsBySearchQuery(POSTS, query);
+  const followingUsers = await getFollowedUsers(CURRENT_USER.handle);
 
   return (
     <main className="absolute inset-0 overflow-hidden">
@@ -40,14 +43,13 @@ export default async function SearchResultsPage({
           className="hide-scroll flex-1 snap-y snap-mandatory overflow-y-auto pb-24"
         >
           {matchingPosts.length > 0 ? (
-            matchingPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                brand={TWEAKS.brand}
-                density={TWEAKS.density}
-              />
-            ))
+            <SearchResultsFeed
+              brand={TWEAKS.brand}
+              currentUser={CURRENT_USER.handle}
+              density={TWEAKS.density}
+              initialFollowingUsers={followingUsers}
+              posts={matchingPosts}
+            />
           ) : (
             <div className="flex h-full snap-start snap-always flex-col px-3.5 pt-2 pb-[5.75rem] [scroll-snap-stop:always] [@media(max-width:430px)_and_(max-height:860px)]:px-3 [@media(max-width:430px)_and_(max-height:860px)]:pb-[5rem]">
               <GlassSurface className="mt-2 flex flex-1 items-center justify-center rounded-[26px] border border-green-50/92 bg-white/45">

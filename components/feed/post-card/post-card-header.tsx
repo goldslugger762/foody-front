@@ -86,10 +86,14 @@ const FULLSCREEN_AUTHOR_TEXT = {
 export type PostCardHeaderProps = {
   post: Post;
   brand?: string;
+  currentUser: string | null;
   expanded?: boolean;
+  isAuthorFollowed: boolean;
+  isFollowPending?: boolean;
   sharePulse: number;
   morePulse: number;
   shouldReduceMotion: boolean | null;
+  onFollowToggle: (author: string, nextFollowing: boolean) => Promise<void>;
   onShareClick: () => void;
   onMoreClick: () => void;
   onBackClick?: () => void;
@@ -127,10 +131,14 @@ function FullscreenHeaderGlass({ children }: { children: ReactNode }) {
 export function PostCardHeader({
   post,
   brand = "#2ECC71",
+  currentUser,
   expanded = false,
+  isAuthorFollowed,
+  isFollowPending = false,
   sharePulse,
   morePulse,
   shouldReduceMotion,
+  onFollowToggle,
   onShareClick,
   onMoreClick,
   onBackClick,
@@ -142,6 +150,8 @@ export function PostCardHeader({
   const authorMeta = expanded
     ? formatFullscreenAuthorMeta(post.when)
     : `${post.realName} · ${post.when}`;
+  const canShowSubscribeButton =
+    expanded && currentUser !== null && currentUser !== post.user;
 
   const headerContent = (
     <>
@@ -192,12 +202,16 @@ export function PostCardHeader({
           {authorMeta}
         </div>
       </div>
-      {expanded && (
+      {canShowSubscribeButton && (
         <SubscribeButton
+          author={post.user}
           brand={brand}
+          pending={isFollowPending}
           shouldCompactAuthor={shouldCompactAuthor}
           shouldCompactAuthorOnSmallScreen={shouldCompactAuthorOnSmallScreen}
           shouldReduceMotion={shouldReduceMotion}
+          subscribed={isAuthorFollowed}
+          onToggle={onFollowToggle}
         />
       )}
       <IconPulseButton
@@ -276,26 +290,34 @@ export function PostCardHeader({
 }
 
 type SubscribeButtonProps = {
+  author: string;
   brand: string;
+  pending: boolean;
   shouldCompactAuthor: boolean;
   shouldCompactAuthorOnSmallScreen: boolean;
   shouldReduceMotion: boolean | null;
+  subscribed: boolean;
+  onToggle: (author: string, nextFollowing: boolean) => Promise<void>;
 };
 
 function SubscribeButton({
+  author,
   brand,
+  pending,
   shouldCompactAuthor,
   shouldCompactAuthorOnSmallScreen,
   shouldReduceMotion,
+  subscribed,
+  onToggle,
 }: SubscribeButtonProps) {
   const scaleControls = useAnimationControls();
-  const [subscribed, setSubscribed] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const shouldAnimate = canAnimate(shouldReduceMotion);
+  const isBusy = pending || isAnimating;
   const label = subscribed ? "Отписаться" : "Подписаться";
 
   function pressSubscribeButton() {
-    if (!shouldAnimate || isAnimating) {
+    if (!shouldAnimate || isBusy) {
       return;
     }
 
@@ -317,25 +339,33 @@ function SubscribeButton({
   }
 
   async function handleSubscribeClick() {
-    if (isAnimating) {
-      return;
-    }
-
-    if (!shouldAnimate) {
-      setSubscribed((currentSubscribed) => !currentSubscribed);
+    if (isBusy) {
       return;
     }
 
     setIsAnimating(true);
-    await scaleControls.start({
-      scale: 1,
-      transition: SUBSCRIBE_RETURN_TRANSITION,
-    });
-    setSubscribed((currentSubscribed) => !currentSubscribed);
 
-    window.setTimeout(() => {
-      setIsAnimating(false);
-    }, SUBSCRIBE_STATE_SETTLE_MS);
+    if (!shouldAnimate) {
+      try {
+        await onToggle(author, !subscribed);
+      } finally {
+        setIsAnimating(false);
+      }
+
+      return;
+    }
+
+    try {
+      await scaleControls.start({
+        scale: 1,
+        transition: SUBSCRIBE_RETURN_TRANSITION,
+      });
+      await onToggle(author, !subscribed);
+    } finally {
+      window.setTimeout(() => {
+        setIsAnimating(false);
+      }, SUBSCRIBE_STATE_SETTLE_MS);
+    }
   }
 
   function handleSubscribeKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -358,9 +388,13 @@ function SubscribeButton({
     <motion.button
       type="button"
       aria-label={label}
+      aria-busy={pending}
       aria-pressed={subscribed}
+      disabled={isBusy}
+      title={label}
       className={cn(
         FULLSCREEN_SUBSCRIBE_BUTTON.base,
+        "disabled:cursor-not-allowed disabled:opacity-70",
         shouldCompactAuthor
           ? FULLSCREEN_SUBSCRIBE_BUTTON.compact
           : FULLSCREEN_SUBSCRIBE_BUTTON.regular,
