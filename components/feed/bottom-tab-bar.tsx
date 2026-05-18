@@ -155,6 +155,7 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
             }
 
             const Icon = t.icon;
+            const isFilledBookmark = t.id === "saved" && isActive;
             const inner = (
               <>
                 <motion.span
@@ -165,7 +166,7 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
                     className="size-[22px] [@media(max-width:430px)_and_(max-height:860px)]:size-5"
                     strokeWidth={isActive ? 2.4 : 1.8}
                     color={isActive ? brand : "#5C6B62"}
-                    fill="none"
+                    fill={isFilledBookmark ? brand : "none"}
                   />
                 </motion.span>
                 <span>{t.label}</span>
