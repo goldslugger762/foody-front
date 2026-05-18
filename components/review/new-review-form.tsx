@@ -29,6 +29,16 @@ import {
   SubscribeStyleButton,
 } from "@/components/feed/subscribe-style-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Palette } from "@/lib/mock-data";
@@ -473,7 +483,17 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
   const [tagDraft, setTagDraft] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [showRequiredAlert, setShowRequiredAlert] = useState(false);
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
   const requiredAlertTimerRef = useRef<number | null>(null);
+  const hasDraft =
+    dish.trim().length > 0 ||
+    price.trim().length > 0 ||
+    place.trim().length > 0 ||
+    address.trim().length > 0 ||
+    photos.length > 0 ||
+    review.trim().length > 0 ||
+    tagDraft.trim().length > 0 ||
+    tags.length > 0;
   const isPublishReady =
     dish.trim().length > 0 &&
     price.trim().length > 0 &&
@@ -491,13 +511,27 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
     };
   }, []);
 
-  function handleBackClick() {
+  function leaveForm() {
     if (window.history.length > 1) {
       router.back();
       return;
     }
 
     router.push("/");
+  }
+
+  function handleBackClick() {
+    if (hasDraft) {
+      setShowDraftDialog(true);
+      return;
+    }
+
+    leaveForm();
+  }
+
+  function handleDiscardDraft() {
+    setShowDraftDialog(false);
+    leaveForm();
   }
 
   function addTag() {
@@ -568,6 +602,41 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
           </motion.div>
         )}
       </AnimatePresence>
+      <AlertDialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
+        <AlertDialogContent className="rounded-[24px] border-0 bg-white/88 p-5 text-[#15291C] shadow-[0_22px_54px_rgba(20,40,28,0.34),0_8px_18px_rgba(20,40,28,0.12),inset_1px_1px_0_rgba(255,255,255,0.74)] ring-0 backdrop-blur-[22px]">
+          <AlertDialogHeader className="place-items-start text-left">
+            <AlertDialogTitle className="text-[20px] leading-tight font-semibold text-[#15291C]">
+              Удалить черновик?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#5C6B62]">
+              Вы написали отличный отзыв, но если вы уйдёте сейчас, текст
+              удалится.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="-mx-5 -mb-5 flex-col gap-2 rounded-b-[24px] border-t border-white/58 bg-white/45 p-5 sm:flex-col">
+            <AlertDialogCancel
+              className="h-10 w-full rounded-[18px] border border-transparent bg-white px-4 text-[14px] font-bold text-[#15291C] shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] hover:bg-white focus-visible:ring-[#15291C]/12"
+              style={getReviewChromeStyle(brand)}
+              onClick={() => setShowDraftDialog(false)}
+            >
+              Вернуться к отзыву
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              className="h-10 w-full rounded-[18px] border border-transparent bg-white px-4 text-[14px] font-bold text-[#8F1D1D] shadow-[0_8px_20px_rgba(60,20,20,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] hover:bg-white focus-visible:ring-red-900/15"
+              style={{
+                background:
+                  "linear-gradient(#FFFFFF,#FFFFFF) padding-box, linear-gradient(140deg, rgba(127,29,29,0.76), rgba(185,28,28,0.44), rgba(239,68,68,0.24), rgba(127,29,29,0.68)) border-box",
+                boxShadow:
+                  "0 6px 14px rgba(60,20,20,0.07), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(47,11,11,0.05)",
+              }}
+              onClick={handleDiscardDraft}
+            >
+              Удалить и выйти
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="absolute inset-0 z-[1] flex flex-col bg-[linear-gradient(180deg,rgba(255,255,255,0.68),rgba(239,245,240,0.88))] pt-12.5">
         <section
           aria-label="Новый отзыв"
