@@ -307,10 +307,12 @@ function AboutSection({
 }
 
 function StatsSection({
+  brand,
   followersCount,
   followingCount,
   postsCount,
 }: {
+  brand: string;
   followersCount: number;
   followingCount: number;
   postsCount: number;
@@ -350,15 +352,21 @@ function StatsSection({
           <GlassSurface
             key={stat.label}
             className="rounded-[22px] border border-green-50/72 bg-white/42"
-            contentClassName="flex min-h-[88px] flex-col items-center justify-center px-2.5 py-3 text-center"
+            contentClassName="grid min-h-[88px] place-items-center px-2.5 py-3 text-center"
           >
-            <Icon className="size-5 text-[#1B7F45]" strokeWidth={2.25} />
-            <p className="mt-1.5 text-[18px] leading-none font-black tracking-[0px] text-[#15291C]">
-              {stat.value}
-            </p>
-            <p className="mt-1 text-[10.5px] leading-tight font-bold tracking-[0.38px] text-[#5C6B62] uppercase">
-              {stat.label}
-            </p>
+            <div className="flex w-full flex-col items-center justify-center text-center">
+              <Icon
+                className="size-5 drop-shadow-[0_3px_6px_rgba(20,40,28,0.25)]"
+                color={brand}
+                strokeWidth={2.25}
+              />
+              <p className="mt-1.5 w-full text-center text-[18px] leading-none font-black tracking-[0px] text-[#15291C]">
+                {stat.value}
+              </p>
+              <p className="mt-1 w-full text-center text-[10.5px] leading-tight font-bold tracking-[0.38px] text-[#5C6B62] uppercase">
+                {stat.label}
+              </p>
+            </div>
           </GlassSurface>
         );
       })}
@@ -900,6 +908,7 @@ export function ProfileScreen({
               />
               <AboutSection about={profile.about} brand={brand} />
               <StatsSection
+                brand={brand}
                 followersCount={profile.followersCount}
                 followingCount={profile.followingCount}
                 postsCount={profile.postsCount}
