@@ -45,8 +45,14 @@ type ProfileScreenProps = {
 
 type LoadState = "loading" | "ready" | "error";
 
+const PROFILE_BUTTON_TAP = { scale: 0.96 } as const;
+
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
+}
+
+function getProfileButtonTap(shouldReduceMotion: boolean | null) {
+  return canAnimate(shouldReduceMotion) ? PROFILE_BUTTON_TAP : undefined;
 }
 
 function pluralizeRu(count: number, forms: readonly [string, string, string]) {
@@ -72,35 +78,34 @@ function pluralizeRu(count: number, forms: readonly [string, string, string]) {
 function ProfileHeader({
   isOwnProfile,
   onSettingsClick,
+  shouldReduceMotion,
   username,
 }: {
   isOwnProfile: boolean;
   username: string;
+  shouldReduceMotion: boolean | null;
   onSettingsClick: () => void;
 }) {
   return (
     <header className="sticky top-0 z-20 px-3.5 pt-2 pb-0 max-[409px]:px-3">
-      <GlassSurface className="h-13">
-        <div className="flex h-13 items-center justify-between gap-3 px-3">
-          <p className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[19px] leading-tight font-extrabold tracking-[0px] text-[#15291C] max-[409px]:text-[16px]">
-            {username}
-          </p>
+      <div className="flex h-13 items-center justify-between gap-3 px-1">
+        <p className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[19px] leading-tight font-extrabold tracking-[0px] text-[#15291C] max-[409px]:text-[16px]">
+          {username}
+        </p>
 
-          {isOwnProfile ? (
-            <button
-              type="button"
-              aria-label="Настройки"
-              title="Настройки"
-              onClick={onSettingsClick}
-              className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-white/42 text-[#15291C] outline-none shadow-[inset_1px_1px_0_rgba(255,255,255,0.78)] transition-colors hover:bg-white/62 focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
-            >
-              <Settings className="size-5" strokeWidth={2.25} />
-            </button>
-          ) : (
-            <div className="size-10 shrink-0" aria-hidden="true" />
-          )}
-        </div>
-      </GlassSurface>
+        {isOwnProfile ? (
+          <motion.button
+            type="button"
+            aria-label="Настройки"
+            title="Настройки"
+            onClick={onSettingsClick}
+            whileTap={getProfileButtonTap(shouldReduceMotion)}
+            className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-white/42 text-[#15291C] outline-none shadow-[inset_1px_1px_0_rgba(255,255,255,0.78)] transition-colors hover:bg-white/62 focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+          >
+            <Settings className="size-5" strokeWidth={2.25} />
+          </motion.button>
+        ) : null}
+      </div>
     </header>
   );
 }
@@ -208,7 +213,7 @@ function ProfileSummary({
 
           <div className="mt-3 grid grid-cols-2 gap-2">
             <motion.div
-              whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.96 } : undefined}
+              whileTap={getProfileButtonTap(shouldReduceMotion)}
             >
               <Button
                 type="button"
@@ -222,7 +227,7 @@ function ProfileSummary({
 
             {isOwnProfile ? (
               <motion.div
-                whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.96 } : undefined}
+                whileTap={getProfileButtonTap(shouldReduceMotion)}
               >
                 <Button
                   type="button"
@@ -236,7 +241,7 @@ function ProfileSummary({
               </motion.div>
             ) : (
               <motion.div
-                whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.96 } : undefined}
+                whileTap={getProfileButtonTap(shouldReduceMotion)}
               >
                 <Button
                   type="button"
@@ -361,7 +366,7 @@ function ProfilePostCard({
       type="button"
       onClick={onClick}
       className="group min-w-0 cursor-pointer rounded-[18px] text-left outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
-      whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.96 } : undefined}
+      whileTap={getProfileButtonTap(shouldReduceMotion)}
     >
       <AspectRatio
         ratio={1}
@@ -395,15 +400,17 @@ function PostsSection({
   shouldReduceMotion: boolean | null;
 }) {
   const retryButton = (
-    <Button
-      type="button"
-      size="sm"
-      onClick={onRetry}
-      className="h-8 rounded-full bg-white/62 px-4 text-[12px] font-extrabold text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] hover:bg-white/78"
-    >
-      <RefreshCw className="size-3.5" />
-      Повторить
-    </Button>
+    <motion.div whileTap={getProfileButtonTap(shouldReduceMotion)}>
+      <Button
+        type="button"
+        size="sm"
+        onClick={onRetry}
+        className="h-8 rounded-full bg-white/62 px-4 text-[12px] font-extrabold text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] hover:bg-white/78"
+      >
+        <RefreshCw className="size-3.5" />
+        Повторить
+      </Button>
+    </motion.div>
   );
 
   return (
@@ -816,15 +823,17 @@ export function ProfileScreen({
   }
 
   const retryButton = (
-    <Button
-      type="button"
-      size="sm"
-      onClick={loadProfile}
-      className="h-8 rounded-full bg-white/62 px-4 text-[12px] font-extrabold text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] hover:bg-white/78"
-    >
-      <RefreshCw className="size-3.5" />
-      Повторить
-    </Button>
+    <motion.div whileTap={getProfileButtonTap(shouldReduceMotion)}>
+      <Button
+        type="button"
+        size="sm"
+        onClick={loadProfile}
+        className="h-8 rounded-full bg-white/62 px-4 text-[12px] font-extrabold text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] hover:bg-white/78"
+      >
+        <RefreshCw className="size-3.5" />
+        Повторить
+      </Button>
+    </motion.div>
   );
 
   return (
@@ -832,6 +841,7 @@ export function ProfileScreen({
       <div className="absolute inset-0 flex flex-col pt-12.5">
         <ProfileHeader
           isOwnProfile={ownProfileRoute || isOwnProfile}
+          shouldReduceMotion={shouldReduceMotion}
           username={profile?.username ?? initialUserId}
           onSettingsClick={handleSettingsClick}
         />
