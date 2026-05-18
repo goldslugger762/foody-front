@@ -31,6 +31,7 @@ import {
   type PhotoDirection,
 } from "@/components/feed/post-card/photo-carousel";
 import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
+import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
 import { useSearchSubmit } from "@/components/search/use-search-submit";
 import { COMMENTS_BY_POST_ID, type Density, type Post } from "@/lib/mock-data";
 
@@ -154,6 +155,7 @@ export function PostCard({
   const [sharePulse, triggerSharePulse] = usePulse();
   const [morePulse, triggerMorePulse] = usePulse();
   const [commentPulse, triggerCommentPulse] = usePulse();
+  const [copyLinkAlertKey, setCopyLinkAlertKey] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   const submitSearchQuery = useSearchSubmit();
 
@@ -259,6 +261,7 @@ export function PostCard({
 
     try {
       await navigator.clipboard.writeText(postLink);
+      setCopyLinkAlertKey((currentKey) => currentKey + 1);
       return;
     } catch {
       const fallbackField = document.createElement("textarea");
@@ -271,6 +274,7 @@ export function PostCard({
       fallbackField.select();
       document.execCommand("copy");
       fallbackField.remove();
+      setCopyLinkAlertKey((currentKey) => currentKey + 1);
     }
   }
 
@@ -526,6 +530,7 @@ export function PostCard({
         onClose={() => setIsCommentsOpen(false)}
         shouldReduceMotion={shouldReduceMotion}
       />
+      <CopyLinkAlert showKey={copyLinkAlertKey} />
     </div>
   );
 }

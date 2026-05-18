@@ -28,6 +28,7 @@ import {
   type PhotoDirection,
 } from "@/components/feed/post-card/photo-carousel";
 import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
+import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
 import { useSearchSubmit } from "@/components/search/use-search-submit";
 import {
   COMMENTS_BY_POST_ID,
@@ -156,6 +157,7 @@ export function FullScreenPost({
   const [sharePulse, triggerSharePulse] = usePulse();
   const [morePulse, triggerMorePulse] = usePulse();
   const [commentPulse, triggerCommentPulse] = usePulse();
+  const [copyLinkAlertKey, setCopyLinkAlertKey] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   const submitSearchQuery = useSearchSubmit();
   const viewportSize = useViewportSize();
@@ -240,6 +242,7 @@ export function FullScreenPost({
 
     try {
       await navigator.clipboard.writeText(postUrl.toString());
+      setCopyLinkAlertKey((currentKey) => currentKey + 1);
       return;
     } catch {
       const fallbackField = document.createElement("textarea");
@@ -252,6 +255,7 @@ export function FullScreenPost({
       fallbackField.select();
       document.execCommand("copy");
       fallbackField.remove();
+      setCopyLinkAlertKey((currentKey) => currentKey + 1);
     }
   }
 
@@ -417,6 +421,7 @@ export function FullScreenPost({
         onClose={() => setIsCommentsOpen(false)}
         shouldReduceMotion={shouldReduceMotion}
       />
+      <CopyLinkAlert showKey={copyLinkAlertKey} />
     </>
   );
 }

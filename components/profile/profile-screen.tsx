@@ -17,6 +17,7 @@ import { DishPhoto } from "@/components/feed/dish-photo";
 import { FullScreenPost } from "@/components/feed/full-screen-post";
 import { GlassSurface } from "@/components/feed/glass-surface";
 import { UserAvatar } from "@/components/feed/user-avatar";
+import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -485,6 +486,7 @@ export function ProfileScreen({
     () => new Set()
   );
   const [notice, setNotice] = useState<string | null>(null);
+  const [copyLinkAlertKey, setCopyLinkAlertKey] = useState(0);
   const profile = profileState?.profile ?? null;
   const isOwnProfile =
     !!profileState?.currentUser && profileState.currentUser === profile?.userId;
@@ -796,13 +798,8 @@ export function ProfileScreen({
     }
 
     try {
-      const result = await shareUserProfile(profile.userId);
-
-      setNotice(
-        result === "copied"
-          ? "Ссылка на профиль скопирована"
-          : "Профиль готов к отправке"
-      );
+      await shareUserProfile(profile.userId);
+      setCopyLinkAlertKey((currentKey) => currentKey + 1);
     } catch {
       setNotice("Не удалось поделиться профилем.");
     }
@@ -893,6 +890,7 @@ export function ProfileScreen({
             <p role="status">{notice}</p>
           </div>
         )}
+        <CopyLinkAlert showKey={copyLinkAlertKey} />
 
         <AnimatePresence>
           {activePost && profileState && (
