@@ -15,18 +15,20 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ChevronRight,
+  CircleAlert,
   ImageUp,
   Star,
   UtensilsCrossed,
   X,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { GlassSurface } from "@/components/feed/glass-surface";
 import {
   FULLSCREEN_SUBSCRIBE_BUTTON,
   SubscribeStyleButton,
 } from "@/components/feed/subscribe-style-button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Palette } from "@/lib/mock-data";
@@ -34,6 +36,7 @@ import { cn } from "@/lib/utils";
 
 const MAX_REVIEW_LENGTH = 2500;
 const MAX_TAGS = 3;
+const REQUIRED_ALERT_MS = 2200;
 const STAR_YELLOW = "#FFB400";
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
@@ -469,6 +472,24 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
   const [review, setReview] = useState("");
   const [tagDraft, setTagDraft] = useState("");
   const [tags, setTags] = useState<string[]>([]);
+  const [showRequiredAlert, setShowRequiredAlert] = useState(false);
+  const requiredAlertTimerRef = useRef<number | null>(null);
+  const isPublishReady =
+    dish.trim().length > 0 &&
+    price.trim().length > 0 &&
+    place.trim().length > 0 &&
+    address.trim().length > 0 &&
+    photos.length > 0 &&
+    review.trim().length > 0 &&
+    tags.length > 0;
+
+  useEffect(() => {
+    return () => {
+      if (requiredAlertTimerRef.current) {
+        window.clearTimeout(requiredAlertTimerRef.current);
+      }
+    };
+  }, []);
 
   function handleBackClick() {
     if (window.history.length > 1) {
@@ -496,9 +517,57 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
     setTagDraft("");
   }
 
+  function showRequiredFieldsAlert() {
+    if (requiredAlertTimerRef.current) {
+      window.clearTimeout(requiredAlertTimerRef.current);
+    }
+
+    setShowRequiredAlert(true);
+    requiredAlertTimerRef.current = window.setTimeout(() => {
+      setShowRequiredAlert(false);
+      requiredAlertTimerRef.current = null;
+    }, REQUIRED_ALERT_MS);
+  }
+
+  function handlePublishClick() {
+    if (!isPublishReady) {
+      showRequiredFieldsAlert();
+      return;
+    }
+
+    setShowRequiredAlert(false);
+  }
+
   return (
     <main className="absolute inset-0 overflow-hidden">
       <ReviewBackgroundBlobs palette={palette} />
+      <AnimatePresence>
+        {showRequiredAlert && (
+          <motion.div
+            className="pointer-events-none absolute top-18 right-0 left-0 z-20 px-[18px]"
+            initial={{ opacity: 0, y: -28 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -18 }}
+            transition={
+              canAnimate(shouldReduceMotion)
+                ? { duration: 0.22, ease: [0.22, 1, 0.36, 1] }
+                : { duration: 0 }
+            }
+          >
+            <Alert className="rounded-[18px] border-red-400/70 bg-white/86 px-4 py-3 text-[#15291C] shadow-[0_12px_28px_rgba(20,40,28,0.12),inset_1px_1px_0_rgba(255,255,255,0.72)] backdrop-blur-[18px]">
+              <CircleAlert
+                className="size-4"
+                color="#EF4444"
+                strokeWidth={2.3}
+                aria-hidden="true"
+              />
+              <AlertDescription className="font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#15291C]">
+                Необходимо заполнить все поля
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="absolute inset-0 z-[1] flex flex-col bg-[linear-gradient(180deg,rgba(255,255,255,0.68),rgba(239,245,240,0.88))] pt-12.5">
         <section
           aria-label="Новый отзыв"
@@ -633,11 +702,14 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
               <SubscribeStyleButton
                 ariaLabel="Опубликовать"
                 brand={brand}
+                muted={!isPublishReady}
+                onClick={handlePublishClick}
                 shouldReduceMotion={shouldReduceMotion}
                 className={cn(
                   FULLSCREEN_SUBSCRIBE_BUTTON.regular,
                   "h-12 min-w-[256px] px-7 text-[18px] font-semibold"
                 )}
+                style={getReviewChromeStyle(brand, "transparent")}
               >
                 <span>Опубликовать</span>
               </SubscribeStyleButton>
