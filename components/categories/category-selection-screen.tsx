@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CircleAlert, RotateCcw, Search } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  type Variants,
+} from "motion/react";
 
 import { FeedSegmentedControl } from "@/components/feed/feed-segmented-control";
 import { GlassSurface } from "@/components/feed/glass-surface";
@@ -57,6 +62,28 @@ const MODE_TABS: readonly [
   { id: "dishes", label: "Блюда" },
   { id: "cuisines", label: "Кухни" },
 ];
+
+const POPULAR_SLIDE_DISTANCE = 42;
+
+type PopularSlideCustom = {
+  direction: number;
+  shouldReduceMotion: boolean;
+};
+
+const popularSlideVariants: Variants = {
+  initial: ({ direction, shouldReduceMotion }: PopularSlideCustom) => ({
+    opacity: 0,
+    x: shouldReduceMotion ? 0 : direction * POPULAR_SLIDE_DISTANCE,
+  }),
+  animate: {
+    opacity: 1,
+    x: 0,
+  },
+  exit: ({ direction, shouldReduceMotion }: PopularSlideCustom) => ({
+    opacity: 0,
+    x: shouldReduceMotion ? 0 : direction * -POPULAR_SLIDE_DISTANCE,
+  }),
+};
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
@@ -214,7 +241,9 @@ export function CategorySelectionScreen({
   onSelectCategory,
 }: CategorySelectionScreenProps) {
   const router = useRouter();
+  const shouldReduceMotion = useReducedMotion();
   const [mode, setMode] = useState<CategoryMode>("dishes");
+  const [popularSlideDirection, setPopularSlideDirection] = useState(1);
   const [loadState, setLoadState] = useState<LoadState>({
     status: "loading",
     data: null,
@@ -329,6 +358,13 @@ export function CategorySelectionScreen({
     router.push("/new-review");
   }
 
+  function handleModeChange(nextMode: CategoryMode) {
+    if (nextMode === mode) return;
+
+    setPopularSlideDirection(nextMode === "cuisines" ? 1 : -1);
+    setMode(nextMode);
+  }
+
   return (
     <ReviewScreen palette={palette}>
       <ReviewContentLayer>
@@ -344,78 +380,98 @@ export function CategorySelectionScreen({
               <h2 className="mb-3 text-[22px] leading-tight font-semibold tracking-[0px] text-[#15291C] max-[380px]:text-[20px]">
                 Популярные категории
               </h2>
-              <AnimatePresence mode="wait">
-                {loadState.status === "loading" ? (
-                  <motion.div
-                    key="loading"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <CategorySkeleton />
-                  </motion.div>
-                ) : loadState.status === "error" ? (
-                  <motion.div
-                    key="error"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                  >
-                    <GlassSurface
-                      className="rounded-[22px] border border-transparent bg-white px-4 py-4"
-                      tintClassName={FIELD_TINT_CLASSES}
-                      style={getReviewChromeStyle(brand, "rgba(255,255,255,0.82)")}
+              <div className="overflow-hidden">
+                <AnimatePresence
+                  mode="wait"
+                  custom={{
+                    direction: popularSlideDirection,
+                    shouldReduceMotion: !!shouldReduceMotion,
+                  }}
+                >
+                  {loadState.status === "loading" ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-50 text-red-600">
-                          <CircleAlert className="size-4" strokeWidth={2.35} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[16px] leading-tight font-bold text-[#15291C]">
-                            Категории не загрузились
-                          </p>
-                          <p className="mt-1 font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#5C6B62]">
-                            {loadState.error}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={loadCategories}
-                            className={cn(
-                              "mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-transparent bg-white px-3 text-[13px] font-bold text-[#15291C] outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
-                              PRESS_CLASSES
-                            )}
-                            style={getReviewChromeStyle(brand)}
-                          >
-                            <RotateCcw className="size-3.5" strokeWidth={2.4} />
-                            Обновить
-                          </button>
+                      <CategorySkeleton />
+                    </motion.div>
+                  ) : loadState.status === "error" ? (
+                    <motion.div
+                      key="error"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                    >
+                      <GlassSurface
+                        className="rounded-[22px] border border-transparent bg-white px-4 py-4"
+                        tintClassName={FIELD_TINT_CLASSES}
+                        style={getReviewChromeStyle(
+                          brand,
+                          "rgba(255,255,255,0.82)"
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-50 text-red-600">
+                            <CircleAlert className="size-4" strokeWidth={2.35} />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[16px] leading-tight font-bold text-[#15291C]">
+                              Категории не загрузились
+                            </p>
+                            <p className="mt-1 font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#5C6B62]">
+                              {loadState.error}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={loadCategories}
+                              className={cn(
+                                "mt-3 inline-flex h-9 cursor-pointer items-center gap-2 rounded-full border border-transparent bg-white px-3 text-[13px] font-bold text-[#15291C] outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                                PRESS_CLASSES
+                              )}
+                              style={getReviewChromeStyle(brand)}
+                            >
+                              <RotateCcw className="size-3.5" strokeWidth={2.4} />
+                              Обновить
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </GlassSurface>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={`popular-${mode}`}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.16 }}
-                  >
-                    <PopularCategoryGrid
-                      brand={brand}
-                      categories={currentPopularCategories}
-                      onSelect={handleSelectCategory}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                      </GlassSurface>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key={`popular-${mode}`}
+                      custom={{
+                        direction: popularSlideDirection,
+                        shouldReduceMotion: !!shouldReduceMotion,
+                      }}
+                      variants={popularSlideVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      transition={
+                        shouldReduceMotion
+                          ? { duration: 0 }
+                          : { duration: 0.24, ease: [0.32, 0.72, 0, 1] }
+                      }
+                    >
+                      <PopularCategoryGrid
+                        brand={brand}
+                        categories={currentPopularCategories}
+                        onSelect={handleSelectCategory}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </section>
 
             <FeedSegmentedControl
               aria-label="Тип категории"
               items={MODE_TABS}
               value={mode}
-              onValueChange={setMode}
+              onValueChange={handleModeChange}
               className="mx-auto h-[37px] max-w-[356px] flex-none bg-[rgba(20,40,28,0.10)]"
               buttonClassName="h-[31px] text-[14px]"
             />
