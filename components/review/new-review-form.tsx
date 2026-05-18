@@ -29,13 +29,14 @@ const STAR_YELLOW = "#FFB400";
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 const FIELD_SURFACE_CLASSES = cn(
-  "h-[50px] rounded-[18px] border border-white/65 bg-transparent",
+  "h-[50px] rounded-[18px] border border-white/80 bg-white",
   "shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)]",
-  "backdrop-blur-[16px] backdrop-saturate-[170%] transition-shadow duration-150",
+  "transition-shadow duration-150",
   "focus-within:ring-2 focus-within:ring-[#15291C]/12 focus-within:shadow-[0_10px_24px_rgba(20,40,28,0.1),inset_1px_1px_0_rgba(255,255,255,0.78)]"
 );
 const FIELD_INPUT_CLASSES =
   "h-full border-0 bg-transparent px-3.5 py-0 text-[15.5px] leading-[50px] font-semibold text-[#15291C] shadow-none outline-none placeholder:text-[#8A958E] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15.5px]";
+const FIELD_TINT_CLASSES = "before:bg-white before:backdrop-blur-0 before:backdrop-saturate-100";
 
 type NewReviewFormProps = {
   brand: string;
@@ -136,7 +137,7 @@ function ReviewField({
       <GlassSurface
         className={FIELD_SURFACE_CLASSES}
         contentClassName="h-full"
-        tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
+        tintClassName={FIELD_TINT_CLASSES}
         highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
       >
         <Input
@@ -326,8 +327,8 @@ function CategoryButton({ brand }: { brand: string }) {
     <button
       type="button"
       className={cn(
-        "flex h-[52px] w-full cursor-pointer items-center gap-3 rounded-[18px] border-[0.5px] border-white/70 bg-white/60 px-4 text-left text-[#15291C]",
-        "shadow-[inset_1px_1px_0_rgba(255,255,255,0.7),inset_-1px_-1px_0_rgba(255,255,255,0.3),0_4px_14px_rgba(20,40,28,0.06)] backdrop-blur-[20px] backdrop-saturate-[180%]",
+        "flex h-[52px] w-full cursor-pointer items-center gap-3 rounded-[18px] border-[0.5px] border-white/80 bg-white px-4 text-left text-[#15291C]",
+        "shadow-[inset_1px_1px_0_rgba(255,255,255,0.7),inset_-1px_-1px_0_rgba(255,255,255,0.3),0_4px_14px_rgba(20,40,28,0.06)]",
         PRESS_CLASSES
       )}
     >
@@ -373,7 +374,7 @@ function TagsInput({
       </p>
       <GlassSurface
         className={cn(FIELD_SURFACE_CLASSES, "min-h-[52px] h-auto")}
-        tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
+        tintClassName={FIELD_TINT_CLASSES}
         highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
       >
         <div className="flex min-h-[50px] flex-wrap items-center gap-1.5 px-2.5 py-2">
@@ -487,7 +488,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                 <GlassSurface
                   className={FIELD_SURFACE_CLASSES}
                   contentClassName="h-full"
-                  tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
+                  tintClassName={FIELD_TINT_CLASSES}
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
                 >
                   <Input
@@ -501,7 +502,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                 <GlassSurface
                   className={FIELD_SURFACE_CLASSES}
                   contentClassName="h-full"
-                  tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
+                  tintClassName={FIELD_TINT_CLASSES}
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
                 >
                   <Input
@@ -533,8 +534,8 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                 </span>
               </div>
               <GlassSurface
-                className="min-h-[124px] rounded-[22px] border border-white/65 bg-transparent shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] backdrop-blur-[16px] backdrop-saturate-[170%] transition-shadow duration-150 focus-within:ring-2 focus-within:ring-[#15291C]/12"
-                tintClassName="before:bg-[#E8ECE9]/28 before:backdrop-blur-[16px] before:backdrop-saturate-[170%]"
+                className="min-h-[124px] rounded-[22px] border border-white/80 bg-white shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] transition-shadow duration-150 focus-within:ring-2 focus-within:ring-[#15291C]/12"
+                tintClassName={FIELD_TINT_CLASSES}
                 highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
               >
                 <Textarea
