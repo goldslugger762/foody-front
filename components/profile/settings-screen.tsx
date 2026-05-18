@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   ChevronRight,
   CircleAlert,
   LogOut,
@@ -64,7 +65,7 @@ function SettingsHeader({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <header className="relative mb-5 grid h-11 grid-cols-[2.25rem_1fr_2.25rem] items-center pt-2">
+    <header className="mb-5 flex items-center gap-4 pt-2">
       <motion.button
         type="button"
         aria-label="Назад"
@@ -77,10 +78,10 @@ function SettingsHeader({
         style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
         whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
       >
-        <ChevronRight className="size-[19px] rotate-180" strokeWidth={2.35} />
+        <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
       </motion.button>
 
-      <h1 className="min-w-0 text-center text-[24px] leading-tight font-semibold tracking-[0px] text-[#15291C]">
+      <h1 className="text-[24px] leading-tight font-semibold tracking-[0px] text-[#15291C]">
         Настройки
       </h1>
     </header>
