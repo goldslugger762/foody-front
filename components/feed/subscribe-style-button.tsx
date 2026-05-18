@@ -172,7 +172,7 @@ export function SubscribeStyleButton({
     >
       <motion.span
         aria-hidden="true"
-        className="absolute inset-0 rounded-full"
+        className="absolute inset-0 rounded-[inherit]"
         animate={{ opacity: active && !muted ? 1 : 0 }}
         transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
         style={{
@@ -181,7 +181,7 @@ export function SubscribeStyleButton({
       />
       <motion.span
         aria-hidden="true"
-        className="absolute inset-px rounded-full"
+        className="absolute inset-px rounded-[inherit]"
         animate={{ opacity: !active && !muted ? 1 : 0 }}
         transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
         style={{
@@ -190,7 +190,7 @@ export function SubscribeStyleButton({
       />
       <motion.span
         aria-hidden="true"
-        className="absolute inset-px rounded-full"
+        className="absolute inset-px rounded-[inherit]"
         animate={{ opacity: muted ? 1 : 0 }}
         transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
         style={{
@@ -200,7 +200,7 @@ export function SubscribeStyleButton({
       />
       <motion.span
         aria-hidden="true"
-        className="absolute inset-px rounded-full"
+        className="absolute inset-px rounded-[inherit]"
         animate={{ opacity: active && !muted ? 1 : 0 }}
         transition={shouldAnimate ? SUBSCRIBE_STATE_TRANSITION : { duration: 0 }}
         style={{

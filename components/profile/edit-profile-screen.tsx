@@ -263,20 +263,20 @@ function EditProfileHeader({
       </h1>
 
       <SubscribeStyleButton
-        active
+        active={false}
         ariaBusy={isSaving}
         ariaLabel="Сохранить профиль"
         brand={brand}
         disabled={!canSave || isSaving}
         shouldReduceMotion={shouldReduceMotion}
+        title="Сохранить"
         className={cn(
           FULLSCREEN_SUBSCRIBE_BUTTON.regular,
-          "h-9 rounded-[12px] px-3.5 text-[12.5px]"
+          FULLSCREEN_SUBSCRIBE_BUTTON.smallRegular
         )}
-        style={getReviewChromeStyle(brand, "transparent")}
         onClick={onSave}
       >
-        <span className="flex h-full items-center justify-center gap-1.5 leading-9">
+        <span className="flex h-full items-center justify-center gap-1.5">
           {isSaving ? <Spinner className="size-3.5" /> : null}
           Сохранить
         </span>
