@@ -477,7 +477,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
   const [price, setPrice] = useState("");
   const [place, setPlace] = useState("");
   const [address, setAddress] = useState("");
-  const [rating, setRating] = useState(4.5);
+  const [rating, setRating] = useState(0);
   const [photos, setPhotos] = useState<File[]>([]);
   const [review, setReview] = useState("");
   const [tagDraft, setTagDraft] = useState("");
@@ -499,6 +499,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
     price.trim().length > 0 &&
     place.trim().length > 0 &&
     address.trim().length > 0 &&
+    rating > 0 &&
     photos.length > 0 &&
     review.trim().length > 0 &&
     tags.length > 0;
