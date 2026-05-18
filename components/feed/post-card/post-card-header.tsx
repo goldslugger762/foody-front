@@ -5,6 +5,7 @@ import {
   Share2,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { type ReactNode } from "react";
 
@@ -21,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Post } from "@/lib/mock-data";
+import { getUserProfileHref } from "@/lib/profile-data";
 import { cn } from "@/lib/utils";
 
 import {
@@ -154,7 +156,13 @@ export function PostCardHeader({
           <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
         </motion.button>
       )}
-      <UserAvatar name={post.user} size={34} />
+      <Link
+        href={getUserProfileHref(post.user)}
+        aria-label={`Открыть профиль ${post.user}`}
+        className="grid size-[34px] shrink-0 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+      >
+        <UserAvatar name={post.user} size={34} />
+      </Link>
       <div className="flex min-w-0 flex-1 flex-col items-start text-left">
         <div
           className={cn(

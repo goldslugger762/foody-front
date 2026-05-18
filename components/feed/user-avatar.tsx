@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
 const PALETTES: ReadonlyArray<readonly [string, string]> = [
@@ -15,10 +15,16 @@ const PALETTES: ReadonlyArray<readonly [string, string]> = [
 type UserAvatarProps = {
   name: string;
   size?: number;
+  src?: string | null;
   className?: string;
 };
 
-export function UserAvatar({ name, size = 36, className }: UserAvatarProps) {
+export function UserAvatar({
+  name,
+  size = 36,
+  src,
+  className,
+}: UserAvatarProps) {
   const seed = name.charCodeAt(1) || 7;
   const [from, to] = PALETTES[seed % PALETTES.length];
   const initial = (name || "?").replace("@", "").slice(0, 1).toUpperCase();
@@ -31,6 +37,7 @@ export function UserAvatar({ name, size = 36, className }: UserAvatarProps) {
       )}
       style={{ width: size, height: size }}
     >
+      {src ? <AvatarImage src={src} alt="" /> : null}
       <AvatarFallback
         className="font-extrabold tracking-tight text-white"
         style={{

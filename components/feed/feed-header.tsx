@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useReducedMotion } from "motion/react";
 
 import { FeedSegmentedControl } from "@/components/feed/feed-segmented-control";
@@ -67,14 +68,14 @@ export function FeedHeader({
           />
 
           {isLoggedIn ? (
-            <button
-              type="button"
+            <Link
+              href="/me"
               aria-label={currentUser}
               title={currentUser}
               className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-transparent p-0 text-[#15291C] outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
             >
               <UserAvatar name={currentUser} size={32} className="shadow-none" />
-            </button>
+            </Link>
           ) : (
             <Button
               type="button"

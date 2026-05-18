@@ -36,7 +36,7 @@ const TABS: TabItem[] = [
     href: "/new-review",
   },
   { id: "saved", label: "Избранное", icon: Bookmark, href: "/saved" },
-  { id: "me", label: "Профиль", icon: User },
+  { id: "me", label: "Профиль", icon: User, href: "/me" },
 ];
 const POST_CARD_EXPANDED_EVENT = "foody:post-card-expanded";
 
