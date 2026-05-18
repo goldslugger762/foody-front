@@ -40,3 +40,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# build and output
+/dist/
+.turbo/
+.cache/
+output/
+
+# playwright
+.playwright/
+
+# OS
+.env.local
+.env.*.local
+Thumbs.db
