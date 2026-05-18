@@ -8,20 +8,21 @@ const TAB_ORDER: Record<string, number> = {
   "/": 0,
   "/search": 1,
   "/search/results": 2,
+  "/categories": 2.25,
   "/new-review": 2.5,
   "/saved": 3,
   "/me": 4,
 };
 
-type TransitionMode = "none" | "horizontal" | "new-review-enter" | "new-review-exit";
+type TransitionMode = "none" | "horizontal" | "fullscreen-enter" | "fullscreen-exit";
 
 type RouteTransition = {
   direction: number;
   mode: TransitionMode;
 };
 
-function isNewReviewPath(pathname: string) {
-  return pathname === "/new-review";
+function isFullscreenPath(pathname: string) {
+  return pathname === "/new-review" || pathname === "/categories";
 }
 
 function getTransition(prev: string | null, current: string): RouteTransition {
@@ -29,12 +30,12 @@ function getTransition(prev: string | null, current: string): RouteTransition {
     return { direction: 0, mode: "none" };
   }
 
-  if (isNewReviewPath(current)) {
-    return { direction: 1, mode: "new-review-enter" };
+  if (isFullscreenPath(current)) {
+    return { direction: 1, mode: "fullscreen-enter" };
   }
 
-  if (isNewReviewPath(prev)) {
-    return { direction: 1, mode: "new-review-exit" };
+  if (isFullscreenPath(prev)) {
+    return { direction: 1, mode: "fullscreen-exit" };
   }
 
   const a = TAB_ORDER[prev];
@@ -48,7 +49,7 @@ function getTransition(prev: string | null, current: string): RouteTransition {
 
 const exitVariants: Variants = {
   exit: (transition: RouteTransition) => {
-    if (transition.mode === "new-review-exit") {
+    if (transition.mode === "fullscreen-exit") {
       return { opacity: 1, y: "100%" };
     }
 
@@ -106,7 +107,7 @@ export function PageTransition({
     snap.transition.mode === "horizontal" && snap.transition.direction !== 0
       ? `${snap.transition.direction * 100}%`
       : 0;
-  const initialY = snap.transition.mode === "new-review-enter" ? "100%" : 0;
+  const initialY = snap.transition.mode === "fullscreen-enter" ? "100%" : 0;
   const initialOpacity = 1;
   const transitionDuration = snap.transition.mode === "none" ? 0 : 0.32;
 

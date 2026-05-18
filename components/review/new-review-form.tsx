@@ -2,7 +2,6 @@
 
 import {
   type ChangeEvent,
-  type CSSProperties,
   type InputHTMLAttributes,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -13,7 +12,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   ChevronRight,
   CircleAlert,
   ImageUp,
@@ -24,6 +22,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
+import { CategorySelectionScreen } from "@/components/categories/category-selection-screen";
 import { GlassSurface } from "@/components/feed/glass-surface";
 import {
   FULLSCREEN_SUBSCRIBE_BUTTON,
@@ -42,67 +41,30 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { FoodCategory } from "@/lib/categories";
 import type { Palette } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import {
+  FIELD_INPUT_CLASSES,
+  FIELD_SURFACE_CLASSES,
+  FIELD_TINT_CLASSES,
+  PRESS_CLASSES,
+  ReviewContentLayer,
+  ReviewScreen,
+  ReviewScreenHeader,
+  ReviewScrollArea,
+  getReviewChromeStyle,
+} from "@/components/review/review-screen-shell";
 
 const MAX_REVIEW_LENGTH = 2500;
 const MAX_TAGS = 3;
 const MAX_PHOTOS = 10;
 const REQUIRED_ALERT_MS = 2200;
 const STAR_YELLOW = "#FFB400";
-const PRESS_CLASSES =
-  "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
-const FIELD_SURFACE_CLASSES = cn(
-  "h-[50px] rounded-[18px] border border-transparent bg-white",
-  "shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)]",
-  "ring-0 ring-transparent transition-shadow duration-150",
-  "focus-within:ring-[3px] focus-within:ring-[rgba(34,139,34,0.26)] focus-within:ring-offset-1 focus-within:ring-offset-transparent focus-within:shadow-[0_10px_24px_rgba(20,40,28,0.1),0_0_0_1px_rgba(122,236,164,0.18),inset_1px_1px_0_rgba(255,255,255,0.78)] focus-within:after:border-[rgba(21,41,28,0.20)]"
-);
-const FIELD_INPUT_CLASSES =
-  "h-full border-0 bg-transparent px-3.5 py-0 text-[15.5px] leading-[50px] font-semibold text-[#15291C] shadow-none outline-none placeholder:text-[#8A958E] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15.5px]";
-const FIELD_TINT_CLASSES = "before:bg-white before:backdrop-blur-0 before:backdrop-saturate-100";
 
 type NewReviewFormProps = {
   brand: string;
   palette: Palette;
-};
-
-type ReviewBlob = {
-  color: string;
-  opacity: number;
-  left: string;
-  top: string;
-  size: string;
-};
-
-const REVIEW_BACKGROUNDS: Record<Palette, { base: string; blobs: ReviewBlob[] }> = {
-  fresh: {
-    base: "#F3F6F2",
-    blobs: [
-      { color: "#46DA8F", opacity: 0.35, left: "76%", top: "18%", size: "19rem" },
-      { color: "#8DE0B0", opacity: 0.55, left: "18%", top: "39%", size: "17rem" },
-      { color: "#F5D08C", opacity: 0.70, left: "88%", top: "72%", size: "18rem" },
-      { color: "#B8E6CC", opacity: 0.50, left: "16%", top: "88%", size: "20rem" },
-    ],
-  },
-  citrus: {
-    base: "#F8F5ED",
-    blobs: [
-      { color: "#FFC25C", opacity: 0.2, left: "78%", top: "17%", size: "18rem" },
-      { color: "#2ECC71", opacity: 0.18, left: "17%", top: "41%", size: "17rem" },
-      { color: "#FF9A6B", opacity: 0.15, left: "86%", top: "74%", size: "18rem" },
-      { color: "#CDEBA8", opacity: 0.19, left: "18%", top: "88%", size: "20rem" },
-    ],
-  },
-  dusk: {
-    base: "#EEF4EF",
-    blobs: [
-      { color: "#2ECC71", opacity: 0.2, left: "78%", top: "18%", size: "19rem" },
-      { color: "#1FA85C", opacity: 0.18, left: "18%", top: "42%", size: "17rem" },
-      { color: "#254A38", opacity: 0.13, left: "88%", top: "73%", size: "18rem" },
-      { color: "#8DE0B0", opacity: 0.18, left: "16%", top: "88%", size: "20rem" },
-    ],
-  },
 };
 
 type ReviewFieldProps = {
@@ -116,46 +78,6 @@ type ReviewFieldProps = {
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
-}
-
-function getReviewChromeStyle(
-  brand: string,
-  fill = "#FFFFFF"
-): CSSProperties {
-  return {
-    background: `linear-gradient(${fill}, ${fill}) padding-box, linear-gradient(140deg, color-mix(in srgb, ${brand} 44%, transparent), rgba(122,236,164,0.42), rgba(100,218,189,0.38), color-mix(in srgb, ${brand} 30%, transparent)) border-box`,
-    boxShadow:
-      "0 6px 14px rgba(20,40,28,0.09), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)",
-  };
-}
-
-function ReviewBackgroundBlobs({ palette }: { palette: Palette }) {
-  const { base, blobs } = REVIEW_BACKGROUNDS[palette];
-
-  return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-0 overflow-hidden"
-      style={{ background: base }}
-    >
-      {blobs.map((blob, index) => (
-        <div
-          key={index}
-          className="absolute rounded-full blur-[72px]"
-          style={{
-            background: blob.color,
-            height: blob.size,
-            left: `calc(${blob.left} - (${blob.size} / 2))`,
-            opacity: blob.opacity,
-            top: `calc(${blob.top} - (${blob.size} / 2))`,
-            width: blob.size,
-          }}
-        />
-      ))}
-      <div className="absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_0%,rgba(255,255,255,0.46),transparent_62%)]" />
-      <div className="absolute inset-0 bg-white/22" />
-    </div>
-  );
 }
 
 function ReviewField({
@@ -415,10 +337,19 @@ function PhotoUpload({
   );
 }
 
-function CategoryButton({ brand }: { brand: string }) {
+function CategoryButton({
+  brand,
+  category,
+  onClick,
+}: {
+  brand: string;
+  category: FoodCategory | null;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className={cn(
         "flex h-[52px] w-full cursor-pointer items-center gap-3 rounded-[18px] border border-transparent px-4 text-left text-[#15291C]",
         PRESS_CLASSES
@@ -433,11 +364,15 @@ function CategoryButton({ brand }: { brand: string }) {
           boxShadow: "0 4px 10px rgba(20,40,28,0.06)",
         }}
       >
-        <UtensilsCrossed size={17} strokeWidth={2.4} color="#15291C" />
+        {category ? (
+          <span className="text-[17px] leading-none">{category.emoji}</span>
+        ) : (
+          <UtensilsCrossed size={17} strokeWidth={2.4} color="#15291C" />
+        )}
       </span>
       <span className="flex flex-1 items-center">
         <span className="text-[16.5px] leading-snug font-bold tracking-[0px] text-[#15291C]">
-          Выберите категорию
+          {category ? category.label : "Выберите категорию"}
         </span>
       </span>
       <span className="ml-auto grid size-[26px] place-items-center rounded-full bg-[rgba(20,40,28,0.06)]">
@@ -532,10 +467,12 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [photos, setPhotos] = useState<File[]>([]);
   const [review, setReview] = useState("");
+  const [category, setCategory] = useState<FoodCategory | null>(null);
   const [tagDraft, setTagDraft] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [showRequiredAlert, setShowRequiredAlert] = useState(false);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const requiredAlertTimerRef = useRef<number | null>(null);
   const hasDraft =
     dish.trim().length > 0 ||
@@ -544,6 +481,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
     address.trim().length > 0 ||
     photos.length > 0 ||
     review.trim().length > 0 ||
+    category !== null ||
     tagDraft.trim().length > 0 ||
     tags.length > 0;
   const isPublishReady =
@@ -554,6 +492,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
     rating > 0 &&
     photos.length > 0 &&
     review.trim().length > 0 &&
+    category !== null &&
     tags.length > 0;
 
   useEffect(() => {
@@ -625,9 +564,25 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
     setShowRequiredAlert(false);
   }
 
+  function handleSelectCategory(nextCategory: FoodCategory) {
+    setCategory(nextCategory);
+    setShowCategoryPicker(false);
+  }
+
+  if (showCategoryPicker) {
+    return (
+      <CategorySelectionScreen
+        brand={brand}
+        palette={palette}
+        source="review"
+        onBack={() => setShowCategoryPicker(false)}
+        onSelectCategory={handleSelectCategory}
+      />
+    );
+  }
+
   return (
-    <main className="absolute inset-0 overflow-hidden">
-      <ReviewBackgroundBlobs palette={palette} />
+    <ReviewScreen palette={palette}>
       <AnimatePresence>
         {showRequiredAlert && (
           <motion.div
@@ -690,31 +645,13 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <div className="absolute inset-0 z-[1] flex flex-col bg-[linear-gradient(180deg,rgba(255,255,255,0.68),rgba(239,245,240,0.88))] pt-12.5">
-        <section
-          aria-label="Новый отзыв"
-          className="hide-scroll flex-1 overflow-y-auto px-[18px] pb-25"
-        >
-          <header className="mb-5 flex items-center gap-4 pt-2">
-            <motion.button
-              type="button"
-              aria-label="Назад"
-              title="Назад"
-              onClick={handleBackClick}
-              className={cn(
-                "grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-[#15291C] outline-none",
-                "border border-transparent",
-                "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
-              )}
-              style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
-              whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
-            >
-              <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
-            </motion.button>
-            <h1 className="text-[24px] leading-tight font-semibold tracking-[0px] text-[#15291C]">
-              Новый отзыв
-            </h1>
-          </header>
+      <ReviewContentLayer>
+        <ReviewScrollArea aria-label="Новый отзыв">
+          <ReviewScreenHeader
+            brand={brand}
+            title="Новый отзыв"
+            onBack={handleBackClick}
+          />
 
           <div className="space-y-6">
             <ReviewField
@@ -835,7 +772,11 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
               </GlassSurface>
             </section>
 
-            <CategoryButton brand={brand} />
+            <CategoryButton
+              brand={brand}
+              category={category}
+              onClick={() => setShowCategoryPicker(true)}
+            />
 
             <TagsInput
               brand={brand}
@@ -867,8 +808,8 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
               </SubscribeStyleButton>
             </div>
           </div>
-        </section>
-      </div>
-    </main>
+        </ReviewScrollArea>
+      </ReviewContentLayer>
+    </ReviewScreen>
   );
 }
