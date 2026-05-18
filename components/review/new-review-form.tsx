@@ -228,13 +228,14 @@ function RatingControl({
 }) {
   return (
     <section className="pt-1">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="flex-1 text-center text-[22px] leading-tight font-semibold text-[#15291C]">
+      <div className="mb-3 grid grid-cols-[3.25rem_1fr_3.25rem] items-center gap-2">
+        <span aria-hidden="true" />
+        <h2 className="text-center text-[22px] leading-tight font-semibold text-[#15291C]">
           Оцените блюдо
         </h2>
-        <span className="flex min-w-14 items-center justify-end gap-1 text-[22px] leading-none font-extrabold text-[#15291C]">
+        <span className="flex items-center justify-end gap-0.5 text-[18px] leading-none font-extrabold text-[#15291C]">
           <Star
-            className="size-5"
+            className="size-4"
             strokeWidth={2.1}
             color={STAR_YELLOW}
             fill={STAR_YELLOW}
@@ -289,12 +290,12 @@ function PhotoUpload({
 
   return (
     <section>
-      <h2 className="mb-2 text-[22px] leading-tight font-semibold tracking-[0px] text-[#15291C] max-[380px]:text-[20px]">
+      <h2 className="text-[22px] leading-tight font-semibold tracking-[0px] text-[#15291C] max-[380px]:text-[20px]">
         Загрузите фотографию блюда
-        <span className="ml-1 text-[13px] font-semibold text-[#15291C]">
-          (мин. 1 шт.)
-        </span>
       </h2>
+      <p className="mt-1 mb-2 font-[family-name:var(--font-roboto)] text-[13px] leading-snug font-medium text-[#5C6B62]">
+        (мин. 1 шт.)
+      </p>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -391,7 +392,7 @@ function TagsInput({
         Напишите тэги
       </h2>
       <p className="mt-1 mb-2 font-[family-name:var(--font-roboto)] text-[13px] leading-snug font-medium text-[#5C6B62]">
-        Напишите тэг и добавьте его через ввод
+        Напишите тэг и добавьте его через ввод (3 шт.)
       </p>
       <GlassSurface
         className={cn(FIELD_SURFACE_CLASSES, "min-h-[52px] h-auto")}
