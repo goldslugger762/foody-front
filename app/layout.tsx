@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
+import { AuthGate } from "@/components/auth/auth-gate";
 import { BackgroundBlobs } from "@/components/feed/background-blobs";
 import { BottomTabBar } from "@/components/feed/bottom-tab-bar";
 import { PageTransition } from "@/components/page-transition";
@@ -31,8 +32,10 @@ export default function RootLayout({
     <html lang="ru" className={`${inter.variable} ${roboto.variable}`}>
       <body className="min-h-screen font-sans antialiased">
         <BackgroundBlobs palette={DEFAULT_TWEAKS.palette} />
-        <PageTransition>{children}</PageTransition>
-        <BottomTabBar brand={DEFAULT_TWEAKS.brand} />
+        <AuthGate>
+          <PageTransition>{children}</PageTransition>
+          <BottomTabBar brand={DEFAULT_TWEAKS.brand} />
+        </AuthGate>
       </body>
     </html>
   );
