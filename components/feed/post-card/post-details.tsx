@@ -32,21 +32,24 @@ export function PostDetails({ post, brand, expanded = false }: PostDetailsProps)
       <div className="flex items-center justify-between gap-3 px-4 pt-1 pb-2.5 max-[390px]:pb-2 [@media(max-width:430px)_and_(max-height:860px)]:px-3.5 [@media(max-width:430px)_and_(max-height:860px)]:pb-1.5">
         <div
           className={cn(
-            "relative isolate inline-flex rounded-[9px] p-px",
-            "bg-[rgba(83,145,105,0.07)]",
-            "shadow-[inset_0_1px_0_rgba(255,255,255,1),0_10px_28px_rgba(20,40,28,0.012)]"
+            "relative isolate inline-flex overflow-hidden rounded-[9px] p-px",
+            "shadow-[inset_1px_1px_0_rgba(255,255,255,0.18),inset_-1px_-1px_0_rgba(11,47,29,0.05)]"
           )}
           style={{
-            boxShadow: `inset 0 1px 0 rgba(255,255,255,0), 0 10px 28px rgba(20,40,28,0.012), -4px 6px 24px ${brand}05`,
+            background: `linear-gradient(185deg, ${brand}A5, rgba(122,236,164,0.85), rgba(100,218,189,0.9), ${brand}B3)`,
+            boxShadow: `0 8px 18px ${brand}1F, inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)`,
           }}
         >
           <span
+            aria-hidden="true"
+            className="absolute inset-px rounded-[8px] bg-[linear-gradient(135deg,rgba(255,255,255,0.82),rgba(226,255,235,0.78))]"
+          />
+          <span
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:py-1",
+              "relative z-[1] inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 [@media(max-width:430px)_and_(max-height:860px)]:px-2.5 [@media(max-width:430px)_and_(max-height:860px)]:py-1",
               "border-0",
-              "bg-[linear-gradient(135deg,rgba(220,255,232,1),rgba(232,255,240,0.60))]",
               "shadow-[inset_0_1px_0_rgba(255,255,255,0),inset_0_-1px_0_rgba(20,40,28,0)]",
-              "backdrop-blur-[14px] backdrop-saturate-[100%]"
+              "backdrop-blur-[18px] backdrop-saturate-[180%]"
             )}
           >
             <span className="text-[10.5px] font-bold tracking-[0.38px] text-[#647268] uppercase">
