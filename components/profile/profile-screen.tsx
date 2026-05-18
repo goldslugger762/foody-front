@@ -850,8 +850,7 @@ export function ProfileScreen({
   }
 
   function handleSettingsClick() {
-    // TODO: route to settings when the settings page exists.
-    setNotice("Настройки скоро появятся.");
+    router.push("/me/settings");
   }
 
   const retryButton = (
