@@ -112,7 +112,7 @@ function validateForm(form: FormState, avatarFile: File | null): FormErrors {
   }
 
   if (!username) {
-    errors.username = "Укажите никнейм.";
+    errors.username = "Укажите имя пользователя.";
   } else if (username.includes(" ")) {
     errors.username = "Без пробелов.";
   } else if (username.length > MAX_USERNAME_LENGTH) {
@@ -216,6 +216,7 @@ function ProfileInput({
             value={value}
             className={cn(
               FIELD_INPUT_CLASSES,
+              "aria-invalid:border-transparent aria-invalid:ring-0 aria-invalid:ring-transparent",
               "min-w-0 flex-1",
               prefix ? "pl-0" : ""
             )}
@@ -639,7 +640,7 @@ export function EditProfileScreen({ brand, palette }: EditProfileScreenProps) {
                 <ProfileInput
                   brand={brand}
                   error={errors.username}
-                  label="Никнейм"
+                  label="Имя пользователя"
                   maxLength={MAX_USERNAME_LENGTH}
                   placeholder="foody_user"
                   prefix="@"
