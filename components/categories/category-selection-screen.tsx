@@ -244,6 +244,7 @@ export function CategorySelectionScreen({
   const shouldReduceMotion = useReducedMotion();
   const [mode, setMode] = useState<CategoryMode>("dishes");
   const [popularSlideDirection, setPopularSlideDirection] = useState(1);
+  const [hasSwitchedPopularMode, setHasSwitchedPopularMode] = useState(false);
   const [loadState, setLoadState] = useState<LoadState>({
     status: "loading",
     data: null,
@@ -361,6 +362,7 @@ export function CategorySelectionScreen({
   function handleModeChange(nextMode: CategoryMode) {
     if (nextMode === mode) return;
 
+    setHasSwitchedPopularMode(true);
     setPopularSlideDirection(nextMode === "cuisines" ? 1 : -1);
     setMode(nextMode);
   }
@@ -447,9 +449,9 @@ export function CategorySelectionScreen({
                         shouldReduceMotion: !!shouldReduceMotion,
                       }}
                       variants={popularSlideVariants}
-                      initial="initial"
+                      initial={hasSwitchedPopularMode ? "initial" : false}
                       animate="animate"
-                      exit="exit"
+                      exit={hasSwitchedPopularMode ? "exit" : undefined}
                       transition={
                         shouldReduceMotion
                           ? { duration: 0 }
