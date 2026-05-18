@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CircleAlert, RotateCcw, Search } from "lucide-react";
+import { CircleAlert, RotateCcw } from "lucide-react";
 import {
   AnimatePresence,
   motion,
@@ -481,12 +481,6 @@ export function CategorySelectionScreen({
                 <h2 className="text-[22px] leading-tight font-semibold tracking-[0px] text-[#15291C] max-[380px]:text-[20px]">
                   Все категории
                 </h2>
-                {source === "search" && (
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/58 px-2.5 py-1 text-[11px] font-bold text-[#5C6B62]">
-                    <Search className="size-3" strokeWidth={2.3} />
-                    поиск
-                  </span>
-                )}
               </div>
 
               {loadState.status === "success" ? (
