@@ -265,14 +265,14 @@ function ProfileSummary({
 function AboutSection({ about }: { about: string | null }) {
   return (
     <section className="px-3.5 pt-5 max-[409px]:px-3">
-      <p className="px-1 text-[15px] leading-tight font-extrabold tracking-[0px] text-[#4B554E]">
+      <p className="px-1 text-[15px] leading-tight font-extrabold tracking-[0px] text-[#15291C]">
         Обо мне
       </p>
       <GlassSurface
         className="mt-2 rounded-[24px] border border-green-50/80 bg-white/45"
         contentClassName="px-4 py-3.5"
       >
-        <p className="font-[family-name:var(--font-roboto)] text-[14px] leading-[1.45] font-medium text-[#39483F]">
+        <p className="font-[family-name:var(--font-roboto)] text-[14px] leading-[1.45] font-medium text-[#15291C]">
           {about ?? "Пользователь пока ничего не рассказал о себе"}
         </p>
       </GlassSurface>
@@ -403,7 +403,7 @@ function PostsSection({
 
   return (
     <section className="px-3.5 pt-7 pb-28 max-[409px]:px-3">
-      <p className="px-1 text-[20px] leading-tight font-extrabold tracking-[0px] text-[#4B554E]">
+      <p className="px-1 text-[20px] leading-tight font-extrabold tracking-[0px] text-[#15291C]">
         {isOwnProfile ? "Ваши посты" : "Посты автора"}
       </p>
 
