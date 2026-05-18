@@ -26,6 +26,7 @@ import type { Palette } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 const MAX_REVIEW_LENGTH = 2500;
+const MAX_TAGS = 3;
 const STAR_YELLOW = "#FFB400";
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
@@ -377,6 +378,8 @@ function TagsInput({
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
 }) {
+  const canAddMoreTags = tags.length < MAX_TAGS;
+
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter") {
       return;
@@ -406,20 +409,29 @@ function TagsInput({
               key={tag}
               type="button"
               onClick={() => onRemoveTag(tag)}
-              className="inline-flex h-[28px] items-center gap-1 rounded-full border border-transparent px-2.5 text-[12px] font-bold text-[#0E8A4F]"
-              style={getReviewChromeStyle(brand, "rgba(46,204,113,0.14)")}
+              className={cn(
+                "origin-center cursor-pointer select-none border-0 outline-none",
+                "inline-flex h-[26px] items-center justify-center gap-1 rounded-full bg-[rgba(46,204,113,0.14)] px-2.5 text-[11.5px] font-bold tracking-[0px] text-[#0E8A4F]",
+                "transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]",
+                "[@media(max-width:430px)_and_(max-height:860px)]:h-6 [@media(max-width:430px)_and_(max-height:860px)]:px-2 [@media(max-width:430px)_and_(max-height:860px)]:text-[11px]"
+              )}
             >
-              <span>#{tag}</span>
-              <X className="size-3" strokeWidth={2.2} />
+              <span className="flex h-full items-center justify-center leading-[26px]">
+                #{tag}
+              </span>
+              <X className="size-3" strokeWidth={2.2} aria-hidden="true" />
             </button>
           ))}
-          <Input
-            value={tagDraft}
-            onChange={(event) => onTagDraftChange(event.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Введите тэг"
-            className={cn(FIELD_INPUT_CLASSES, "h-8 min-w-[120px] flex-1 px-1.5")}
-          />
+          {canAddMoreTags && (
+            <Input
+              value={tagDraft}
+              maxLength={32}
+              onChange={(event) => onTagDraftChange(event.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Введите тэг"
+              className={cn(FIELD_INPUT_CLASSES, "h-8 min-w-[120px] flex-1 px-1.5")}
+            />
+          )}
         </div>
       </GlassSurface>
     </section>
@@ -449,9 +461,14 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
   }
 
   function addTag() {
-    const normalizedTag = tagDraft.trim().replace(/^#/, "");
+    const normalizedTag = tagDraft.trim().replace(/^#+/, "");
+    const normalizedTagKey = normalizedTag.toLocaleLowerCase("ru-RU");
 
-    if (!normalizedTag || tags.includes(normalizedTag)) {
+    if (
+      !normalizedTag ||
+      tags.some((tag) => tag.toLocaleLowerCase("ru-RU") === normalizedTagKey) ||
+      tags.length >= MAX_TAGS
+    ) {
       setTagDraft("");
       return;
     }
