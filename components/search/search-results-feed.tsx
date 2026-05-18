@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { PostCard } from "@/components/feed/post-card";
 import {
+  getNextPostIdMembership,
   requestBookmarkMutation,
   requestFollowMutation,
   requestLikeMutation,
@@ -132,12 +133,18 @@ export function SearchResultsFeed({
 
         return nextPostIds;
       });
+      setSavedPostIds((currentPostIds) =>
+        getNextPostIdMembership(currentPostIds, postId, nextSaved)
+      );
 
       try {
         const result = await requestBookmarkMutation(postId, nextSaved);
 
         setSavedPostIds(result.savedPostIds);
       } catch {
+        setSavedPostIds((currentPostIds) =>
+          getNextPostIdMembership(currentPostIds, postId, !nextSaved)
+        );
         setNotice("Не удалось обновить избранное. Попробуйте ещё раз.");
       } finally {
         setPendingSavePostIds((currentPostIds) => {

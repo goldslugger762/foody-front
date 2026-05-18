@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { CURRENT_USER } from "@/lib/current-user";
 import {
+  getNextPostIdMembership,
   requestFeed,
   requestBookmarkMutation,
   requestFollowMutation,
@@ -326,12 +327,18 @@ export default function FeedPage() {
 
         return nextPostIds;
       });
+      setSavedPostIds((currentPostIds) =>
+        getNextPostIdMembership(currentPostIds, postId, nextSaved)
+      );
 
       try {
         const result = await requestBookmarkMutation(postId, nextSaved);
 
         setSavedPostIds(result.savedPostIds);
       } catch {
+        setSavedPostIds((currentPostIds) =>
+          getNextPostIdMembership(currentPostIds, postId, !nextSaved)
+        );
         setNotice("Не удалось обновить избранное. Попробуйте ещё раз.");
       } finally {
         setPendingSavePostIds((currentPostIds) => {

@@ -4,9 +4,10 @@ import { dirname, join } from "node:path";
 import { CURRENT_USER } from "@/lib/current-user";
 import type {
   BookmarkCheckResponse,
+  FavoritePostsResponse,
   BookmarkMutationResponse,
 } from "@/lib/feed-api";
-import { POSTS } from "@/lib/mock-data";
+import { POSTS, type Post } from "@/lib/mock-data";
 
 type BookmarkRecord = {
   createdAt: string;
@@ -139,6 +140,47 @@ function getSavedPostIdsFromStore(store: BookmarkStore, user: string) {
     .map((record) => record.postId);
 }
 
+function getFavoriteRecordsFromStore(store: BookmarkStore, user: string) {
+  return store.bookmarks
+    .filter((record) => record.user === user)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+}
+
+function getPostById(postId: number) {
+  return POSTS.find((post) => post.id === postId) ?? null;
+}
+
+function getFavoritePostsFromStore(store: BookmarkStore, user: string) {
+  return getFavoriteRecordsFromStore(store, user)
+    .map((record) => getPostById(record.postId))
+    .filter((post): post is Post => post !== null);
+}
+
+function getRecentFavoriteTagsFromPosts(posts: Post[], limit: number) {
+  const tags: string[] = [];
+  const seenTags = new Set<string>();
+
+  for (const post of posts) {
+    for (const tag of post.tags.slice(1)) {
+      if (seenTags.has(tag)) {
+        continue;
+      }
+
+      seenTags.add(tag);
+      tags.push(tag);
+
+      if (tags.length >= limit) {
+        return tags;
+      }
+    }
+  }
+
+  return tags;
+}
+
 function validatePostId(postId: number) {
   if (!Number.isInteger(postId) || postId <= 0) {
     throw new BookmarkValidationError(
@@ -162,6 +204,53 @@ export async function getSavedPostIds(user = CURRENT_USER.handle) {
   const store = await readBookmarkStore();
 
   return getSavedPostIdsFromStore(store, user);
+}
+
+export async function getFavoritePosts(user = CURRENT_USER.handle) {
+  const store = await readBookmarkStore();
+
+  return getFavoritePostsFromStore(store, user);
+}
+
+export async function getFavoritePostsCount(user = CURRENT_USER.handle) {
+  const savedPostIds = await getSavedPostIds(user);
+
+  return savedPostIds.length;
+}
+
+export async function getRecentFavoriteTags(
+  user = CURRENT_USER.handle,
+  limit = 20
+) {
+  const posts = await getFavoritePosts(user);
+
+  return getRecentFavoriteTagsFromPosts(posts, limit);
+}
+
+export async function getFavoritePostsSnapshot(
+  user = CURRENT_USER.handle,
+  tagsLimit = 20,
+  extra: Pick<
+    FavoritePostsResponse,
+    "followingUsers" | "likedPostIds"
+  > = {
+    followingUsers: [],
+    likedPostIds: [],
+  }
+): Promise<FavoritePostsResponse> {
+  const store = await readBookmarkStore();
+  const posts = getFavoritePostsFromStore(store, user);
+  const savedPostIds = getSavedPostIdsFromStore(store, user);
+
+  return {
+    currentUser: user,
+    followingUsers: extra.followingUsers,
+    likedPostIds: extra.likedPostIds,
+    posts,
+    recentFavoriteTags: getRecentFavoriteTagsFromPosts(posts, tagsLimit),
+    savedPostIds,
+    savedPostsCount: savedPostIds.length,
+  };
 }
 
 export async function getBookmarkCheck(
@@ -202,6 +291,8 @@ export async function savePost(
       postId: targetPostId,
       saved: true,
       savedPostIds: getSavedPostIdsFromStore(store, CURRENT_USER.handle),
+      savedPostsCount: getSavedPostIdsFromStore(store, CURRENT_USER.handle)
+        .length,
       changed: !alreadySaved,
     };
   });
@@ -225,6 +316,8 @@ export async function unsavePost(
       postId: targetPostId,
       saved: false,
       savedPostIds: getSavedPostIdsFromStore(store, CURRENT_USER.handle),
+      savedPostsCount: getSavedPostIdsFromStore(store, CURRENT_USER.handle)
+        .length,
       changed: store.bookmarks.length !== previousLength,
     };
   });

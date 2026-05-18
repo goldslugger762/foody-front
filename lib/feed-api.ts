@@ -57,6 +57,17 @@ export type BookmarkCheckResponse = BookmarkListResponse & {
 
 export type BookmarkMutationResponse = BookmarkCheckResponse & {
   changed: boolean;
+  savedPostsCount: number;
+};
+
+export type FavoritePostsResponse = {
+  currentUser: string | null;
+  followingUsers: string[];
+  likedPostIds: number[];
+  posts: Post[];
+  recentFavoriteTags: string[];
+  savedPostIds: number[];
+  savedPostsCount: number;
 };
 
 export type CommentLikeListResponse = {
@@ -113,12 +124,45 @@ export async function readApiJson<T>(response: Response): Promise<T> {
   throw new Error("Не удалось выполнить запрос.");
 }
 
+export function getNextPostIdMembership(
+  postIds: number[],
+  postId: number,
+  included: boolean
+) {
+  const hasPostId = postIds.includes(postId);
+
+  if (included) {
+    return hasPostId ? postIds : [...postIds, postId];
+  }
+
+  return hasPostId ? postIds.filter((id) => id !== postId) : postIds;
+}
+
 export async function requestFeed(scope: FeedScope) {
   const response = await fetch(`/api/feed?scope=${scope}`, {
     cache: "no-store",
   });
 
   return readApiJson<FeedResponse>(response);
+}
+
+export async function getFavoritePosts(tagsLimit = 20) {
+  const params = new URLSearchParams({
+    tagsLimit: String(tagsLimit),
+  });
+  const response = await fetch(`/api/favorites?${params.toString()}`, {
+    cache: "no-store",
+  });
+
+  return readApiJson<FavoritePostsResponse>(response);
+}
+
+export async function getFavoritePostsCount() {
+  return (await getFavoritePosts()).savedPostsCount;
+}
+
+export async function getRecentFavoriteTags(limit = 20) {
+  return (await getFavoritePosts(limit)).recentFavoriteTags;
 }
 
 export async function requestFollowMutation(
@@ -149,6 +193,10 @@ export async function requestBookmarkMutation(
   });
 
   return readApiJson<BookmarkMutationResponse>(response);
+}
+
+export async function togglePostBookmark(postId: number, nextSaved: boolean) {
+  return requestBookmarkMutation(postId, nextSaved);
 }
 
 export async function requestCommentLikes(commentIds: PostComment["id"][]) {
