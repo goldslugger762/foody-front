@@ -515,7 +515,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                 "border border-transparent",
                 "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
               )}
-              style={getReviewChromeStyle(brand, "rgba(255,255,255,0.58)")}
+              style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
               whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
             >
               <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
