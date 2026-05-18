@@ -41,9 +41,13 @@ Routes live in `app/`:
 - `/` (`app/page.tsx`) — client Foody feed. It fetches `/api/feed?scope=...`, owns the `new`/`subs` feed tab, and passes mutation state into `PostCard`.
 - `/search` (`app/search/page.tsx`) — RSC shell for search history. It renders the `SearchHistory` client island.
 - `/search/results` (`app/search/results/page.tsx`) — async RSC results page. It awaits `searchParams`, filters `POSTS` via `lib/search.ts`, reads server-side interaction state from `lib/server/*-store.ts`, and renders `SearchResultsHeader`, `SaveRecentSearchQuery`, and `SearchResultsFeed` client islands.
+- `/categories` (`app/categories/page.tsx`) — async RSC fullscreen category picker shell. It awaits `searchParams`, derives `source=search|review`, and renders the `CategorySelectionScreen` client island.
+- `/new-review` (`app/new-review/page.tsx`) — RSC shell for the fullscreen local review composer. It renders `NewReviewForm` with brand/palette tweaks.
+- `/saved` (`app/saved/page.tsx`) — RSC shell for the saved-posts screen. It renders `SavedPostsScreen`, which fetches favorite data client-side from `/api/favorites`.
 
 API Route Handlers live under `app/api/`:
 - `/api/feed` — reads the feed snapshot for `new` or `subs`.
+- `/api/favorites` — reads the saved-post snapshot, including saved posts, saved count, recent saved tags, followed authors, and liked post IDs.
 - `/api/follows` and `/api/follows/[user]` — list/check/mutate follows.
 - `/api/likes` and `/api/likes/[postId]` — list/check/mutate post likes.
 - `/api/bookmarks` and `/api/bookmarks/[postId]` — list/check/mutate saved posts.
@@ -57,8 +61,10 @@ Pick the `page.tsx` shape by how interconnected the state is:
 - `app/page.tsx` is `'use client'` because feed state is shared by the header, feed cards, notices, and optimistic pending indicators.
 - `app/search/page.tsx` is RSC because search query/history state is contained in `SearchHistory` and its children.
 - `app/search/results/page.tsx` is RSC because it resolves URL params and server store snapshots before handing interactive state to client islands.
+- `app/categories/page.tsx` is RSC because it only resolves `searchParams` before handing off to `CategorySelectionScreen`.
+- `app/new-review/page.tsx` and `app/saved/page.tsx` are RSC shells; their interactive state lives in `NewReviewForm` and `SavedPostsScreen`.
 
-Push `'use client'` as far down the tree as practical. Server-friendly visuals include `background-blobs`, `glass-surface`, `user-avatar`, `dish-photo`, and `section-header`. Current app-level client islands include `app/page.tsx`, `page-transition`, `feed-header`, `post-card`, `comments-sheet`, `photo-viewer-modal`, `bottom-tab-bar`, `search-history`, `search-header`, `search-results-header`, `search-results-feed`, `search-input-glass`, `recent-searches`, `popular-tags`, `category-picker`, and `save-recent-search-query`.
+Push `'use client'` as far down the tree as practical. Server-friendly visuals include `background-blobs`, `glass-surface`, `user-avatar`, `dish-photo`, and `section-header`. Current app-level client islands include `app/page.tsx`, `page-transition`, `feed-header`, `feed-segmented-control`, `post-card`, `full-screen-post`, `comments-sheet`, `photo-viewer-modal`, `subscribe-style-button`, `bottom-tab-bar`, `search-history`, `search-header`, `search-results-header`, `search-results-feed`, `search-input-glass`, `recent-searches`, `popular-tags`, `category-picker`, `save-recent-search-query`, `category-selection-screen`, `review-screen-shell`, `new-review-form`, and `saved-posts-screen`.
 
 Do not import `lib/server/*-store.ts` from Client Components. Server Components can read those helpers directly; Client Components should go through `lib/feed-api.ts`.
 
@@ -70,6 +76,10 @@ Do not import `lib/server/*-store.ts` from Client Components. Server Components 
 
 `lib/feed-api.ts` owns client fetch helpers and API response types. Use these helpers for follow, like, bookmark, comment-like, and feed requests instead of scattering ad hoc `fetch` calls through components.
 
+`lib/categories.ts` owns the current mock category dictionary (`dishes` and `cuisines`) and popular category helpers. It already has TODOs for backend replacement; preserve the `FoodCategory` shape (`id`, `label`, `emoji`, `mode`) when wiring real data.
+
+Saved posts are backed by bookmarks. `SavedPostsScreen` fetches `/api/favorites`, optimistically updates likes/bookmarks/follows through `lib/feed-api.ts`, and opens saved cards via `FullScreenPost`. `/api/favorites` composes bookmark, follow, and like server stores into one screen snapshot.
+
 Local demo persistence lives in ignored JSON files under `.data/`:
 - `.data/follows.json`
 - `.data/likes.json`
@@ -80,13 +90,22 @@ The server stores in `lib/server/` validate inputs against mock data, dedupe rec
 
 Comment text submission in `CommentsSheet` is currently local optimistic UI only. Comment likes are persisted through the comment-like API.
 
+New review submission in `NewReviewForm` is currently local UI only. It validates required fields, supports local photo previews, category selection, tags, rating, and draft-exit confirmation, but does not persist or create a post yet.
+
 ### Navigation
 
-`BottomTabBar` (`components/feed/bottom-tab-bar.tsx`) is shared by every route through `app/layout.tsx`. The active tab is derived from `usePathname()` — do not re-introduce an `active`/`onChange` controlled API. Route-bound tabs render as `next/link`; stubs for routes that do not exist yet (`add`, `saved`, `me`) stay as `<button>`.
+`BottomTabBar` (`components/feed/bottom-tab-bar.tsx`) is shared by every route through `app/layout.tsx`. The active tab is derived from `usePathname()` — do not re-introduce an `active`/`onChange` controlled API. Route-bound tabs render as `next/link`; only tabs without an `href` stay as `<button>` stubs.
 
-Nested search pages are considered active under the `/search` tab. `BottomTabBar` hides while a post card is expanded by listening for the `foody:post-card-expanded` window event from `PostCard`.
+Current bottom tabs:
+- `feed` links to `/`.
+- `search` links to `/search`.
+- `add` links to `/new-review` and is styled as the primary plus action.
+- `saved` links to `/saved`.
+- `me` is still a stub button.
 
-To add a new route to the bar, set its `href` in the `TABS` array and update `TAB_ORDER` in `components/page-transition.tsx` so route slide direction stays correct.
+Nested search and saved pages are considered active under their parent tab through `pathname.startsWith(...)`. `BottomTabBar` hides while a post card is expanded by listening for the `foody:post-card-expanded` window event from `PostCard`/`FullScreenPost`, and it also hides on fullscreen routes `/new-review` and `/categories`.
+
+To add a new route to the bar, set its `href` in the `TABS` array and update `TAB_ORDER` in `components/page-transition.tsx` so route slide direction stays correct. `PageTransition` treats `/new-review` and `/categories` as fullscreen enter/exit routes via `isFullscreenPath()`.
 
 ### Feed and post cards
 
@@ -99,11 +118,27 @@ The card UI is split between:
 
 When changing the card, preserve the single `PostCard` prop contract used by both the feed and search-results feed.
 
+`FullScreenPost` (`components/feed/full-screen-post.tsx`) reuses the expanded post-card composition for saved posts. Keep its mutation callback contract aligned with `PostCard` (`onFollowToggle`, `onLikeToggle`, `onSaveToggle`) so saved, feed, and search can share interaction semantics.
+
 ### Search
 
 Search navigation goes through `useSearchSubmit()` and `getSearchResultsHref()` so query trimming and URL shape stay consistent. `lib/search.ts` currently matches posts by dish name and tags only.
 
 Recent searches are client-side localStorage state in `components/search/recent-search-store.ts`. `SaveRecentSearchQuery` writes result-page queries back into that store after a small delay. Keep this local browser state separate from server `.data` stores.
+
+`CategoryPicker` on `/search` routes to `/categories?source=search`. Selecting a category there navigates to `/search/results?q=%23<category label>`. When `CategorySelectionScreen` is embedded inside `NewReviewForm`, it uses `source="review"` plus `onBack`/`onSelectCategory` callbacks instead of route navigation.
+
+### Review and categories
+
+`components/review/review-screen-shell.tsx` defines the shared fullscreen chrome for `/new-review` and `/categories`: `ReviewScreen`, `ReviewContentLayer`, `ReviewScrollArea`, `ReviewScreenHeader`, field surface/input classes, press classes, and `getReviewChromeStyle()`. Use these pieces for new fullscreen creation/category flows instead of duplicating the background, header, field chrome, or press treatment.
+
+`CategorySelectionScreen` loads category data from `lib/categories.ts` in a client effect and keeps its own loading/error/retry UI. It supports two modes, `dishes` and `cuisines`, using `FeedSegmentedControl`; keep that control generic for two-item segmented tabs.
+
+`NewReviewForm` owns all draft state locally. It embeds `CategorySelectionScreen` when choosing a category, shows required-field alerts through shadcn `Alert`, and uses shadcn `AlertDialog` for draft discard confirmation. Photo upload uses local `File` objects and object URLs; revoke URLs when changing that code.
+
+### Saved posts
+
+`SavedPostsScreen` is the interactive saved screen. It fetches `getFavoritePosts(20)`, renders recent tags from saved posts, shows a two-column grid, and opens `FullScreenPost` for detailed interaction. Keep optimistic updates reversible: bookmark removal removes the card locally, failed mutations restore the previous saved state, and successful bookmark mutations resync favorites in the background.
 
 ### Tailwind v4, CSS-first
 
@@ -116,7 +151,7 @@ Add theme tokens / utilities in CSS, not a JS config. v4 supports fractional spa
 
 ### shadcn
 
-`components.json`: style `radix-nova`, RSC-enabled, icons `lucide-react`, base color `neutral`. Current `components/ui/` includes `aspect-ratio`, `avatar`, `button`, `card`, `dropdown-menu`, `input`, `input-group`, `label`, `progress`, `scroll-area`, `spinner`, `tabs`, and `textarea`. Add more with `npx shadcn@latest add <name> --yes`; they land in `components/ui/`.
+`components.json`: style `radix-nova`, RSC-enabled, icons `lucide-react`, base color `neutral`. Current `components/ui/` includes `alert`, `alert-dialog`, `aspect-ratio`, `avatar`, `button`, `card`, `dropdown-menu`, `input`, `input-group`, `label`, `progress`, `scroll-area`, `spinner`, `tabs`, and `textarea`. Add more with `npx shadcn@latest add <name> --yes`; they land in `components/ui/`.
 
 **Radix import shape is non-standard.** The dep is the umbrella `radix-ui` package (not `@radix-ui/react-*`). Primitives are imported as namespaces:
 
@@ -139,7 +174,7 @@ Use the `motion` library for React animations. Prefer existing Motion primitives
 
 ### Domain components & "Liquid Glass + Flat" visual language
 
-Per-screen components live in feature subfolders: `components/feed/`, `components/search/`. Mirror this when adding a new screen. Cross-screen primitives (e.g. `GlassSurface`) live under `components/feed/` for now — promote to `components/` only when a third consumer appears.
+Per-screen components live in feature subfolders: `components/feed/`, `components/search/`, `components/review/`, `components/categories/`, and `components/saved/`. Mirror this when adding a new screen. Cross-screen primitives such as `GlassSurface` and `FeedSegmentedControl` still live under `components/feed/` for now because the project evolved from the feed shell; promote to a broader folder only when doing an intentional cleanup.
 
 The project has its own design system. **All new UI must use it, and every next page must visually feel like the feed page**: same mobile app shell, shared bottom navigation, liquid-glass surfaces, soft green food-social palette, tight rounded geometry, Russian copy, Motion interaction style, and the same typography rhythm. Do not introduce a separate visual direction, generic landing-page layout, or unrelated component style unless the user explicitly asks for a redesign.
 
