@@ -422,7 +422,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
               type="button"
               onClick={() => router.replace("/login")}
               className={cn(
-                "mx-auto block cursor-pointer rounded-full px-3 py-2 text-[14px] leading-tight font-extrabold tracking-[0px] text-[#15291C] outline-none transition-colors hover:bg-[#15291C]/6 focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                "mx-auto block cursor-pointer rounded-full px-3 py-2 text-[16px] leading-tight font-extrabold tracking-[0px] text-[#15291C] outline-none transition-colors hover:bg-[#15291C]/6 focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
                 PRESS_CLASSES
               )}
               whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
