@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 const MAX_REVIEW_LENGTH = 2500;
+const STAR_YELLOW = "#FFB400";
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 const FIELD_SURFACE_CLASSES = cn(
@@ -82,13 +83,11 @@ function ReviewField({
 }
 
 function RatingStar({
-  brand,
   index,
   rating,
   shouldReduceMotion,
   onRate,
 }: {
-  brand: string;
   index: number;
   rating: number;
   shouldReduceMotion: boolean | null;
@@ -112,7 +111,11 @@ function RatingStar({
       onPointerDown={updateRating}
       whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.86, rotate: -3 } : undefined}
     >
-      <Star className="size-7 max-[380px]:size-6" strokeWidth={2.1} />
+      <Star
+        className="size-7 max-[380px]:size-6"
+        strokeWidth={2.1}
+        color={fill > 0 ? STAR_YELLOW : "#AAB4AE"}
+      />
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden rounded-[15px]"
@@ -121,8 +124,8 @@ function RatingStar({
         <Star
           className="size-7 max-[380px]:size-6"
           strokeWidth={2.1}
-          color={brand}
-          fill={brand}
+          color={STAR_YELLOW}
+          fill={STAR_YELLOW}
         />
       </span>
     </motion.button>
@@ -130,12 +133,10 @@ function RatingStar({
 }
 
 function RatingControl({
-  brand,
   rating,
   shouldReduceMotion,
   onRate,
 }: {
-  brand: string;
   rating: number;
   shouldReduceMotion: boolean | null;
   onRate: (rating: number) => void;
@@ -146,15 +147,21 @@ function RatingControl({
         <h2 className="flex-1 text-center text-[22px] leading-tight font-semibold text-[#15291C]">
           Оцените блюдо
         </h2>
-        <span className="min-w-10 text-right text-[22px] leading-none font-extrabold text-[#15291C]">
-          {rating.toFixed(1)}
+        <span className="flex min-w-14 items-center justify-end gap-1 text-[22px] leading-none font-extrabold text-[#15291C]">
+          <Star
+            className="size-5"
+            strokeWidth={2.1}
+            color={STAR_YELLOW}
+            fill={STAR_YELLOW}
+            aria-hidden="true"
+          />
+          <span>{rating.toFixed(1)}</span>
         </span>
       </div>
       <div className="flex items-center justify-center gap-3 max-[380px]:gap-2.5">
         {[0, 1, 2, 3, 4].map((index) => (
           <RatingStar
             key={index}
-            brand={brand}
             index={index}
             rating={rating}
             shouldReduceMotion={shouldReduceMotion}
@@ -439,7 +446,6 @@ export function NewReviewForm({ brand }: NewReviewFormProps) {
             </section>
 
             <RatingControl
-              brand={brand}
               rating={rating}
               shouldReduceMotion={shouldReduceMotion}
               onRate={setRating}
