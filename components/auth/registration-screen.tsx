@@ -149,7 +149,7 @@ function RegistrationLayout({
   children: ReactNode;
   description: ReactNode;
   footer?: ReactNode;
-  onBack: () => void;
+  onBack?: () => void;
   progress: number;
   title: string;
 }) {
@@ -164,20 +164,24 @@ function RegistrationLayout({
         <div className="mx-auto flex min-h-[calc(100svh-7.5rem)] w-full max-w-[390px] flex-col py-6">
           <div className="pt-8 max-[380px]:pt-4">
             <div className="mb-5 flex items-center gap-3">
-              <motion.button
-                type="button"
-                aria-label="Назад"
-                title="Назад"
-                onClick={onBack}
-                className={cn(
-                  "grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-[#15291C] outline-none border border-transparent backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
-                  PRESS_CLASSES
-                )}
-                style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
-                whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
-              >
-                <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
-              </motion.button>
+              {onBack ? (
+                <motion.button
+                  type="button"
+                  aria-label="Назад"
+                  title="Назад"
+                  onClick={onBack}
+                  className={cn(
+                    "grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-[#15291C] outline-none border border-transparent backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                    PRESS_CLASSES
+                  )}
+                  style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
+                  whileTap={
+                    canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined
+                  }
+                >
+                  <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
+                </motion.button>
+              ) : null}
               <h1 className="min-w-0 flex-1 text-[24px] leading-tight font-black tracking-[0px] text-[#15291C]">
                 {title}
               </h1>
@@ -411,7 +415,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
             </>
           )
         }
-        onBack={handleHeaderBack}
+        onBack={step > 1 ? handleHeaderBack : undefined}
         footer={
           step === 1 ? (
             <motion.button
