@@ -92,7 +92,7 @@ function ProfileHeader({
   return (
     <header className="sticky top-0 z-20 px-3.5 pt-2 pb-0 max-[409px]:px-3">
       <div className="flex h-13 items-center justify-between gap-3 px-1">
-        <p className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[19px] leading-tight font-extrabold tracking-[0px] text-[#15291C] max-[409px]:text-[16px]">
+        <p className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-sans text-[18px] leading-tight font-black tracking-[-0.2px] text-[#15291C] max-[409px]:text-[14.5px]">
           {username}
         </p>
 
@@ -207,10 +207,10 @@ function ProfileSummary({
         />
 
         <div className="min-w-0 flex-1">
-          <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[18px] leading-tight font-extrabold tracking-[-0.2px] text-[#15291C]">
+          <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[19px] leading-[1.2] font-extrabold tracking-[-0.4px] text-[#15291C] max-[390px]:text-[18px] [@media(max-width:430px)_and_(max-height:860px)]:text-[17px]">
             {profile.displayName}
           </p>
-          <p className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap font-[family-name:var(--font-roboto)] text-[13.5px] leading-tight font-medium text-[#5C6B62]">
+          <p className="mt-px overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] leading-tight font-medium text-[#5C6B62] max-[380px]:text-[10px] [@media(min-width:381px)_and_(max-width:400px)_and_(max-height:860px)]:text-[10.25px]">
             {profile.city ?? "Город не указан"}
           </p>
 
@@ -295,7 +295,7 @@ function AboutSection({
           background: `linear-gradient(#FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, color-mix(in srgb, ${brand} 78%, white), rgba(122,236,164,0.92), rgba(100,218,189,0.66), color-mix(in srgb, ${brand} 88%, transparent)) border-box`,
         }}
       >
-        <p className="font-[family-name:var(--font-roboto)] text-[14px] leading-[1.45] font-medium text-[#15291C]">
+        <p className="font-[family-name:var(--font-roboto)] text-[15px] leading-[1.62] font-medium text-pretty text-[#15291C] max-[390px]:text-[14.5px] max-[390px]:leading-[1.5] [@media(max-width:430px)_and_(max-height:860px)]:text-[14px] [@media(max-width:430px)_and_(max-height:860px)]:leading-[1.42]">
           {about ?? "Пользователь пока ничего не рассказал о себе"}
         </p>
       </div>
@@ -353,7 +353,7 @@ function StatsSection({
             <p className="mt-1.5 text-[18px] leading-none font-black tracking-[0px] text-[#15291C]">
               {stat.value}
             </p>
-            <p className="mt-1 font-[family-name:var(--font-roboto)] text-[11px] leading-tight font-medium text-[#5C6B62]">
+            <p className="mt-1 text-[10.5px] leading-tight font-bold tracking-[0.38px] text-[#5C6B62] uppercase">
               {stat.label}
             </p>
           </GlassSurface>
