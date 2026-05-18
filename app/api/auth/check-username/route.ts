@@ -1,6 +1,6 @@
 import { normalizeUsername, type AvailabilityResponse } from "@/lib/auth-api";
 
-const USERNAME_PATTERN = /^[\p{L}\d_]+$/u;
+const USERNAME_PATTERN = /^[A-Za-z\d_]+$/;
 const RESERVED_USERNAMES = new Set(["admin", "foody", "you"]);
 
 function isUsernamePayload(value: unknown): value is { username: string } {
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         code: "INVALID_USERNAME_CHARS",
-        error: "Имя пользователя может содержать только буквы, цифры и _",
+        error: "Имя пользователя может содержать только английские буквы, цифры и _",
         field: "username",
       },
       { status: 400 }

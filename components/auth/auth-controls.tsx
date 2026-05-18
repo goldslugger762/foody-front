@@ -176,7 +176,9 @@ export function AuthField({
   idPrefix = "auth",
   inputMode,
   label,
+  maxLength,
   onChange,
+  onFocus,
   placeholder,
   rightControl,
   type,
@@ -188,7 +190,9 @@ export function AuthField({
   idPrefix?: string;
   inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
   label: string;
+  maxLength?: number;
   onChange: (value: string) => void;
+  onFocus?: () => void;
   placeholder: string;
   rightControl?: ReactNode;
   type: string;
@@ -204,7 +208,7 @@ export function AuthField({
       <GlassSurface
         className={cn(
           FIELD_SURFACE_CLASSES,
-          "bg-white/84",
+          "overflow-hidden bg-white/84",
           error &&
             "ring-2 ring-destructive/38 focus-within:ring-destructive/42 focus-within:shadow-[0_10px_24px_rgba(20,40,28,0.1),0_0_0_1px_rgba(239,68,68,0.28),inset_1px_1px_0_rgba(255,255,255,0.78)]"
         )}
@@ -219,15 +223,17 @@ export function AuthField({
             aria-invalid={!!error}
             autoComplete={autoComplete}
             inputMode={inputMode}
+            maxLength={maxLength}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange(event.target.value)
             }
+            onFocus={onFocus}
             placeholder={placeholder}
             type={type}
             value={value}
             className={cn(
               FIELD_INPUT_CLASSES,
-              "min-w-0 flex-1 aria-invalid:text-destructive aria-invalid:placeholder:text-destructive/58",
+              "min-w-0 flex-1 border-transparent aria-invalid:border-transparent aria-invalid:text-destructive aria-invalid:ring-0 aria-invalid:placeholder:text-destructive/58 focus-visible:border-transparent",
               rightControl ? "pr-1.5" : ""
             )}
           />

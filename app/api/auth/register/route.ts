@@ -7,7 +7,7 @@ import {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^[\p{L}\d]+$/u;
-const USERNAME_PATTERN = /^[\p{L}\d_]+$/u;
+const USERNAME_PATTERN = /^[A-Za-z\d_]+$/;
 const RESERVED_EMAILS = new Set(["taken@example.com", "busy@mail.com"]);
 const RESERVED_USERNAMES = new Set(["admin", "foody", "you"]);
 
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
   if (!USERNAME_PATTERN.test(username)) {
     return validationError(
-      "Имя пользователя может содержать только буквы, цифры и _",
+      "Имя пользователя может содержать только английские буквы, цифры и _",
       "username"
     );
   }

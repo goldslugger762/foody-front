@@ -57,7 +57,7 @@ type RegistrationErrors = Partial<Record<keyof RegistrationForm | "form", string
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^[\p{L}\d]+$/u;
-const USERNAME_PATTERN = /^[\p{L}\d_]+$/u;
+const USERNAME_PATTERN = /^[A-Za-z\d_]+$/;
 const STEP_PROGRESS: Record<RegistrationStep, number> = {
   1: 33,
   2: 66,
@@ -124,10 +124,16 @@ function validateUsername(usernameValue: string) {
   }
 
   if (!USERNAME_PATTERN.test(username)) {
-    return "Имя пользователя может содержать только буквы, цифры и _";
+    return "Имя пользователя может содержать только английские буквы, цифры и _";
   }
 
   return undefined;
+}
+
+function formatUsernameInput(value: string) {
+  const username = normalizeUsername(value).replace(/[^A-Za-z\d_]/g, "").slice(0, 12);
+
+  return username ? `@${username}` : "@";
 }
 
 function RegistrationLayout({
@@ -143,7 +149,7 @@ function RegistrationLayout({
   children: ReactNode;
   description: ReactNode;
   footer?: ReactNode;
-  onBack?: () => void;
+  onBack: () => void;
   progress: number;
   title: string;
 }) {
@@ -157,14 +163,14 @@ function RegistrationLayout({
       >
         <div className="mx-auto flex min-h-[calc(100svh-7.5rem)] w-full max-w-[390px] flex-col py-6">
           <div className="pt-8 max-[380px]:pt-4">
-            {onBack ? (
+            <div className="mb-5 flex items-center gap-3">
               <motion.button
                 type="button"
                 aria-label="Назад"
                 title="Назад"
                 onClick={onBack}
                 className={cn(
-                  "mb-5 grid size-9 cursor-pointer place-items-center rounded-full text-[#15291C] outline-none border border-transparent backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                  "grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-[#15291C] outline-none border border-transparent backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
                   PRESS_CLASSES
                 )}
                 style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
@@ -172,12 +178,12 @@ function RegistrationLayout({
               >
                 <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
               </motion.button>
-            ) : null}
-
-            <div className="px-1">
-              <h1 className="text-[24px] leading-tight font-black tracking-[0px] text-[#15291C]">
+              <h1 className="min-w-0 flex-1 text-[24px] leading-tight font-black tracking-[0px] text-[#15291C]">
                 {title}
               </h1>
+            </div>
+
+            <div className="px-1">
               <div className="mt-2 font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#425146]">
                 {description}
               </div>
@@ -219,74 +225,32 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [slideDirection, setSlideDirection] = useState(1);
   const [successOpen, setSuccessOpen] = useState(false);
 
-  const emailError = useMemo(() => {
-    if (!form.email.trim()) {
-      return undefined;
-    }
-
-    return validateEmail(form.email);
-  }, [form.email]);
-
-  const passwordError = useMemo(() => {
-    if (!form.password) {
-      return undefined;
-    }
-
-    return validatePassword(form.password);
-  }, [form.password]);
-
-  const confirmPasswordError = useMemo(() => {
-    if (!form.confirmPassword) {
-      return undefined;
-    }
-
-    return validateConfirmPassword(form.password, form.confirmPassword);
-  }, [form.confirmPassword, form.password]);
-
-  const nameError = useMemo(() => {
-    if (!form.name.trim()) {
-      return undefined;
-    }
-
-    return validateName(form.name);
-  }, [form.name]);
-
-  const usernameError = useMemo(() => {
-    if (!form.username.trim()) {
-      return undefined;
-    }
-
-    return validateUsername(form.username);
-  }, [form.username]);
-
-  const stepIsValid = useMemo(() => {
+  const stepCanSubmit = useMemo(() => {
     if (step === 1) {
-      return !!form.email.trim() && !validateEmail(form.email);
+      return !!form.email.trim();
     }
 
     if (step === 2) {
-      return (
-        !!form.password &&
-        !!form.confirmPassword &&
-        !validatePassword(form.password) &&
-        !validateConfirmPassword(form.password, form.confirmPassword)
-      );
+      return !!form.password && !!form.confirmPassword;
     }
 
-    return (
-      !!form.name.trim() &&
-      !!form.username.trim() &&
-      !validateName(form.name) &&
-      !validateUsername(form.username)
-    );
+    return !!form.name.trim() && normalizeUsername(form.username).length > 0;
   }, [form, step]);
 
   function updateField(field: keyof RegistrationForm, value: string) {
+    const nextValue =
+      field === "name"
+        ? value.slice(0, 12)
+        : field === "username"
+          ? formatUsernameInput(value)
+          : value;
+
     setForm((currentForm) => ({
       ...currentForm,
-      [field]: value,
+      [field]: nextValue,
     }));
     setErrors((currentErrors) => ({
       ...currentErrors,
@@ -314,9 +278,19 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
 
   function goBack() {
     setErrors({});
+    setSlideDirection(-1);
     setStep((currentStep) =>
       currentStep === 3 ? 2 : currentStep === 2 ? 1 : currentStep
     );
+  }
+
+  function handleHeaderBack() {
+    if (step === 1) {
+      router.replace("/login");
+      return;
+    }
+
+    goBack();
   }
 
   function closeSuccess() {
@@ -340,6 +314,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
 
       try {
         await checkEmailAvailability(form.email);
+        setSlideDirection(1);
         setStep(2);
       } catch (error) {
         setBackendError(error);
@@ -365,6 +340,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
         return;
       }
 
+      setSlideDirection(1);
       setStep(3);
       return;
     }
@@ -435,14 +411,14 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
             </>
           )
         }
-        onBack={step > 1 ? goBack : undefined}
+        onBack={handleHeaderBack}
         footer={
           step === 1 ? (
             <motion.button
               type="button"
               onClick={() => router.replace("/login")}
               className={cn(
-                "mx-auto block cursor-pointer rounded-full bg-[#15291C] px-5 py-3 text-[14px] leading-tight font-extrabold tracking-[0px] text-white shadow-[0_12px_26px_rgba(20,40,28,0.22)] outline-none transition-colors hover:bg-[#0E1C14] focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                "mx-auto block cursor-pointer rounded-full px-3 py-2 text-[14px] leading-tight font-extrabold tracking-[0px] text-[#15291C] outline-none transition-colors hover:bg-[#15291C]/6 focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
                 PRESS_CLASSES
               )}
               whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.94 } : undefined}
@@ -464,16 +440,24 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
             <motion.div
               key={step}
               className="space-y-4"
-              initial={canAnimate(shouldReduceMotion) ? { opacity: 0, x: 18 } : false}
+              initial={
+                canAnimate(shouldReduceMotion)
+                  ? { opacity: 0, x: slideDirection * 42 }
+                  : false
+              }
               animate={{ opacity: 1, x: 0 }}
-              exit={canAnimate(shouldReduceMotion) ? { opacity: 0, x: -18 } : undefined}
-              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              exit={
+                canAnimate(shouldReduceMotion)
+                  ? { opacity: 0, x: slideDirection * -42 }
+                  : undefined
+              }
+              transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
             >
               {step === 1 ? (
                 <AuthField
                   autoComplete="email"
                   brand={brand}
-                  error={errors.email ?? emailError}
+                  error={errors.email}
                   idPrefix="registration"
                   inputMode="email"
                   label="Email"
@@ -489,7 +473,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
                   <AuthField
                     autoComplete="new-password"
                     brand={brand}
-                    error={errors.password ?? passwordError}
+                    error={errors.password}
                     idPrefix="registration"
                     label="Пароль"
                     placeholder="Введите Ваш пароль..."
@@ -508,7 +492,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
                   <AuthField
                     autoComplete="new-password"
                     brand={brand}
-                    error={errors.confirmPassword ?? confirmPasswordError}
+                    error={errors.confirmPassword}
                     idPrefix="registration"
                     label="Повторите пароль"
                     placeholder="Повторите пароль..."
@@ -534,23 +518,31 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
                   <AuthField
                     autoComplete="given-name"
                     brand={brand}
-                    error={errors.name ?? nameError}
+                    error={errors.name}
                     idPrefix="registration"
                     label="Имя"
                     placeholder="Иван..."
                     type="text"
                     value={form.name}
+                    maxLength={12}
                     onChange={(value) => updateField("name", value)}
                   />
                   <AuthField
                     autoComplete="username"
                     brand={brand}
-                    error={errors.username ?? usernameError}
+                    error={errors.username}
                     idPrefix="registration"
                     label="Имя пользователя"
                     placeholder="@ivan_ivanov..."
                     type="text"
+                    inputMode="text"
                     value={form.username}
+                    maxLength={13}
+                    onFocus={() => {
+                      if (!form.username) {
+                        updateField("username", "@");
+                      }
+                    }}
                     onChange={(value) => updateField("username", value)}
                   />
                 </>
@@ -582,10 +574,10 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
 
           <div className="pt-1">
             <AuthButton
-              active={stepIsValid}
+              active={stepCanSubmit}
               brand={brand}
-              disabled={!stepIsValid || isLoading}
-              fill={stepIsValid ? "rgba(189,247,208,0.30)" : "rgba(255,255,255,0.40)"}
+              disabled={!stepCanSubmit || isLoading}
+              fill={stepCanSubmit ? "rgba(189,247,208,0.30)" : "rgba(255,255,255,0.40)"}
               type="submit"
             >
               <span className="flex items-center justify-center gap-2">
