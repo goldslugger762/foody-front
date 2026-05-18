@@ -16,6 +16,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { DishPhoto } from "@/components/feed/dish-photo";
 import { FullScreenPost } from "@/components/feed/full-screen-post";
 import { GlassSurface } from "@/components/feed/glass-surface";
+import { SubscribeStyleButton } from "@/components/feed/subscribe-style-button";
 import { UserAvatar } from "@/components/feed/user-avatar";
 import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -212,27 +213,38 @@ function ProfileSummary({
           </p>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <motion.button
-              type="button"
+            <SubscribeStyleButton
+              active
+              ariaLabel="Поделиться"
+              brand={brand}
+              shouldReduceMotion={shouldReduceMotion}
+              title="Поделиться"
+              className="h-9 w-full rounded-[12px] px-3 text-[12.5px]"
               onClick={onShareClick}
-              whileTap={getProfileButtonTap(shouldReduceMotion)}
-              className="inline-flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/62 bg-white/52 px-3 text-[12px] font-extrabold whitespace-nowrap text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.78)] outline-none transition-colors hover:bg-white/68 focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [&_svg]:shrink-0"
             >
-              <Send className="size-3.5" />
-              Поделиться
-            </motion.button>
+              <span className="flex h-full items-center justify-center gap-1.5 leading-9">
+                <Send className="size-3.5 shrink-0" />
+                Поделиться
+              </span>
+            </SubscribeStyleButton>
 
             {isOwnProfile ? (
-              <motion.button
+              <button
                 type="button"
                 onClick={onEditClick}
-                whileTap={getProfileButtonTap(shouldReduceMotion)}
-                className="inline-flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-transparent px-3 text-[12px] font-extrabold whitespace-nowrap text-[#0B2F1D] shadow-[0_8px_18px_rgba(8,58,33,0.14),inset_1px_1px_0_rgba(255,255,255,0.68)] outline-none transition-[filter] hover:brightness-[1.02] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [&_svg]:shrink-0"
-                style={{ backgroundColor: brand }}
+                className={cn(
+                  "origin-center inline-flex h-9 w-full cursor-pointer select-none items-center justify-center rounded-[12px] border-0 bg-[linear-gradient(135deg,#BDF7D0,#73E89F)] px-3 text-[12.5px] font-extrabold tracking-[0px] whitespace-nowrap text-[#06301A] outline-none transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [-webkit-tap-highlight-color:transparent]",
+                  canAnimate(shouldReduceMotion) && "active:scale-[0.94]"
+                )}
+                style={{
+                  boxShadow: `0 4px 12px ${brand}33, inset 1px 1px 0 rgba(255,255,255,0.65)`,
+                }}
               >
-                <Edit3 className="size-3.5" />
-                Редактировать
-              </motion.button>
+                <span className="flex h-full items-center justify-center gap-1.5 leading-9">
+                  <Edit3 className="size-3.5 shrink-0" />
+                  Редактировать
+                </span>
+              </button>
             ) : (
               <motion.button
                 type="button"
