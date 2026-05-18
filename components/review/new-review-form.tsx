@@ -12,7 +12,14 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronRight, ImageUp, Star, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  ImageUp,
+  Star,
+  UtensilsCrossed,
+  X,
+} from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
 import { GlassSurface } from "@/components/feed/glass-surface";
@@ -353,11 +360,23 @@ function CategoryButton({ brand }: { brand: string }) {
       )}
       style={getReviewChromeStyle(brand)}
     >
-      <span className="text-[15.5px] leading-snug font-bold tracking-[0px] text-[#15291C]">
-        Выберите категорию
+      <span
+        aria-hidden="true"
+        className="grid size-8 place-items-center rounded-[10px] text-[17px] leading-none"
+        style={{
+          background: `${brand}66`,
+          boxShadow: `0 4px 12px ${brand}55`,
+        }}
+      >
+        <UtensilsCrossed size={17} strokeWidth={2.4} color="#15291C" />
+      </span>
+      <span className="flex flex-1 items-center">
+        <span className="text-[16.5px] leading-snug font-bold tracking-[0px] text-[#15291C]">
+          Выберите категорию
+        </span>
       </span>
       <span className="ml-auto grid size-[26px] place-items-center rounded-full bg-[rgba(20,40,28,0.06)]">
-        <ChevronRight size={14} strokeWidth={2.4} color={brand} />
+        <ChevronRight size={14} strokeWidth={2.4} color="#15291C" />
       </span>
     </button>
   );
