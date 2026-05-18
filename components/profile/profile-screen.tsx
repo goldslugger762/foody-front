@@ -262,20 +262,28 @@ function ProfileSummary({
   );
 }
 
-function AboutSection({ about }: { about: string | null }) {
+function AboutSection({
+  about,
+  brand,
+}: {
+  about: string | null;
+  brand: string;
+}) {
   return (
     <section className="px-3.5 pt-5 max-[409px]:px-3">
       <p className="px-1 text-[15px] leading-tight font-extrabold tracking-[0px] text-[#15291C]">
         Обо мне
       </p>
-      <GlassSurface
-        className="mt-2 rounded-[24px] border border-green-50/80 bg-white/45"
-        contentClassName="px-4 py-3.5"
+      <div
+        className="mt-2 rounded-[20px] border border-transparent px-4 py-3.5"
+        style={{
+          background: `linear-gradient(#FFFFFF, #FFFFFF) padding-box, linear-gradient(135deg, color-mix(in srgb, ${brand} 78%, white), rgba(122,236,164,0.92), rgba(100,218,189,0.66), color-mix(in srgb, ${brand} 88%, transparent)) border-box`,
+        }}
       >
         <p className="font-[family-name:var(--font-roboto)] text-[14px] leading-[1.45] font-medium text-[#15291C]">
           {about ?? "Пользователь пока ничего не рассказал о себе"}
         </p>
-      </GlassSurface>
+      </div>
     </section>
   );
 }
@@ -862,7 +870,7 @@ export function ProfileScreen({
                 }
                 onShareClick={() => void handleShareClick()}
               />
-              <AboutSection about={profile.about} />
+              <AboutSection about={profile.about} brand={brand} />
               <StatsSection
                 followersCount={profile.followersCount}
                 followingCount={profile.followingCount}
