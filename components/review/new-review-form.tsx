@@ -21,6 +21,7 @@ import {
 } from "@/components/feed/subscribe-style-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { Palette } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 const MAX_REVIEW_LENGTH = 2500;
@@ -38,6 +39,45 @@ const FIELD_INPUT_CLASSES =
 
 type NewReviewFormProps = {
   brand: string;
+  palette: Palette;
+};
+
+type ReviewBlob = {
+  color: string;
+  opacity: number;
+  left: string;
+  top: string;
+  size: string;
+};
+
+const REVIEW_BACKGROUNDS: Record<Palette, { base: string; blobs: ReviewBlob[] }> = {
+  fresh: {
+    base: "#F3F6F2",
+    blobs: [
+      { color: "#46DA8F", opacity: 0.55, left: "76%", top: "18%", size: "19rem" },
+      { color: "#8DE0B0", opacity: 0.75, left: "18%", top: "39%", size: "17rem" },
+      { color: "#F5D08C", opacity: 0.70, left: "88%", top: "72%", size: "18rem" },
+      { color: "#B8E6CC", opacity: 0.50, left: "16%", top: "88%", size: "20rem" },
+    ],
+  },
+  citrus: {
+    base: "#F8F5ED",
+    blobs: [
+      { color: "#FFC25C", opacity: 0.2, left: "78%", top: "17%", size: "18rem" },
+      { color: "#2ECC71", opacity: 0.18, left: "17%", top: "41%", size: "17rem" },
+      { color: "#FF9A6B", opacity: 0.15, left: "86%", top: "74%", size: "18rem" },
+      { color: "#CDEBA8", opacity: 0.19, left: "18%", top: "88%", size: "20rem" },
+    ],
+  },
+  dusk: {
+    base: "#EEF4EF",
+    blobs: [
+      { color: "#2ECC71", opacity: 0.2, left: "78%", top: "18%", size: "19rem" },
+      { color: "#1FA85C", opacity: 0.18, left: "18%", top: "42%", size: "17rem" },
+      { color: "#254A38", opacity: 0.13, left: "88%", top: "73%", size: "18rem" },
+      { color: "#8DE0B0", opacity: 0.18, left: "16%", top: "88%", size: "20rem" },
+    ],
+  },
 };
 
 type ReviewFieldProps = {
@@ -50,6 +90,35 @@ type ReviewFieldProps = {
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
+}
+
+function ReviewBackgroundBlobs({ palette }: { palette: Palette }) {
+  const { base, blobs } = REVIEW_BACKGROUNDS[palette];
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{ background: base }}
+    >
+      {blobs.map((blob, index) => (
+        <div
+          key={index}
+          className="absolute rounded-full blur-[72px]"
+          style={{
+            background: blob.color,
+            height: blob.size,
+            left: `calc(${blob.left} - (${blob.size} / 2))`,
+            opacity: blob.opacity,
+            top: `calc(${blob.top} - (${blob.size} / 2))`,
+            width: blob.size,
+          }}
+        />
+      ))}
+      <div className="absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_0%,rgba(255,255,255,0.46),transparent_62%)]" />
+      <div className="absolute inset-0 bg-white/22" />
+    </div>
+  );
 }
 
 function ReviewField({
@@ -332,7 +401,7 @@ function TagsInput({
   );
 }
 
-export function NewReviewForm({ brand }: NewReviewFormProps) {
+export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
   const [dish, setDish] = useState("");
@@ -367,8 +436,9 @@ export function NewReviewForm({ brand }: NewReviewFormProps) {
   }
 
   return (
-    <main className="absolute inset-0 overflow-hidden bg-[#F3F6F2]">
-      <div className="absolute inset-0 flex flex-col bg-[linear-gradient(180deg,rgba(255,255,255,0.82),rgba(239,245,240,0.96))] pt-12.5">
+    <main className="absolute inset-0 overflow-hidden">
+      <ReviewBackgroundBlobs palette={palette} />
+      <div className="absolute inset-0 z-[1] flex flex-col bg-[linear-gradient(180deg,rgba(255,255,255,0.68),rgba(239,245,240,0.88))] pt-12.5">
         <section
           aria-label="Новый отзыв"
           className="hide-scroll flex-1 overflow-y-auto px-[18px] pb-25"

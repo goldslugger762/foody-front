@@ -4,5 +4,5 @@ import { DEFAULT_TWEAKS, type Tweaks } from "@/lib/mock-data";
 const TWEAKS: Tweaks = DEFAULT_TWEAKS;
 
 export default function NewReviewPage() {
-  return <NewReviewForm brand={TWEAKS.brand} />;
+  return <NewReviewForm brand={TWEAKS.brand} palette={TWEAKS.palette} />;
 }
