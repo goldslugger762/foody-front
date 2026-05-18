@@ -108,9 +108,9 @@ function getReviewChromeStyle(
   fill = "#FFFFFF"
 ): CSSProperties {
   return {
-    background: `linear-gradient(${fill}, ${fill}) padding-box, linear-gradient(140deg, color-mix(in srgb, ${brand} 52%, transparent), rgba(122,236,164,0.50), rgba(100,218,189,0.38), color-mix(in srgb, ${brand} 68%, transparent)) border-box`,
+    background: `linear-gradient(${fill}, ${fill}) padding-box, linear-gradient(140deg, color-mix(in srgb, ${brand} 44%, transparent), rgba(122,236,164,0.42), rgba(100,218,189,0.38), color-mix(in srgb, ${brand} 30%, transparent)) border-box`,
     boxShadow:
-      "0 8px 18px rgba(46,204,113,0.08), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)",
+      "0 6px 14px rgba(20,40,28,0.09), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)",
   };
 }
 
@@ -364,8 +364,8 @@ function CategoryButton({ brand }: { brand: string }) {
         aria-hidden="true"
         className="grid size-8 place-items-center rounded-[10px] text-[17px] leading-none"
         style={{
-          background: `${brand}66`,
-          boxShadow: `0 4px 12px ${brand}55`,
+          background: `${brand}42`,
+          boxShadow: "0 4px 10px rgba(20,40,28,0.06)",
         }}
       >
         <UtensilsCrossed size={17} strokeWidth={2.4} color="#15291C" />
