@@ -479,7 +479,7 @@ function TagsInput({
         Напишите тэги
       </h2>
       <p className="mt-1 mb-2 font-[family-name:var(--font-roboto)] text-[13px] leading-snug font-medium text-[#5C6B62]">
-        Напишите тэг и добавьте его через ввод (3 шт.)
+        Напишите тэг и добавьте его через ввод (мин 1 шт.)
       </p>
       <GlassSurface
         className={cn(FIELD_SURFACE_CLASSES, "min-h-[52px] h-auto")}
