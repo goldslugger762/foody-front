@@ -33,7 +33,7 @@ const CUISINE_CATEGORIES: FoodCategory[] = [
   { id: "middle-eastern", label: "Ближневосточная", emoji: "🧆", mode: "cuisines" },
   { id: "mexican", label: "Мексиканская", emoji: "🌮", mode: "cuisines" },
   { id: "french", label: "Французская", emoji: "🥐", mode: "cuisines" },
-  { id: "georgian", label: "Грузинская", emoji: "🍷", mode: "cuisines" },
+  { id: "georgian", label: "Грузинская", emoji: "🥟", mode: "cuisines" },
   { id: "japanese", label: "Японская", emoji: "🍣", mode: "cuisines" },
   { id: "korean", label: "Корейская", emoji: "🥘", mode: "cuisines" },
   { id: "thai", label: "Тайская", emoji: "🌶️", mode: "cuisines" },
@@ -56,7 +56,7 @@ const POPULAR_CUISINE_CATEGORY_IDS = [
   "russian",
   "caucasian",
   "american",
-  "middle-eastern",
+  "georgian",
   "mexican",
   "french",
 ];

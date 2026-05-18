@@ -137,7 +137,14 @@ function PopularCategoryGrid({
           >
             <span aria-hidden="true">{category.emoji}</span>
           </span>
-          <span className="mt-1.5 block truncate text-[12.5px] leading-tight font-bold text-[#15291C] max-[380px]:text-[11px]">
+          <span
+            className={cn(
+              "mt-1.5 block leading-tight font-bold text-[#15291C]",
+              category.mode === "cuisines"
+                ? "text-[10.5px] max-[380px]:text-[9.5px]"
+                : "text-[12px] max-[380px]:text-[10.5px]"
+            )}
+          >
             {category.label}
           </span>
         </motion.button>
