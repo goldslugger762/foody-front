@@ -55,8 +55,8 @@ const REVIEW_BACKGROUNDS: Record<Palette, { base: string; blobs: ReviewBlob[] }>
   fresh: {
     base: "#F3F6F2",
     blobs: [
-      { color: "#46DA8F", opacity: 0.55, left: "76%", top: "18%", size: "19rem" },
-      { color: "#8DE0B0", opacity: 0.75, left: "18%", top: "39%", size: "17rem" },
+      { color: "#46DA8F", opacity: 0.35, left: "76%", top: "18%", size: "19rem" },
+      { color: "#8DE0B0", opacity: 0.55, left: "18%", top: "39%", size: "17rem" },
       { color: "#F5D08C", opacity: 0.70, left: "88%", top: "72%", size: "18rem" },
       { color: "#B8E6CC", opacity: 0.50, left: "16%", top: "88%", size: "20rem" },
     ],
