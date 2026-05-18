@@ -71,7 +71,12 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
     return pathname === t.href || pathname.startsWith(`${t.href}/`);
   };
 
-  if (isPostCardExpanded || pathname === "/new-review" || pathname === "/categories") {
+  if (
+    isPostCardExpanded ||
+    pathname === "/new-review" ||
+    pathname === "/categories" ||
+    pathname === "/me/edit"
+  ) {
     return null;
   }
 

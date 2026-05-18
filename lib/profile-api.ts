@@ -17,6 +17,18 @@ export type UserPostsResponse = {
   userId: string;
 };
 
+export type UpdateUserProfileInput = {
+  about: string | null;
+  avatarUrl?: string | null;
+  city: string | null;
+  displayName: string;
+  username: string;
+};
+
+export type UploadUserAvatarResponse = {
+  avatarUrl: string;
+};
+
 export async function getCurrentUserProfile() {
   const response = await fetch("/api/profile", {
     cache: "no-store",
@@ -42,6 +54,53 @@ export async function getUserPosts(userId: string) {
   );
 
   return readApiJson<UserPostsResponse>(response);
+}
+
+export async function updateUserProfile(data: UpdateUserProfileInput) {
+  const response = await fetch("/api/profile", {
+    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "PATCH",
+  });
+
+  return readApiJson<UserProfileResponse>(response);
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      reject(new Error("Не удалось прочитать фото."));
+    };
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Не удалось прочитать фото."));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadUserAvatar(
+  file: File
+): Promise<UploadUserAvatarResponse> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Выберите изображение для фото профиля.");
+  }
+
+  // TODO: replace this mock upload with a real multipart endpoint.
+  // The edit screen calls this only during save, so switching to backend upload
+  // later will not change the form flow.
+  return {
+    avatarUrl: await readFileAsDataUrl(file),
+  };
 }
 
 async function copyTextToClipboard(value: string) {

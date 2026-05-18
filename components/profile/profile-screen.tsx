@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Edit3,
   ImageOff,
@@ -42,6 +43,7 @@ type ProfileScreenProps = {
   density: Density;
   initialUserId: string;
   ownProfileRoute?: boolean;
+  savedNotice?: boolean;
 };
 
 type LoadState = "loading" | "ready" | "error";
@@ -478,7 +480,9 @@ export function ProfileScreen({
   density,
   initialUserId,
   ownProfileRoute = false,
+  savedNotice = false,
 }: ProfileScreenProps) {
+  const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
   const [profileState, setProfileState] = useState<UserProfileResponse | null>(
     null
@@ -514,6 +518,19 @@ export function ProfileScreen({
     () => new Set(profileState?.savedPostIds ?? []),
     [profileState?.savedPostIds]
   );
+
+  useEffect(() => {
+    if (!savedNotice || !ownProfileRoute || profileLoadState !== "ready") {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setNotice("Профиль сохранён.");
+      router.replace("/me", { scroll: false });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [ownProfileRoute, profileLoadState, router, savedNotice]);
 
   const loadProfile = useCallback(async () => {
     setProfileLoadState("loading");
@@ -818,8 +835,7 @@ export function ProfileScreen({
   }
 
   function handleEditClick() {
-    // TODO: route to the profile editor when the edit profile page exists.
-    setNotice("Редактирование профиля скоро появится.");
+    router.push("/me/edit");
   }
 
   function handleSettingsClick() {
