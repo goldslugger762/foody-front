@@ -2,6 +2,7 @@
 
 import {
   type ChangeEvent,
+  type CSSProperties,
   type InputHTMLAttributes,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -29,7 +30,7 @@ const STAR_YELLOW = "#FFB400";
 const PRESS_CLASSES =
   "origin-center transition-transform duration-150 ease-out active:scale-[0.94] [-webkit-tap-highlight-color:transparent]";
 const FIELD_SURFACE_CLASSES = cn(
-  "h-[50px] rounded-[18px] border border-white/80 bg-white",
+  "h-[50px] rounded-[18px] border border-transparent bg-white",
   "shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)]",
   "transition-shadow duration-150",
   "focus-within:ring-2 focus-within:ring-[#15291C]/12 focus-within:shadow-[0_10px_24px_rgba(20,40,28,0.1),inset_1px_1px_0_rgba(255,255,255,0.78)]"
@@ -82,6 +83,7 @@ const REVIEW_BACKGROUNDS: Record<Palette, { base: string; blobs: ReviewBlob[] }>
 };
 
 type ReviewFieldProps = {
+  brand: string;
   label: string;
   placeholder: string;
   value: string;
@@ -91,6 +93,17 @@ type ReviewFieldProps = {
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
+}
+
+function getReviewChromeStyle(
+  brand: string,
+  fill = "#FFFFFF"
+): CSSProperties {
+  return {
+    background: `linear-gradient(${fill}, ${fill}) padding-box, linear-gradient(140deg, color-mix(in srgb, ${brand} 52%, transparent), rgba(122,236,164,0.50), rgba(100,218,189,0.38), color-mix(in srgb, ${brand} 68%, transparent)) border-box`,
+    boxShadow:
+      "0 8px 18px rgba(46,204,113,0.08), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(11,47,29,0.05)",
+  };
 }
 
 function ReviewBackgroundBlobs({ palette }: { palette: Palette }) {
@@ -123,6 +136,7 @@ function ReviewBackgroundBlobs({ palette }: { palette: Palette }) {
 }
 
 function ReviewField({
+  brand,
   label,
   placeholder,
   value,
@@ -139,6 +153,7 @@ function ReviewField({
         contentClassName="h-full"
         tintClassName={FIELD_TINT_CLASSES}
         highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
+        style={getReviewChromeStyle(brand)}
       >
         <Input
           value={value}
@@ -244,9 +259,11 @@ function RatingControl({
 }
 
 function PhotoUpload({
+  brand,
   files,
   onFilesChange,
 }: {
+  brand: string;
   files: File[];
   onFilesChange: (files: File[]) => void;
 }) {
@@ -282,11 +299,12 @@ function PhotoUpload({
         type="button"
         onClick={() => inputRef.current?.click()}
         className={cn(
-          "flex min-h-[122px] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-[26px] border border-white/65 bg-[#E8ECE9]/34 px-5 text-center text-[#15291C]",
-          "shadow-[0_10px_24px_rgba(20,40,28,0.09),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] backdrop-blur-[18px] backdrop-saturate-[170%]",
+          "flex min-h-[122px] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-[26px] border border-transparent px-5 text-center text-[#15291C]",
+          "backdrop-blur-[18px] backdrop-saturate-[170%]",
           "outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
           PRESS_CLASSES
         )}
+        style={getReviewChromeStyle(brand, "rgba(232,236,233,0.46)")}
       >
         <ImageUp className="size-9" strokeWidth={2.15} />
         <span className="font-[family-name:var(--font-roboto)] text-[14px] font-medium text-[#5C6B62]">
@@ -306,7 +324,8 @@ function PhotoUpload({
           {previews.map((preview) => (
             <div
               key={preview.url}
-              className="relative size-16 shrink-0 overflow-hidden rounded-[14px] border border-white/65 bg-white/42 shadow-[0_6px_14px_rgba(20,40,28,0.1)]"
+              className="relative size-16 shrink-0 overflow-hidden rounded-[14px] border border-transparent"
+              style={getReviewChromeStyle(brand, "rgba(255,255,255,0.72)")}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -327,10 +346,10 @@ function CategoryButton({ brand }: { brand: string }) {
     <button
       type="button"
       className={cn(
-        "flex h-[52px] w-full cursor-pointer items-center gap-3 rounded-[18px] border-[0.5px] border-white/80 bg-white px-4 text-left text-[#15291C]",
-        "shadow-[inset_1px_1px_0_rgba(255,255,255,0.7),inset_-1px_-1px_0_rgba(255,255,255,0.3),0_4px_14px_rgba(20,40,28,0.06)]",
+        "flex h-[52px] w-full cursor-pointer items-center gap-3 rounded-[18px] border border-transparent px-4 text-left text-[#15291C]",
         PRESS_CLASSES
       )}
+      style={getReviewChromeStyle(brand)}
     >
       <span className="text-[15.5px] leading-snug font-bold tracking-[0px] text-[#15291C]">
         Выберите категорию
@@ -343,12 +362,14 @@ function CategoryButton({ brand }: { brand: string }) {
 }
 
 function TagsInput({
+  brand,
   tags,
   tagDraft,
   onTagDraftChange,
   onAddTag,
   onRemoveTag,
 }: {
+  brand: string;
   tags: string[];
   tagDraft: string;
   onTagDraftChange: (tag: string) => void;
@@ -376,6 +397,7 @@ function TagsInput({
         className={cn(FIELD_SURFACE_CLASSES, "min-h-[52px] h-auto")}
         tintClassName={FIELD_TINT_CLASSES}
         highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
+        style={getReviewChromeStyle(brand)}
       >
         <div className="flex min-h-[50px] flex-wrap items-center gap-1.5 px-2.5 py-2">
           {tags.map((tag) => (
@@ -383,7 +405,8 @@ function TagsInput({
               key={tag}
               type="button"
               onClick={() => onRemoveTag(tag)}
-              className="inline-flex h-[28px] items-center gap-1 rounded-full bg-[rgba(46,204,113,0.14)] px-2.5 text-[12px] font-bold text-[#0E8A4F]"
+              className="inline-flex h-[28px] items-center gap-1 rounded-full border border-transparent px-2.5 text-[12px] font-bold text-[#0E8A4F]"
+              style={getReviewChromeStyle(brand, "rgba(46,204,113,0.14)")}
             >
               <span>#{tag}</span>
               <X className="size-3" strokeWidth={2.2} />
@@ -452,9 +475,10 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
               onClick={handleBackClick}
               className={cn(
                 "grid size-9 shrink-0 cursor-pointer place-items-center rounded-full text-[#15291C] outline-none",
-                "border border-white/65 bg-white/58 shadow-[0_8px_20px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.86),inset_-1px_-1px_0_rgba(255,255,255,0.28)]",
+                "border border-transparent",
                 "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
               )}
+              style={getReviewChromeStyle(brand, "rgba(255,255,255,0.58)")}
               whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
             >
               <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
@@ -466,6 +490,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
 
           <div className="space-y-6">
             <ReviewField
+              brand={brand}
               label="Что вы ели?"
               placeholder="Введите название блюда"
               value={dish}
@@ -473,6 +498,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
             />
 
             <ReviewField
+              brand={brand}
               label="Сколько стоило блюдо?"
               placeholder="Например: 450"
               value={price}
@@ -490,6 +516,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                   contentClassName="h-full"
                   tintClassName={FIELD_TINT_CLASSES}
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
+                  style={getReviewChromeStyle(brand)}
                 >
                   <Input
                     aria-label="Название заведения"
@@ -504,6 +531,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                   contentClassName="h-full"
                   tintClassName={FIELD_TINT_CLASSES}
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
+                  style={getReviewChromeStyle(brand)}
                 >
                   <Input
                     aria-label="Адрес заведения"
@@ -522,7 +550,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
               onRate={setRating}
             />
 
-            <PhotoUpload files={photos} onFilesChange={setPhotos} />
+            <PhotoUpload brand={brand} files={photos} onFilesChange={setPhotos} />
 
             <section>
               <div className="mb-2 flex items-end justify-between gap-3">
@@ -534,9 +562,10 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                 </span>
               </div>
               <GlassSurface
-                className="min-h-[124px] rounded-[22px] border border-white/80 bg-white shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] transition-shadow duration-150 focus-within:ring-2 focus-within:ring-[#15291C]/12"
+                className="min-h-[124px] rounded-[22px] border border-transparent bg-white transition-shadow duration-150 focus-within:ring-2 focus-within:ring-[#15291C]/12"
                 tintClassName={FIELD_TINT_CLASSES}
                 highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
+                style={getReviewChromeStyle(brand)}
               >
                 <Textarea
                   value={review}
@@ -551,6 +580,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
             <CategoryButton brand={brand} />
 
             <TagsInput
+              brand={brand}
               tags={tags}
               tagDraft={tagDraft}
               onTagDraftChange={setTagDraft}
