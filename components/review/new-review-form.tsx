@@ -373,7 +373,7 @@ export function NewReviewForm({ brand }: NewReviewFormProps) {
           aria-label="Новый отзыв"
           className="hide-scroll flex-1 overflow-y-auto px-[18px] pb-25"
         >
-          <header className="mb-5 flex items-center gap-4 pt-1">
+          <header className="mb-5 flex items-center gap-4 pt-2">
             <motion.button
               type="button"
               aria-label="Назад"
