@@ -151,12 +151,12 @@ function FieldShell({
 }) {
   return (
     <label className="block">
-      <span className="mb-2 flex items-end justify-between gap-3 px-1">
-        <span className="text-[12px] leading-tight font-black tracking-[0.08em] text-[#7B8780] uppercase">
+      <span className="mb-2 flex items-end justify-between gap-3">
+        <span className="text-[22px] leading-tight font-semibold tracking-[0px] text-[#15291C] max-[380px]:text-[20px]">
           {label}
         </span>
         {hint ? (
-          <span className="font-[family-name:var(--font-roboto)] text-[12px] leading-tight font-bold text-[#6A766F]">
+          <span className="pb-0.5 text-[12px] font-bold text-[#5C6B62]">
             {hint}
           </span>
         ) : null}
@@ -259,7 +259,7 @@ function EditProfileHeader({
           <ArrowLeft className="size-[19px]" strokeWidth={2.35} />
         </motion.button>
 
-        <h1 className="min-w-0 text-[19px] leading-tight font-extrabold tracking-[0px] text-[#15291C]">
+        <h1 className="min-w-0 text-[24px] leading-tight font-semibold tracking-[0px] text-[#15291C]">
           Редактировать
         </h1>
       </div>
@@ -269,13 +269,13 @@ function EditProfileHeader({
         ariaBusy={isSaving}
         ariaLabel="Сохранить профиль"
         brand={brand}
-        disabled={isSaving}
+        disabled={!canSave || isSaving}
         muted={!canSave}
         shouldReduceMotion={shouldReduceMotion}
         title="Сохранить"
         className={cn(
           FULLSCREEN_SUBSCRIBE_BUTTON.regular,
-          FULLSCREEN_SUBSCRIBE_BUTTON.smallRegular
+          "h-9 px-4 text-[13px] max-[380px]:h-7.5 max-[380px]:px-2.5 max-[380px]:text-[11.25px]"
         )}
         onClick={canSave ? onSave : undefined}
       >
@@ -679,7 +679,7 @@ export function EditProfileScreen({ brand, palette }: EditProfileScreenProps) {
                       }
                       placeholder="Расскажите, какие места и вкусы вы ищете"
                       value={form.about}
-                      className="min-h-[136px] resize-none border-0 bg-transparent px-3.5 py-3 text-[15px] leading-[1.45] font-medium text-[#15291C] shadow-none outline-none placeholder:text-[#8A958E] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15px]"
+                      className="min-h-[136px] resize-none border-0 bg-transparent px-3.5 py-3 text-[15px] font-medium text-[#15291C] shadow-none outline-none placeholder:text-[#8A958E] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15px]"
                     />
                   </GlassSurface>
                 </FieldShell>
