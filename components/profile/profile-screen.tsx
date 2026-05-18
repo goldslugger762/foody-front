@@ -18,7 +18,6 @@ import { FullScreenPost } from "@/components/feed/full-screen-post";
 import { GlassSurface } from "@/components/feed/glass-surface";
 import { UserAvatar } from "@/components/feed/user-avatar";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
   getNextPostIdMembership,
@@ -212,58 +211,49 @@ function ProfileSummary({
           </p>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
-            <motion.div
+            <motion.button
+              type="button"
+              onClick={onShareClick}
               whileTap={getProfileButtonTap(shouldReduceMotion)}
+              className="inline-flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-white/62 bg-white/52 px-3 text-[12px] font-extrabold whitespace-nowrap text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.78)] outline-none transition-colors hover:bg-white/68 focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [&_svg]:shrink-0"
             >
-              <Button
-                type="button"
-                onClick={onShareClick}
-                className="h-8 w-full rounded-full border border-white/62 bg-white/52 px-3 text-[12px] font-extrabold text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.78)] hover:bg-white/68"
-              >
-                <Send className="size-3.5" />
-                Поделиться
-              </Button>
-            </motion.div>
+              <Send className="size-3.5" />
+              Поделиться
+            </motion.button>
 
             {isOwnProfile ? (
-              <motion.div
+              <motion.button
+                type="button"
+                onClick={onEditClick}
                 whileTap={getProfileButtonTap(shouldReduceMotion)}
+                className="inline-flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-transparent px-3 text-[12px] font-extrabold whitespace-nowrap text-[#0B2F1D] shadow-[0_8px_18px_rgba(8,58,33,0.14),inset_1px_1px_0_rgba(255,255,255,0.68)] outline-none transition-[filter] hover:brightness-[1.02] focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [&_svg]:shrink-0"
+                style={{ backgroundColor: brand }}
               >
-                <Button
-                  type="button"
-                  onClick={onEditClick}
-                  className="h-8 w-full rounded-full border border-transparent px-3 text-[12px] font-extrabold text-[#0B2F1D] shadow-[0_8px_18px_rgba(8,58,33,0.14),inset_1px_1px_0_rgba(255,255,255,0.68)] hover:brightness-[1.02]"
-                  style={{ backgroundColor: brand }}
-                >
-                  <Edit3 className="size-3.5" />
-                  Редактировать
-                </Button>
-              </motion.div>
+                <Edit3 className="size-3.5" />
+                Редактировать
+              </motion.button>
             ) : (
-              <motion.div
+              <motion.button
+                type="button"
+                disabled={isFollowPending}
+                aria-pressed={subscribed}
+                onClick={onFollowClick}
                 whileTap={getProfileButtonTap(shouldReduceMotion)}
+                className={cn(
+                  "inline-flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-[12px] font-extrabold whitespace-nowrap shadow-[0_8px_18px_rgba(8,58,33,0.14),inset_1px_1px_0_rgba(255,255,255,0.68)] outline-none transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [&_svg]:shrink-0",
+                  subscribed
+                    ? "border border-white/62 bg-white/58 text-[#15291C] hover:bg-white/72"
+                    : "border border-transparent text-[#0B2F1D] transition-[filter] hover:brightness-[1.02]"
+                )}
+                style={subscribed ? undefined : { backgroundColor: brand }}
               >
-                <Button
-                  type="button"
-                  disabled={isFollowPending}
-                  aria-pressed={subscribed}
-                  onClick={onFollowClick}
-                  className={cn(
-                    "h-8 w-full rounded-full px-3 text-[12px] font-extrabold shadow-[0_8px_18px_rgba(8,58,33,0.14),inset_1px_1px_0_rgba(255,255,255,0.68)]",
-                    subscribed
-                      ? "border border-white/62 bg-white/58 text-[#15291C] hover:bg-white/72"
-                      : "border border-transparent text-[#0B2F1D] hover:brightness-[1.02]"
-                  )}
-                  style={subscribed ? undefined : { backgroundColor: brand }}
-                >
-                  {isFollowPending ? (
-                    <Spinner className="size-3.5" />
-                  ) : (
-                    <UserRoundCheck className="size-3.5" />
-                  )}
-                  {subscribed ? "Вы подписаны" : "Подписаться"}
-                </Button>
-              </motion.div>
+                {isFollowPending ? (
+                  <Spinner className="size-3.5" />
+                ) : (
+                  <UserRoundCheck className="size-3.5" />
+                )}
+                {subscribed ? "Вы подписаны" : "Подписаться"}
+              </motion.button>
             )}
           </div>
         </div>
@@ -400,17 +390,15 @@ function PostsSection({
   shouldReduceMotion: boolean | null;
 }) {
   const retryButton = (
-    <motion.div whileTap={getProfileButtonTap(shouldReduceMotion)}>
-      <Button
-        type="button"
-        size="sm"
-        onClick={onRetry}
-        className="h-8 rounded-full bg-white/62 px-4 text-[12px] font-extrabold text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] hover:bg-white/78"
-      >
-        <RefreshCw className="size-3.5" />
-        Повторить
-      </Button>
-    </motion.div>
+    <motion.button
+      type="button"
+      onClick={onRetry}
+      whileTap={getProfileButtonTap(shouldReduceMotion)}
+      className="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white/62 px-4 text-[12px] font-extrabold whitespace-nowrap text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] outline-none transition-colors hover:bg-white/78 focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [&_svg]:shrink-0"
+    >
+      <RefreshCw className="size-3.5" />
+      Повторить
+    </motion.button>
   );
 
   return (
@@ -823,17 +811,15 @@ export function ProfileScreen({
   }
 
   const retryButton = (
-    <motion.div whileTap={getProfileButtonTap(shouldReduceMotion)}>
-      <Button
-        type="button"
-        size="sm"
-        onClick={loadProfile}
-        className="h-8 rounded-full bg-white/62 px-4 text-[12px] font-extrabold text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] hover:bg-white/78"
-      >
-        <RefreshCw className="size-3.5" />
-        Повторить
-      </Button>
-    </motion.div>
+    <motion.button
+      type="button"
+      onClick={loadProfile}
+      whileTap={getProfileButtonTap(shouldReduceMotion)}
+      className="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-white/62 px-4 text-[12px] font-extrabold whitespace-nowrap text-[#15291C] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75)] outline-none transition-colors hover:bg-white/78 focus-visible:ring-2 focus-visible:ring-[#15291C]/18 [&_svg]:shrink-0"
+    >
+      <RefreshCw className="size-3.5" />
+      Повторить
+    </motion.button>
   );
 
   return (
