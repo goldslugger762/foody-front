@@ -61,3 +61,12 @@ output/
 .env.local
 .env.*.local
 Thumbs.db
+
+# Agents
+AGENTS.md
+CLAUDE.md
+/.agents/
+/.codex/
+
+# Other
+eslint.config.mjs
