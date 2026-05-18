@@ -77,7 +77,8 @@ export function BottomTabBar({ brand }: BottomTabBarProps) {
     pathname === "/categories" ||
     pathname === "/me/edit" ||
     pathname === "/me/settings" ||
-    pathname === "/login"
+    pathname === "/login" ||
+    pathname === "/register"
   ) {
     return null;
   }

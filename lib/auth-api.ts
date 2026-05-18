@@ -23,6 +23,19 @@ export type LoginUserInput = {
 
 export type LoginUserResponse = AuthActionResponse & AuthSession;
 
+export type RegisterUserInput = {
+  email: string;
+  name: string;
+  password: string;
+  username: string;
+};
+
+export type RegisterUserResponse = AuthActionResponse & AuthSession;
+
+export type AvailabilityResponse = AuthActionResponse & {
+  available: boolean;
+};
+
 export const AUTH_REDIRECT_HREF = "/login";
 export const AUTH_SUCCESS_HREF = "/";
 
@@ -36,6 +49,24 @@ const AUTH_STORAGE_KEYS = [
   "accessToken",
   "refreshToken",
 ] as const;
+
+export class AuthApiError extends Error {
+  code?: string;
+  field?: keyof RegisterUserInput | "confirmPassword" | "form";
+
+  constructor(
+    message: string,
+    options: {
+      code?: string;
+      field?: keyof RegisterUserInput | "confirmPassword" | "form";
+    } = {}
+  ) {
+    super(message);
+    this.name = "AuthApiError";
+    this.code = options.code;
+    this.field = options.field;
+  }
+}
 
 function notifyAuthStateChanged() {
   if (typeof window === "undefined") {
@@ -172,6 +203,100 @@ export async function loginUser(credentials: LoginUserInput) {
   return payload;
 }
 
+async function readAuthJson<T>(response: Response): Promise<T> {
+  if (response.ok) {
+    return (await response.json()) as T;
+  }
+
+  try {
+    const payload = (await response.json()) as {
+      code?: unknown;
+      error?: unknown;
+      field?: unknown;
+    };
+
+    if (typeof payload.error === "string" && payload.error.length > 0) {
+      throw new AuthApiError(payload.error, {
+        code: typeof payload.code === "string" ? payload.code : undefined,
+        field: isAuthErrorField(payload.field) ? payload.field : "form",
+      });
+    }
+  } catch (error) {
+    if (error instanceof AuthApiError) {
+      throw error;
+    }
+  }
+
+  throw new AuthApiError("Не удалось выполнить запрос.", { field: "form" });
+}
+
+function isAuthErrorField(
+  field: unknown
+): field is keyof RegisterUserInput | "confirmPassword" | "form" {
+  return (
+    field === "email" ||
+    field === "password" ||
+    field === "confirmPassword" ||
+    field === "name" ||
+    field === "username" ||
+    field === "form"
+  );
+}
+
+export function normalizeUsername(value: string) {
+  return value.trim().replace(/^@+/, "");
+}
+
+export async function checkEmailAvailability(email: string) {
+  // TODO: replace this mock route with the production email availability endpoint.
+  const response = await fetch("/api/auth/check-email", {
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  return readAuthJson<AvailabilityResponse>(response);
+}
+
+export async function checkUsernameAvailability(username: string) {
+  // TODO: replace this mock route with the production username availability endpoint.
+  const response = await fetch("/api/auth/check-username", {
+    body: JSON.stringify({ username: normalizeUsername(username) }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  return readAuthJson<AvailabilityResponse>(response);
+}
+
+export async function registerUser(input: RegisterUserInput) {
+  // TODO: replace this mock route with the production registration endpoint.
+  const response = await fetch("/api/auth/register", {
+    body: JSON.stringify({
+      ...input,
+      email: input.email.trim().toLowerCase(),
+      name: input.name.trim(),
+      username: normalizeUsername(input.username),
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  const payload = await readAuthJson<RegisterUserResponse>(response);
+  saveLocalAuthSession({
+    accessToken: payload.accessToken,
+    user: payload.user,
+  });
+
+  return payload;
+}
+
 export async function getCurrentUser() {
   // TODO: when backend sessions are available, verify the stored token server-side.
   return getStoredAuthUser();
@@ -194,6 +319,20 @@ export function getMockAuthUser(email: string): AuthUser {
     email,
     handle: CURRENT_USER.handle,
     realName: CURRENT_USER.realName,
+  };
+}
+
+export function getMockRegisteredAuthUser(input: {
+  email: string;
+  name: string;
+  username: string;
+}): AuthUser {
+  const username = normalizeUsername(input.username);
+
+  return {
+    email: input.email,
+    handle: username ? `@${username}` : CURRENT_USER.handle,
+    realName: input.name.trim() || CURRENT_USER.realName,
   };
 }
 

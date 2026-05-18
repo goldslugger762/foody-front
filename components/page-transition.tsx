@@ -15,6 +15,7 @@ const TAB_ORDER: Record<string, number> = {
   "/me/edit": 4.25,
   "/me/settings": 4.35,
   "/login": 5,
+  "/register": 5.15,
 };
 
 type TransitionMode = "none" | "horizontal" | "fullscreen-enter" | "fullscreen-exit";
@@ -30,7 +31,8 @@ function isFullscreenPath(pathname: string) {
     pathname === "/categories" ||
     pathname === "/me/edit" ||
     pathname === "/me/settings" ||
-    pathname === "/login"
+    pathname === "/login" ||
+    pathname === "/register"
   );
 }
 

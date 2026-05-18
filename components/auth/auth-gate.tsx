@@ -9,10 +9,10 @@ import {
   subscribeToAuthState,
 } from "@/lib/auth-api";
 
-const PUBLIC_PATHS = [AUTH_REDIRECT_HREF] as const;
+const PUBLIC_AUTH_PATHS = [AUTH_REDIRECT_HREF, "/register"] as const;
 
 function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.some(
+  return PUBLIC_AUTH_PATHS.some(
     (path) => pathname === path || pathname.startsWith(`${path}/`)
   );
 }
