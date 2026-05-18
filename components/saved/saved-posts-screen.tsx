@@ -111,16 +111,11 @@ function applyFavoriteResponse(response: FavoritePostsResponse): SavedState {
 function SavedHeader({ count }: { count: number }) {
   return (
     <header className="sticky top-0 z-20 px-3.5 pt-2 pb-0 max-[409px]:px-3">
-      <GlassSurface className="h-13">
-        <div className="flex h-13 items-center gap-3 px-4 max-[409px]:px-3.5">
-          <div className="grid size-9 shrink-0 place-items-center rounded-full bg-white/54 text-[#1B7F45] shadow-[inset_1px_1px_0_rgba(255,255,255,0.78)]">
-            <Bookmark className="size-4.5" strokeWidth={2.3} />
-          </div>
-          <p className="min-w-0 text-[15px] leading-tight font-extrabold tracking-[0px] text-[#15291C] max-[409px]:text-[13.5px]">
-            Вы добавили в избранное {count} {pluralizePosts(count)}
-          </p>
-        </div>
-      </GlassSurface>
+      <div className="flex h-13 items-center px-1">
+        <p className="min-w-0 text-[19px] leading-tight font-extrabold tracking-[0px] text-[#15291C] max-[409px]:text-[13.5px]">
+          Вы добавили в избранное {count} {pluralizePosts(count)}
+        </p>
+      </div>
     </header>
   );
 }
@@ -140,7 +135,7 @@ function FavoriteTagsCarousel({
   }
 
   return (
-    <div className="pt-3">
+    <div className="pt-1">
       <div
         aria-label="Последние тэги из избранного"
         className="hide-scroll flex gap-1.5 overflow-x-auto overflow-y-hidden px-3.5 pb-1 max-[409px]:px-3"
@@ -227,7 +222,7 @@ function SavedPostGridCard({
             <Bookmark className="size-7 text-[#1B7F45]/55" strokeWidth={2.2} />
           </div>
         )}
-        <div className="absolute inset-x-2 bottom-2 rounded-[12px] bg-[#15291C]/70 px-2.5 py-2 text-white shadow-[0_8px_18px_rgba(8,24,15,0.22)] backdrop-blur-[16px]">
+        <div className="absolute inset-x-2 bottom-2 rounded-[12px] bg-black/15 px-2.5 py-2 text-white shadow-[0_4px_14px_rgba(0,0,0,0.16)] backdrop-blur-[10px]">
           <p className="line-clamp-2 text-[12px] leading-[1.08] font-extrabold tracking-[0px]">
             {post.dish}
           </p>
