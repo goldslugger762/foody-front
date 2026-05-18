@@ -242,39 +242,42 @@ function EditProfileHeader({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <header className="grid grid-cols-[2.75rem_1fr_auto] items-center gap-2 px-[18px] pt-2 pb-4">
-      <motion.button
-        type="button"
-        aria-label="Назад"
-        title="Назад"
-        onClick={onBack}
-        className={cn(
-          "grid size-10 cursor-pointer place-items-center rounded-full border border-transparent text-[#15291C] outline-none",
-          "backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
-        )}
-        style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
-        whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
-      >
-        <ArrowLeft className="size-[19px]" strokeWidth={2.35} />
-      </motion.button>
+    <header className="flex items-center justify-between gap-3 px-[18px] pt-2 pb-4">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <motion.button
+          type="button"
+          aria-label="Назад"
+          title="Назад"
+          onClick={onBack}
+          className={cn(
+            "grid size-10 shrink-0 cursor-pointer place-items-center rounded-full border border-transparent text-[#15291C] outline-none",
+            "backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+          )}
+          style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
+          whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
+        >
+          <ArrowLeft className="size-[19px]" strokeWidth={2.35} />
+        </motion.button>
 
-      <h1 className="min-w-0 text-center text-[19px] leading-tight font-extrabold tracking-[0px] text-[#15291C]">
-        Редактировать
-      </h1>
+        <h1 className="min-w-0 text-[19px] leading-tight font-extrabold tracking-[0px] text-[#15291C]">
+          Редактировать
+        </h1>
+      </div>
 
       <SubscribeStyleButton
         active={false}
         ariaBusy={isSaving}
         ariaLabel="Сохранить профиль"
         brand={brand}
-        disabled={!canSave || isSaving}
+        disabled={isSaving}
+        muted={!canSave}
         shouldReduceMotion={shouldReduceMotion}
         title="Сохранить"
         className={cn(
           FULLSCREEN_SUBSCRIBE_BUTTON.regular,
           FULLSCREEN_SUBSCRIBE_BUTTON.smallRegular
         )}
-        onClick={onSave}
+        onClick={canSave ? onSave : undefined}
       >
         <span className="flex h-full items-center justify-center gap-1.5">
           {isSaving ? <Spinner className="size-3.5" /> : null}
@@ -584,12 +587,11 @@ export function EditProfileScreen({ brand, palette }: EditProfileScreenProps) {
                     PRESS_CLASSES
                   )}
                 >
-                  <span className="absolute inset-0 rounded-full bg-white/58 shadow-[0_16px_36px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.76)] backdrop-blur-[18px]" />
                   <UserAvatar
                     name={normalizeUsername(form.username || "you")}
                     size={112}
                     src={avatarSrc}
-                    className="relative z-[1] shadow-[0_10px_24px_rgba(20,40,28,0.16),inset_0_0_0_2px_rgba(255,255,255,0.82)]"
+                    className="relative z-[1] !shadow-[0_10px_24px_rgba(20,40,28,0.16)]"
                   />
                   <span
                     className="absolute right-1 bottom-2 z-[2] grid size-9 place-items-center rounded-full border-2 border-white text-white shadow-[0_8px_18px_rgba(20,40,28,0.18)]"
@@ -602,9 +604,10 @@ export function EditProfileScreen({ brand, palette }: EditProfileScreenProps) {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className={cn(
-                    "mt-3 cursor-pointer text-[15px] leading-tight font-extrabold text-[#159447] outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                    "mt-3 cursor-pointer text-[15px] leading-tight font-extrabold outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
                     PRESS_CLASSES
                   )}
+                  style={{ color: brand }}
                 >
                   Изменить фото
                 </button>
