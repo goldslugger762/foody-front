@@ -221,7 +221,10 @@ function ProfileSummary({
               brand={brand}
               shouldReduceMotion={shouldReduceMotion}
               title="Поделиться"
-              className="h-9 w-full rounded-[12px] px-3 text-[12.5px]"
+              className="h-9 w-full rounded-[12px] px-3 text-[12.5px] [&>span[aria-hidden=true]:first-of-type]:!inset-px"
+              style={{
+                boxShadow: `0 4px 12px ${brand}14, inset 1px 1px 0 rgba(0,0,0,0.06), inset -1px -1px 0 rgba(11,47,29,0.05)`,
+              }}
               onClick={onShareClick}
             >
               <span className="flex h-full items-center justify-center gap-1.5 leading-9">
