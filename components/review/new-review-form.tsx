@@ -17,6 +17,7 @@ import {
   ChevronRight,
   CircleAlert,
   ImageUp,
+  Plus,
   Star,
   UtensilsCrossed,
   X,
@@ -46,6 +47,7 @@ import { cn } from "@/lib/utils";
 
 const MAX_REVIEW_LENGTH = 2500;
 const MAX_TAGS = 3;
+const MAX_PHOTOS = 10;
 const REQUIRED_ALERT_MS = 2200;
 const STAR_YELLOW = "#FFB400";
 const PRESS_CLASSES =
@@ -321,7 +323,18 @@ function PhotoUpload({
   }, [previews]);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    onFilesChange(Array.from(event.target.files ?? []));
+    const selectedFiles = Array.from(event.target.files ?? []);
+
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    onFilesChange([...files, ...selectedFiles].slice(0, MAX_PHOTOS));
+    event.target.value = "";
+  }
+
+  function removePhoto(indexToRemove: number) {
+    onFilesChange(files.filter((_, index) => index !== indexToRemove));
   }
 
   return (
@@ -332,36 +345,36 @@ function PhotoUpload({
       <p className="mt-1 mb-2 font-[family-name:var(--font-roboto)] text-[13px] leading-snug font-medium text-[#5C6B62]">
         (мин. 1 шт.)
       </p>
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        className={cn(
-          "flex min-h-[122px] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-[26px] border border-transparent px-5 text-center text-[#15291C]",
-          "backdrop-blur-[18px] backdrop-saturate-[170%]",
-          "outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
-          PRESS_CLASSES
-        )}
-        style={getReviewChromeStyle(brand, "rgba(232,236,233,0.46)")}
-      >
-        <ImageUp className="size-9" strokeWidth={2.15} />
-        <span className="font-[family-name:var(--font-roboto)] text-[14px] font-medium text-[#5C6B62]">
-          Выберите фотографии нажав сюда
-        </span>
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={handleChange}
-        className="sr-only"
-      />
-      {previews.length > 0 && (
-        <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-          {previews.map((preview) => (
-            <div
-              key={preview.url}
-              className="relative size-16 shrink-0 overflow-hidden rounded-[14px] border border-transparent"
+      {previews.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className={cn(
+            "flex min-h-[122px] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-[26px] border border-transparent px-5 text-center text-[#15291C]",
+            "backdrop-blur-[18px] backdrop-saturate-[170%]",
+            "outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+            PRESS_CLASSES
+          )}
+          style={getReviewChromeStyle(brand, "rgba(232,236,233,0.46)")}
+        >
+          <ImageUp className="size-9" strokeWidth={2.15} />
+          <span className="font-[family-name:var(--font-roboto)] text-[14px] font-medium text-[#5C6B62]">
+            Выберите фотографии нажав сюда
+          </span>
+        </button>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {previews.map((preview, index) => (
+            <button
+              key={`${preview.name}-${index}`}
+              type="button"
+              aria-label={`Удалить фото ${index + 1}`}
+              onClick={() => removePhoto(index)}
+              className={cn(
+                "relative h-[122px] w-full cursor-pointer overflow-hidden rounded-[26px] border border-transparent p-0",
+                "outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                PRESS_CLASSES
+              )}
               style={getReviewChromeStyle(brand, "rgba(255,255,255,0.72)")}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -370,10 +383,34 @@ function PhotoUpload({
                 alt={preview.name}
                 className="h-full w-full object-cover"
               />
-            </div>
+            </button>
           ))}
+          {files.length < MAX_PHOTOS && (
+            <button
+              type="button"
+              aria-label="Добавить фото"
+              onClick={() => inputRef.current?.click()}
+              className={cn(
+                "grid h-[122px] w-full cursor-pointer place-items-center rounded-[26px] border border-transparent text-[#15291C]",
+                "backdrop-blur-[18px] backdrop-saturate-[170%]",
+                "outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+                PRESS_CLASSES
+              )}
+              style={getReviewChromeStyle(brand, "rgba(232,236,233,0.46)")}
+            >
+              <Plus className="size-8" strokeWidth={2.25} />
+            </button>
+          )}
         </div>
       )}
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleChange}
+        className="sr-only"
+      />
     </section>
   );
 }
