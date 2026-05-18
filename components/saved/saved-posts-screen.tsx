@@ -49,6 +49,7 @@ const EMPTY_SAVED_STATE: SavedState = {
   savedPostIds: [],
   savedPostsCount: 0,
 };
+const SAVED_LOADING_OVERLAY_ENABLED = false;
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
@@ -158,21 +159,16 @@ function FavoriteTagsCarousel({
 function SavedStatus({
   action,
   body,
-  loading = false,
   title,
 }: {
   action?: React.ReactNode;
   body: string;
-  loading?: boolean;
   title: string;
 }) {
   return (
     <div className="px-3.5 pt-3 pb-28 max-[409px]:px-3">
       <GlassSurface className="flex min-h-[360px] items-center justify-center rounded-[26px] border border-green-50/92 bg-white/45">
         <div className="max-w-[272px] px-6 text-center">
-          {loading && (
-            <Spinner className="mx-auto mb-4 size-6 text-[#1B7F45]" />
-          )}
           <p className="text-[20px] leading-tight font-extrabold tracking-[-0.35px] text-[#15291C]">
             {title}
           </p>
@@ -181,6 +177,25 @@ function SavedStatus({
           </p>
           {action && <div className="mt-4 flex justify-center">{action}</div>}
         </div>
+      </GlassSurface>
+    </div>
+  );
+}
+
+function SavedLoadingOverlay() {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-13 bottom-24 z-20 grid place-items-center px-3.5">
+      <GlassSurface
+        aria-live="polite"
+        role="status"
+        className="pointer-events-auto w-full max-w-[260px] rounded-[20px] border border-white/68 bg-white/22 shadow-[0_14px_34px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.72)]"
+        contentClassName="flex items-center justify-center gap-2.5 px-4 py-3"
+        tintClassName="before:bg-white/28 before:backdrop-blur-[20px] before:backdrop-saturate-[180%]"
+      >
+        <Spinner className="size-5 shrink-0 text-[#1B7F45]" />
+        <span className="whitespace-nowrap text-[14px] font-extrabold tracking-[0px] text-[#15291C]">
+          Загрузка...
+        </span>
       </GlassSurface>
     </div>
   );
@@ -491,11 +506,7 @@ export function SavedPostsScreen({ brand, density }: SavedPostsScreenProps) {
           className="hide-scroll min-h-0 flex-1 overflow-y-auto pb-28"
         >
           {loadState === "loading" ? (
-            <SavedStatus
-              loading
-              title="Загружаем избранное"
-              body="Собираем сохранённые посты и последние тэги."
-            />
+            null
           ) : loadState === "error" ? (
             <SavedStatus
               title="Избранное не загрузилось"
@@ -520,6 +531,10 @@ export function SavedPostsScreen({ brand, density }: SavedPostsScreenProps) {
             />
           )}
         </section>
+
+        {SAVED_LOADING_OVERLAY_ENABLED && loadState === "loading" ? (
+          <SavedLoadingOverlay />
+        ) : null}
 
         {notice && (
           <div className="pointer-events-none absolute right-4 bottom-[6.25rem] left-4 z-30 rounded-[18px] border border-white/70 bg-white/78 px-4 py-3 text-center text-[13px] leading-tight font-bold text-[#15291C] shadow-[0_12px_24px_rgba(20,40,28,0.14),inset_1px_1px_0_rgba(255,255,255,0.8)] backdrop-blur-[20px]">
