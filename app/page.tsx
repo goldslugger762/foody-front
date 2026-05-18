@@ -2,6 +2,7 @@
 
 import {
   type ReactNode,
+  type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -9,13 +10,18 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import { FeedHeader, type FeedTab } from "@/components/feed/feed-header";
 import { GlassSurface } from "@/components/feed/glass-surface";
 import { PostCard } from "@/components/feed/post-card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { CURRENT_USER } from "@/lib/current-user";
+import {
+  AUTH_REDIRECT_HREF,
+  getCurrentUser,
+  subscribeToAuthState,
+} from "@/lib/auth-api";
 import {
   getNextPostIdMembership,
   requestFeed,
@@ -118,11 +124,10 @@ function FeedLoadingOverlay({
 }
 
 export default function FeedPage() {
+  const router = useRouter();
   const feedScrollRef = useRef<HTMLElement>(null);
   const [feedTab, setFeedTab] = useState<FeedTab>("new");
-  const [currentUser, setCurrentUser] = useState<string | null>(
-    CURRENT_USER.handle
-  );
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [feedLoadState, setFeedLoadState] =
     useState<FeedLoadState>("loading");
   const [followingUsers, setFollowingUsers] = useState<string[]>([]);
@@ -161,11 +166,39 @@ export default function FeedPage() {
   }, []);
 
   const applyFeedResponse = useCallback((response: FeedResponse) => {
-    setCurrentUser(response.currentUser);
     setFollowingUsers(response.followingUsers);
     setLikedPostIds(response.likedPostIds);
     setSavedPostIds(response.savedPostIds);
     setPosts(response.posts);
+  }, []);
+
+  const redirectToLogin = useCallback(() => {
+    router.push(AUTH_REDIRECT_HREF);
+  }, [router]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function syncAuthState() {
+      const user = await getCurrentUser();
+
+      if (!isActive) {
+        return;
+      }
+
+      setCurrentUser(user?.handle ?? null);
+    }
+
+    void syncAuthState();
+
+    const unsubscribe = subscribeToAuthState(() => {
+      void syncAuthState();
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
   }, []);
 
   const syncFeed = useCallback(
@@ -221,6 +254,11 @@ export default function FeedPage() {
 
   const handleTabChange = useCallback(
     (nextTab: FeedTab) => {
+      if (!currentUser) {
+        redirectToLogin();
+        return;
+      }
+
       if (nextTab === feedTab) {
         return;
       }
@@ -230,7 +268,29 @@ export default function FeedPage() {
       setNotice(null);
       scrollFeedToTop();
     },
-    [feedTab, scrollFeedToTop]
+    [currentUser, feedTab, redirectToLogin, scrollFeedToTop]
+  );
+
+  const handleGuestInteraction = useCallback(
+    (event: ReactMouseEvent<HTMLElement>) => {
+      if (currentUser) {
+        return;
+      }
+
+      const target = event.target as HTMLElement;
+      const interactiveTarget = target.closest(
+        "a,button,input,textarea,select,[role='button']"
+      );
+
+      if (!interactiveTarget) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      redirectToLogin();
+    },
+    [currentUser, redirectToLogin]
   );
 
   const retryFeed = useCallback(() => {
@@ -364,13 +424,17 @@ export default function FeedPage() {
   );
 
   return (
-    <main className="absolute inset-0 overflow-hidden">
+    <main
+      className="absolute inset-0 overflow-hidden"
+      onClickCapture={handleGuestInteraction}
+    >
       <div className="absolute inset-0 flex flex-col pt-12.5">
         <FeedHeader
           brand={TWEAKS.brand}
           tab={feedTab}
           onTabChange={handleTabChange}
           currentUser={currentUser}
+          onAuthClick={redirectToLogin}
         />
 
         <section
@@ -392,12 +456,12 @@ export default function FeedPage() {
                 brand={TWEAKS.brand}
                 density={TWEAKS.density}
                 currentUser={currentUser}
-                isAuthorFollowed={followingUsersSet.has(post.user)}
-                isFollowPending={pendingAuthors.has(post.user)}
-                isLiked={likedPostIdsSet.has(post.id)}
-                isLikePending={pendingLikePostIds.has(post.id)}
-                isSaved={savedPostIdsSet.has(post.id)}
-                isSavePending={pendingSavePostIds.has(post.id)}
+                isAuthorFollowed={!!currentUser && followingUsersSet.has(post.user)}
+                isFollowPending={!!currentUser && pendingAuthors.has(post.user)}
+                isLiked={!!currentUser && likedPostIdsSet.has(post.id)}
+                isLikePending={!!currentUser && pendingLikePostIds.has(post.id)}
+                isSaved={!!currentUser && savedPostIdsSet.has(post.id)}
+                isSavePending={!!currentUser && pendingSavePostIds.has(post.id)}
                 onFollowToggle={toggleFollow}
                 onLikeToggle={toggleLike}
                 onSaveToggle={toggleSave}

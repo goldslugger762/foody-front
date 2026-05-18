@@ -9,12 +9,16 @@ import {
   subscribeToAuthState,
 } from "@/lib/auth-api";
 
-const PUBLIC_AUTH_PATHS = [AUTH_REDIRECT_HREF, "/register"] as const;
+const PUBLIC_AUTH_PATHS = ["/", AUTH_REDIRECT_HREF, "/register"] as const;
 
 function isPublicPath(pathname: string) {
-  return PUBLIC_AUTH_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`)
-  );
+  return PUBLIC_AUTH_PATHS.some((path) => {
+    if (path === "/") {
+      return pathname === path;
+    }
+
+    return pathname === path || pathname.startsWith(`${path}/`);
+  });
 }
 
 export function AuthGate({ children }: { children: React.ReactNode }) {

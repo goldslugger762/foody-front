@@ -29,6 +29,7 @@ type FeedHeaderProps = {
   tab: FeedTab;
   onTabChange: (next: FeedTab) => void;
   currentUser: string | null;
+  onAuthClick?: () => void;
 };
 
 export function FeedHeader({
@@ -36,6 +37,7 @@ export function FeedHeader({
   tab,
   onTabChange,
   currentUser,
+  onAuthClick,
 }: FeedHeaderProps) {
   const isLoggedIn = !!currentUser;
   const shouldReduceMotion = useReducedMotion();
@@ -80,6 +82,7 @@ export function FeedHeader({
             <Button
               type="button"
               size="sm"
+              onClick={onAuthClick}
               className={cn(
                 "h-8 origin-center translate-z-0 cursor-pointer select-none rounded-full border border-transparent bg-transparent px-2.5 pt-px text-[10px] leading-[1.1] font-extrabold tracking-[0px] text-[#0B2F1D] outline-none will-change-transform max-[409px]:px-1.5 max-[409px]:text-[8.75px]",
                 "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out [backface-visibility:hidden] [-webkit-tap-highlight-color:transparent]",
@@ -91,7 +94,7 @@ export function FeedHeader({
                   "0 8px 18px rgba(8,58,33,0.17), inset 0 1px 0 rgba(255,255,255,0.58), inset 0 -1px 0 rgba(255,255,255,0.18)",
               }}
             >
-              Регистрация
+              Войти
             </Button>
           )}
         </div>
