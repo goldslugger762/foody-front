@@ -53,8 +53,8 @@ const PRESS_CLASSES =
 const FIELD_SURFACE_CLASSES = cn(
   "h-[50px] rounded-[18px] border border-transparent bg-white",
   "shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)]",
-  "transition-shadow duration-150",
-  "focus-within:ring-2 focus-within:ring-[#15291C]/12 focus-within:shadow-[0_10px_24px_rgba(20,40,28,0.1),inset_1px_1px_0_rgba(255,255,255,0.78)]"
+  "ring-0 ring-transparent transition-shadow duration-150",
+  "focus-within:ring-[3px] focus-within:ring-[rgba(34,139,34,0.26)] focus-within:ring-offset-1 focus-within:ring-offset-transparent focus-within:shadow-[0_10px_24px_rgba(20,40,28,0.1),0_0_0_1px_rgba(122,236,164,0.18),inset_1px_1px_0_rgba(255,255,255,0.78)] focus-within:after:border-[rgba(21,41,28,0.20)]"
 );
 const FIELD_INPUT_CLASSES =
   "h-full border-0 bg-transparent px-3.5 py-0 text-[15.5px] leading-[50px] font-semibold text-[#15291C] shadow-none outline-none placeholder:text-[#8A958E] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-transparent md:text-[15.5px]";
@@ -176,13 +176,28 @@ function ReviewField({
         highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
         style={getReviewChromeStyle(brand)}
       >
-        <Input
-          value={value}
-          inputMode={inputMode}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          className={FIELD_INPUT_CLASSES}
-        />
+        <div className="group flex h-full items-center gap-2 pr-3">
+          <Input
+            value={value}
+            inputMode={inputMode}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={placeholder}
+            className={cn(FIELD_INPUT_CLASSES, "min-w-0 flex-1 pr-0")}
+          />
+          {value && (
+            <button
+              type="button"
+              aria-label="Очистить"
+              onClick={() => onChange("")}
+              className={cn(
+                "grid size-[22px] shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] p-0 text-[#3A4A40] opacity-0 transition-opacity group-focus-within:opacity-100",
+                PRESS_CLASSES
+              )}
+            >
+              <X className="size-[11px]" strokeWidth={2.4} />
+            </button>
+          )}
+        </div>
       </GlassSurface>
     </label>
   );
@@ -694,13 +709,28 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
                   style={getReviewChromeStyle(brand)}
                 >
-                  <Input
-                    aria-label="Название заведения"
-                    value={place}
-                    onChange={(event) => setPlace(event.target.value)}
-                    placeholder="Название заведения"
-                    className={FIELD_INPUT_CLASSES}
-                  />
+                  <div className="group flex h-full items-center gap-2 pr-3">
+                    <Input
+                      aria-label="Название заведения"
+                      value={place}
+                      onChange={(event) => setPlace(event.target.value)}
+                      placeholder="Название заведения"
+                      className={cn(FIELD_INPUT_CLASSES, "min-w-0 flex-1 pr-0")}
+                    />
+                    {place && (
+                      <button
+                        type="button"
+                        aria-label="Очистить"
+                        onClick={() => setPlace("")}
+                        className={cn(
+                          "grid size-[22px] shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] p-0 text-[#3A4A40] opacity-0 transition-opacity group-focus-within:opacity-100",
+                          PRESS_CLASSES
+                        )}
+                      >
+                        <X className="size-[11px]" strokeWidth={2.4} />
+                      </button>
+                    )}
+                  </div>
                 </GlassSurface>
                 <GlassSurface
                   className={FIELD_SURFACE_CLASSES}
@@ -709,13 +739,28 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                   highlightClassName="after:border-[0.5px] after:border-white/58 after:shadow-[inset_1px_1px_0_rgba(255,255,255,0.74),inset_-1px_-1px_0_rgba(255,255,255,0.26)]"
                   style={getReviewChromeStyle(brand)}
                 >
-                  <Input
-                    aria-label="Адрес заведения"
-                    value={address}
-                    onChange={(event) => setAddress(event.target.value)}
-                    placeholder="Адрес заведения"
-                    className={FIELD_INPUT_CLASSES}
-                  />
+                  <div className="group flex h-full items-center gap-2 pr-3">
+                    <Input
+                      aria-label="Адрес заведения"
+                      value={address}
+                      onChange={(event) => setAddress(event.target.value)}
+                      placeholder="Адрес заведения"
+                      className={cn(FIELD_INPUT_CLASSES, "min-w-0 flex-1 pr-0")}
+                    />
+                    {address && (
+                      <button
+                        type="button"
+                        aria-label="Очистить"
+                        onClick={() => setAddress("")}
+                        className={cn(
+                          "grid size-[22px] shrink-0 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(20,40,28,0.08)] p-0 text-[#3A4A40] opacity-0 transition-opacity group-focus-within:opacity-100",
+                          PRESS_CLASSES
+                        )}
+                      >
+                        <X className="size-[11px]" strokeWidth={2.4} />
+                      </button>
+                    )}
+                  </div>
                 </GlassSurface>
               </div>
             </section>
