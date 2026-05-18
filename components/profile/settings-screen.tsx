@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -44,12 +45,20 @@ type SettingsScreenProps = {
 
 type PendingAction = "logout" | "delete" | null;
 
-const DANGER_CHROME_STYLE = {
-  background:
-    "linear-gradient(rgba(255,255,255,0.82),rgba(255,255,255,0.82)) padding-box, linear-gradient(140deg, rgba(185,28,28,0.56), rgba(239,68,68,0.30), rgba(255,255,255,0.74), rgba(185,28,28,0.38)) border-box",
-  boxShadow:
-    "0 6px 14px rgba(60,20,20,0.07), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(47,11,11,0.05)",
-} as const;
+const SETTINGS_SECTION_STYLES = {
+  accountContainerFill: "rgba(255,255,255,0.82)",
+  accountIconBackground: (brand: string) => `${brand}1F`,
+  dangerContainer: {
+    background:
+      "linear-gradient(rgba(255,255,255,0.9),rgba(255,255,255,0.92)) padding-box, linear-gradient(150deg, rgba(185,28,28,0.4), rgba(239,68,68,0.20), rgba(255,255,255,0.74), rgba(185,28,28,0.35)) border-box",
+    boxShadow:
+      "0 6px 14px rgba(60,20,20,0.07), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(47,11,11,0.05)",
+  },
+} satisfies {
+  accountContainerFill: string;
+  accountIconBackground: (brand: string) => string;
+  dangerContainer: CSSProperties;
+};
 
 function canAnimate(shouldReduceMotion: boolean | null) {
   return !shouldReduceMotion;
@@ -140,7 +149,7 @@ function AccountItem({
       <span
         className="grid size-10 shrink-0 place-items-center rounded-[14px]"
         style={{
-          background: `${brand}1F`,
+          background: SETTINGS_SECTION_STYLES.accountIconBackground(brand),
           boxShadow: "0 5px 12px rgba(20,40,28,0.06)",
         }}
       >
@@ -267,7 +276,7 @@ function ConfirmationDialog({
             variant="destructive"
             disabled={pending}
             className="h-10 w-full rounded-[18px] border border-transparent bg-white px-4 text-[14px] font-bold text-[#8F1D1D] shadow-[0_8px_20px_rgba(60,20,20,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] hover:bg-white focus-visible:ring-red-900/15"
-            style={DANGER_CHROME_STYLE}
+            style={SETTINGS_SECTION_STYLES.dangerContainer}
             onClick={(event) => {
               event.preventDefault();
               onConfirm();
@@ -362,7 +371,10 @@ export function SettingsScreen({ brand, palette }: SettingsScreenProps) {
             <SettingsSection title="Аккаунт">
               <div
                 className="overflow-hidden rounded-[22px] border border-transparent"
-                style={getReviewChromeStyle(brand, "rgba(255,255,255,0.72)")}
+                style={getReviewChromeStyle(
+                  brand,
+                  SETTINGS_SECTION_STYLES.accountContainerFill
+                )}
               >
                 <AccountItem
                   brand={brand}
@@ -390,7 +402,7 @@ export function SettingsScreen({ brand, palette }: SettingsScreenProps) {
             >
               <div
                 className="overflow-hidden rounded-[22px] border border-transparent"
-                style={DANGER_CHROME_STYLE}
+                style={SETTINGS_SECTION_STYLES.dangerContainer}
               >
                 <DangerButton
                   disabled={isAnyActionPending}
