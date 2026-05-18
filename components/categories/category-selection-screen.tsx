@@ -166,7 +166,7 @@ function PopularCategoryGrid({
           </span>
           <span
             className={cn(
-              "mt-1.5 block leading-tight font-bold text-[#15291C]",
+              "mt-1.5 flex h-8 items-start justify-center overflow-hidden text-center leading-tight font-bold text-[#15291C]",
               category.mode === "cuisines"
                 ? "text-[10.5px] max-[380px]:text-[9.5px]"
                 : "text-[12px] max-[380px]:text-[10.5px]"
