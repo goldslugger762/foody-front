@@ -629,12 +629,6 @@ export function ProfileScreen({
     return () => window.clearTimeout(timer);
   }, [ownProfileRoute, profileLoadState, router, savedNotice]);
 
-  useEffect(() => {
-    if (reviewSubmittedNotice) {
-      setShowReviewSubmittedDialog(true);
-    }
-  }, [reviewSubmittedNotice]);
-
   const loadProfile = useCallback(async () => {
     setProfileLoadState("loading");
     setPostsLoadState("loading");
@@ -711,13 +705,16 @@ export function ProfileScreen({
     window.addEventListener(REVIEW_POSTS_CHANGED_EVENT, handleReviewPostsChanged);
     window.addEventListener(REVIEW_SUBMIT_ERROR_EVENT, handleReviewSubmitError);
 
-    const initialErrorMessage = consumeReviewSubmitError();
+    const initialErrorTimer = window.setTimeout(() => {
+      const initialErrorMessage = consumeReviewSubmitError();
 
-    if (initialErrorMessage) {
-      setNotice(initialErrorMessage);
-    }
+      if (initialErrorMessage) {
+        setNotice(initialErrorMessage);
+      }
+    }, 0);
 
     return () => {
+      window.clearTimeout(initialErrorTimer);
       window.removeEventListener(
         REVIEW_POSTS_CHANGED_EVENT,
         handleReviewPostsChanged
