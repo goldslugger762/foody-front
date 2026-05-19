@@ -326,20 +326,31 @@ function PhotoUpload({
 }
 
 function PhotoPreview({ file }: { file: File }) {
-  const [previewUrl] = useState(() => URL.createObjectURL(file));
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
     return () => {
-      URL.revokeObjectURL(previewUrl);
+      URL.revokeObjectURL(objectUrl);
     };
-  }, [previewUrl]);
+  }, [file]);
+
+  if (!previewUrl) {
+    return (
+      <div className="h-full w-full bg-[#E8ECE9]" aria-hidden="true" />
+    );
+  }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={previewUrl}
-      alt={file.name}
+      alt={file.name || "Загруженное фото"}
       className="block h-full w-full object-cover text-transparent"
+      loading="lazy"
+      decoding="async"
     />
   );
 }
