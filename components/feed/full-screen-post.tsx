@@ -1,0 +1,441 @@
+"use client";
+
+import {
+  animate,
+  type PanInfo,
+  useMotionValue,
+  useReducedMotion,
+} from "motion/react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { flushSync } from "react-dom";
+
+import {
+  ExpandedPostCardView,
+} from "@/components/feed/post-card-sections";
+import { CommentsSheet } from "@/components/feed/comments-sheet";
+import {
+  getPhotoDragEndDecision,
+  getPhotoDragTrackX,
+  getPhotoSwitchCenterX,
+  getPhotoTrackIndexes,
+  PHOTO_SWITCH_DURATION,
+  PHOTO_SWITCH_EASE,
+  type PhotoDirection,
+} from "@/components/feed/post-card/photo-carousel";
+import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
+import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
+import { useSearchSubmit } from "@/components/search/use-search-submit";
+import { usePostCommentsCount } from "@/lib/comment-count-store";
+import {
+  COMMENTS_BY_POST_ID,
+  type Density,
+  type Post,
+} from "@/lib/mock-data";
+
+type FullScreenPostProps = {
+  post: Post;
+  brand: string;
+  currentUser: string | null;
+  density: Density;
+  isAuthorFollowed: boolean;
+  isFollowPending?: boolean;
+  isLiked: boolean;
+  isLikePending?: boolean;
+  isSaved: boolean;
+  isSavePending?: boolean;
+  onClose: () => void;
+  onFollowToggle: (author: string, nextFollowing: boolean) => Promise<void>;
+  onLikeToggle: (postId: number, nextLiked: boolean) => Promise<void>;
+  onSaveToggle: (postId: number, nextSaved: boolean) => Promise<void>;
+};
+
+const POST_CARD_EXPANDED_EVENT = "foody:post-card-expanded";
+
+type ViewportSize = {
+  height: number;
+  width: number;
+};
+
+function getViewportSize(): ViewportSize {
+  if (typeof window === "undefined") {
+    return { height: 0, width: 0 };
+  }
+
+  return {
+    height: window.visualViewport?.height ?? window.innerHeight,
+    width: window.visualViewport?.width ?? window.innerWidth,
+  };
+}
+
+function useViewportSize() {
+  const [viewportSize, setViewportSize] = useState<ViewportSize>({
+    height: 0,
+    width: 0,
+  });
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+
+    function syncViewportSize() {
+      setViewportSize(getViewportSize());
+    }
+
+    syncViewportSize();
+    window.addEventListener("resize", syncViewportSize);
+    viewport?.addEventListener("resize", syncViewportSize);
+
+    return () => {
+      window.removeEventListener("resize", syncViewportSize);
+      viewport?.removeEventListener("resize", syncViewportSize);
+    };
+  }, []);
+
+  return viewportSize;
+}
+
+function getPhotoRatio(density: Density, viewportSize: ViewportSize) {
+  const regularRatio = density === "cozy" ? 0.98 : 1.12;
+
+  if (viewportSize.width === 0 || viewportSize.width > 430) {
+    return regularRatio;
+  }
+
+  if (viewportSize.height <= 860) {
+    return density === "cozy" ? 1.28 : 1.22;
+  }
+
+  if (viewportSize.height <= 900) {
+    return density === "cozy" ? 1.3 : 1.3;
+  }
+
+  if (viewportSize.height <= 940) {
+    return density === "cozy" ? 1.16 : 1.2;
+  }
+
+  return density === "cozy" ? 1.12 : 1.26;
+}
+
+function usePulse() {
+  const [pulse, setPulse] = useState(0);
+
+  function triggerPulse() {
+    setPulse((currentPulse) => currentPulse + 1);
+  }
+
+  return [pulse, triggerPulse] as const;
+}
+
+export function FullScreenPost({
+  post,
+  brand,
+  currentUser,
+  density,
+  isAuthorFollowed,
+  isFollowPending = false,
+  isLiked,
+  isLikePending = false,
+  isSaved,
+  isSavePending = false,
+  onClose,
+  onFollowToggle,
+  onLikeToggle,
+  onSaveToggle,
+}: FullScreenPostProps) {
+  const [photoIdx, setPhotoIdx] = useState(0);
+  const [photoIndicatorIdx, setPhotoIndicatorIdx] = useState(0);
+  const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
+  const [viewerPhotoIdx, setViewerPhotoIdx] = useState(0);
+  const [viewerPhotoDirection, setViewerPhotoDirection] =
+    useState<PhotoDirection>(1);
+  const [viewerOpenKey, setViewerOpenKey] = useState(0);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [photoWidth, setPhotoWidth] = useState(0);
+  const [sharePulse, triggerSharePulse] = usePulse();
+  const [morePulse, triggerMorePulse] = usePulse();
+  const [commentPulse, triggerCommentPulse] = usePulse();
+  const [copyLinkAlertKey, setCopyLinkAlertKey] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
+  const submitSearchQuery = useSearchSubmit();
+  const commentsCount = usePostCommentsCount(post.id, post.comments);
+  const displayPost = useMemo(
+    () =>
+      commentsCount === post.comments
+        ? post
+        : {
+            ...post,
+            comments: commentsCount,
+          },
+    [commentsCount, post]
+  );
+  const viewportSize = useViewportSize();
+  const photoRatio = getPhotoRatio(density, viewportSize);
+  const [mainTag, ...restTags] = displayPost.tags;
+  const likeCount = displayPost.likes + (isLiked ? 1 : 0);
+  const hasPhotoSlider = displayPost.photos > 1;
+  const lastPhotoIdx = Math.max(displayPost.photos - 1, 0);
+  const canDragToPreviousPhoto = photoIdx > 0;
+  const canDragToNextPhoto = photoIdx < lastPhotoIdx;
+  const expandedPhotoViewportRef = useRef<HTMLDivElement>(null);
+  const photoTrackX = useMotionValue(0);
+  const photoAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
+  const photoDragBaseXRef = useRef(0);
+  const trackPhotoIndexes = getPhotoTrackIndexes(photoIdx, lastPhotoIdx);
+
+  useLayoutEffect(() => {
+    const viewport = expandedPhotoViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const viewportElement = viewport;
+
+    function syncPhotoWidth() {
+      const nextWidth = viewportElement.getBoundingClientRect().width;
+      photoAnimationRef.current?.stop();
+      photoAnimationRef.current = null;
+      setPhotoWidth(nextWidth);
+      photoTrackX.jump(getPhotoSwitchCenterX(nextWidth));
+    }
+
+    syncPhotoWidth();
+
+    const resizeObserver = new ResizeObserver(syncPhotoWidth);
+    resizeObserver.observe(viewportElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [photoTrackX]);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent(POST_CARD_EXPANDED_EVENT, {
+        detail: { expanded: true },
+      })
+    );
+
+    return () => {
+      photoAnimationRef.current?.stop();
+      window.dispatchEvent(
+        new CustomEvent(POST_CARD_EXPANDED_EVENT, {
+          detail: { expanded: false },
+        })
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (isPhotoViewerOpen || isCommentsOpen) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isCommentsOpen, isPhotoViewerOpen, onClose]);
+
+  async function copyPostLink() {
+    const postUrl = new URL("/saved", window.location.origin);
+    postUrl.searchParams.set("post", String(displayPost.id));
+
+    try {
+      await navigator.clipboard.writeText(postUrl.toString());
+      setCopyLinkAlertKey((currentKey) => currentKey + 1);
+      return;
+    } catch {
+      const fallbackField = document.createElement("textarea");
+      fallbackField.value = postUrl.toString();
+      fallbackField.setAttribute("readonly", "");
+      fallbackField.style.position = "fixed";
+      fallbackField.style.top = "-999px";
+      fallbackField.style.left = "-999px";
+      document.body.appendChild(fallbackField);
+      fallbackField.select();
+      document.execCommand("copy");
+      fallbackField.remove();
+      setCopyLinkAlertKey((currentKey) => currentKey + 1);
+    }
+  }
+
+  function handlePhotoOpen() {
+    setViewerPhotoDirection(1);
+    setViewerPhotoIdx(photoIdx);
+    setViewerOpenKey((currentKey) => currentKey + 1);
+    setIsPhotoViewerOpen(true);
+  }
+
+  function handleViewerPhotoChange(nextPhotoIdx: number) {
+    const clampedPhotoIdx = Math.min(Math.max(nextPhotoIdx, 0), lastPhotoIdx);
+
+    if (clampedPhotoIdx === viewerPhotoIdx) {
+      return;
+    }
+
+    setViewerPhotoDirection(clampedPhotoIdx > viewerPhotoIdx ? 1 : -1);
+    setViewerPhotoIdx(clampedPhotoIdx);
+  }
+
+  function animatePhotoTrackToCenter() {
+    photoAnimationRef.current = animate(
+      photoTrackX,
+      getPhotoSwitchCenterX(photoWidth),
+      {
+        duration: shouldReduceMotion ? 0.01 : PHOTO_SWITCH_DURATION,
+        ease: PHOTO_SWITCH_EASE,
+        onComplete: () => {
+          photoTrackX.jump(getPhotoSwitchCenterX(photoWidth));
+        },
+      }
+    );
+  }
+
+  function handlePhotoDragStart() {
+    photoAnimationRef.current?.stop();
+    photoDragBaseXRef.current = photoTrackX.get();
+    photoTrackX.stop();
+    setPhotoIndicatorIdx(photoIdx);
+  }
+
+  function handlePhotoDrag(
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) {
+    if (!hasPhotoSlider || photoWidth <= 0) {
+      return;
+    }
+
+    photoTrackX.set(
+      getPhotoDragTrackX({
+        canDragToNextPhoto,
+        canDragToPreviousPhoto,
+        dragBaseX: photoDragBaseXRef.current,
+        dragOffsetX: info.offset.x,
+        photoWidth,
+      })
+    );
+  }
+
+  function handlePhotoDragEnd(
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) {
+    if (!hasPhotoSlider || photoWidth <= 0) {
+      return;
+    }
+
+    const { nextTrackX, targetPhotoIdx } = getPhotoDragEndDecision({
+      canDragToNextPhoto,
+      canDragToPreviousPhoto,
+      photoIdx,
+      photoTrackX: photoTrackX.get(),
+      photoWidth,
+      swipeVelocityX: info.velocity.x,
+    });
+
+    photoAnimationRef.current?.stop();
+    setPhotoIndicatorIdx(targetPhotoIdx);
+
+    if (targetPhotoIdx !== photoIdx) {
+      flushSync(() => {
+        setPhotoIdx(targetPhotoIdx);
+      });
+      photoTrackX.jump(nextTrackX);
+    }
+
+    animatePhotoTrackToCenter();
+  }
+
+  return (
+    <>
+      <ExpandedPostCardView
+        brand={brand}
+        engagement={{
+          commentPulse,
+          likeCount,
+          liked: isLiked,
+          likePending: isLikePending,
+          onCommentClick: () => {
+            triggerCommentPulse();
+            setIsCommentsOpen(true);
+          },
+          onLikeClick: () => void onLikeToggle(displayPost.id, !isLiked),
+          onSaveClick: () => void onSaveToggle(displayPost.id, !isSaved),
+          savePending: isSavePending,
+          saved: isSaved,
+        }}
+        follow={{
+          currentUser,
+          isAuthorFollowed,
+          isFollowPending,
+          onFollowToggle,
+        }}
+        headerActions={{
+          morePulse,
+          onMoreClick: triggerMorePulse,
+          onShareClick: () => {
+            triggerSharePulse();
+            void copyPostLink();
+          },
+          sharePulse,
+        }}
+        mainTag={mainTag}
+        onBackClick={onClose}
+        onTagClick={submitSearchQuery}
+        photoCarousel={{
+          canDragToNextPhoto,
+          canDragToPreviousPhoto,
+          hasPhotoSlider,
+          onPhotoDrag: handlePhotoDrag,
+          onPhotoDragEnd: handlePhotoDragEnd,
+          onPhotoDragStart: handlePhotoDragStart,
+          onPhotoOpen: handlePhotoOpen,
+          photoIndicatorIdx,
+          photoRatio,
+          photoTrackX,
+          photoViewportRef: expandedPhotoViewportRef,
+          photoWidth,
+          trackPhotoIndexes,
+        }}
+        post={displayPost}
+        restTags={restTags}
+        shouldReduceMotion={shouldReduceMotion}
+      />
+      <PhotoViewerModal
+        activeIndex={viewerPhotoIdx}
+        direction={viewerPhotoDirection}
+        onChangeIndex={handleViewerPhotoChange}
+        onClose={() => setIsPhotoViewerOpen(false)}
+        open={isPhotoViewerOpen}
+        openKey={viewerOpenKey}
+        photoRatio={photoRatio}
+        post={displayPost}
+        shouldReduceMotion={shouldReduceMotion}
+      />
+      <CommentsSheet
+        open={isCommentsOpen}
+        brand={brand}
+        comments={COMMENTS_BY_POST_ID[displayPost.id] ?? []}
+        commentsCount={displayPost.comments}
+        onClose={() => setIsCommentsOpen(false)}
+        postId={displayPost.id}
+        shouldReduceMotion={shouldReduceMotion}
+      />
+      <CopyLinkAlert showKey={copyLinkAlertKey} />
+    </>
+  );
+}
