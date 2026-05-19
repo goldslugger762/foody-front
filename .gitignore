@@ -70,3 +70,15 @@ CLAUDE.md
 
 # Other
 eslint.config.mjs
+
+# Extras: common temp, editor and cache files that are safe to ignore
+.eslintcache
+.history
+*.tmp
+*.temp
+*.bak
+*.orig
+*.pid
+.sass-cache/
+.parcel-cache/
+.cache-loader/
