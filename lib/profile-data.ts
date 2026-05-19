@@ -1,5 +1,5 @@
 import { CURRENT_USER } from "@/lib/current-user";
-import { POSTS, type Post } from "@/lib/mock-data";
+import { COMMENTS_BY_POST_ID, POSTS, type Post } from "@/lib/mock-data";
 
 export type UserProfile = {
   userId: string;
@@ -91,6 +91,27 @@ function getPostAuthorSeed(userId: string): ProfileSeed | null {
   };
 }
 
+function getCommentAuthorSeed(userId: string): ProfileSeed | null {
+  const authorComment = Object.values(COMMENTS_BY_POST_ID)
+    .flat()
+    .find((comment) => comment.user === userId);
+
+  if (!authorComment) {
+    return null;
+  }
+
+  return {
+    userId,
+    username: userId,
+    displayName: authorComment.realName,
+    city: null,
+    avatarUrl: authorComment.avatarUrl ?? null,
+    about: null,
+    followersCount: authorComment.likes,
+    followingCount: 0,
+  };
+}
+
 export function getUserProfileHref(userId: string) {
   return `/profile/${encodeURIComponent(userId)}`;
 }
@@ -102,7 +123,10 @@ export function getProfilePosts(userId: string): Post[] {
 
 export function getProfileByUserId(userId: string): UserProfile | null {
   // TODO: replace these seeded profiles with backend profile data.
-  const seed = PROFILE_SEEDS[userId] ?? getPostAuthorSeed(userId);
+  const seed =
+    PROFILE_SEEDS[userId] ??
+    getPostAuthorSeed(userId) ??
+    getCommentAuthorSeed(userId);
 
   if (!seed) {
     return null;

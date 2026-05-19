@@ -14,7 +14,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatarProfileLink } from "@/components/feed/user-avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,14 +87,6 @@ const SHEET_TRANSITION = {
 const OVERLAY_TRANSITION = { duration: 0.22, ease: "easeOut" } as const;
 // MVP: timestamps are hidden in the sheet, but can be restored by flipping this.
 const SHOW_COMMENT_TIMESTAMPS = false;
-const AVATAR_PALETTES: ReadonlyArray<readonly [string, string]> = [
-  ["#FFD6A5", "#FF8FAB"],
-  ["#A7C957", "#386641"],
-  ["#FFC25C", "#E76F51"],
-  ["#90DBF4", "#A78BFA"],
-  ["#F2CC8F", "#81B29A"],
-  ["#CDB4DB", "#FFAFCC"],
-];
 const CURRENT_USER: PostComment = {
   id: 0,
   user: DEMO_CURRENT_USER.handle,
@@ -106,10 +98,6 @@ const CURRENT_USER: PostComment = {
 
 function getDisplayHandle(user: string) {
   return user.startsWith("@") ? user : `@${user}`;
-}
-
-function getAvatarInitial(name: string) {
-  return (name || "?").replace("@", "").slice(0, 1).toUpperCase();
 }
 
 function getCommentIdKey(id: PostComment["id"]) {
@@ -242,30 +230,15 @@ function CommentAvatar({
   size?: number;
   className?: string;
 }) {
-  const seed = comment.user.charCodeAt(1) || 7;
-  const [from, to] = AVATAR_PALETTES[seed % AVATAR_PALETTES.length];
-
   return (
-    <Avatar
-      className={cn(
-        "shrink-0 shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.55)] after:hidden",
-        className
-      )}
-      style={{ width: size, height: size }}
-    >
-      {comment.avatarUrl && (
-        <AvatarImage src={comment.avatarUrl} alt={comment.realName} />
-      )}
-      <AvatarFallback
-        className="font-extrabold tracking-tight text-white"
-        style={{
-          backgroundImage: `linear-gradient(135deg, ${from}, ${to})`,
-          fontSize: size * 0.42,
-        }}
-      >
-        {getAvatarInitial(comment.user)}
-      </AvatarFallback>
-    </Avatar>
+    <UserAvatarProfileLink
+      ariaLabel={`Открыть профиль ${getDisplayHandle(comment.user)}`}
+      className="shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.55)] after:hidden"
+      linkClassName={className}
+      name={comment.user}
+      size={size}
+      src={comment.avatarUrl}
+    />
   );
 }
 

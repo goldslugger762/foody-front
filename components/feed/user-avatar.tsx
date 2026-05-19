@@ -1,6 +1,8 @@
 import * as React from "react";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getUserProfileHref } from "@/lib/profile-data";
 import { cn } from "@/lib/utils";
 
 const PALETTES: ReadonlyArray<readonly [string, string]> = [
@@ -17,6 +19,12 @@ type UserAvatarProps = {
   size?: number;
   src?: string | null;
   className?: string;
+};
+
+type UserAvatarProfileLinkProps = UserAvatarProps & {
+  ariaLabel?: string;
+  href?: string;
+  linkClassName?: string;
 };
 
 export function UserAvatar({
@@ -48,5 +56,29 @@ export function UserAvatar({
         {initial}
       </AvatarFallback>
     </Avatar>
+  );
+}
+
+export function UserAvatarProfileLink({
+  ariaLabel,
+  className,
+  href,
+  linkClassName,
+  name,
+  size = 36,
+  src,
+}: UserAvatarProfileLinkProps) {
+  return (
+    <Link
+      href={href ?? getUserProfileHref(name)}
+      aria-label={ariaLabel ?? `Открыть профиль ${name}`}
+      title={name}
+      className={cn(
+        "grid shrink-0 cursor-pointer place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#15291C]/18",
+        linkClassName
+      )}
+    >
+      <UserAvatar className={className} name={name} size={size} src={src} />
+    </Link>
   );
 }
