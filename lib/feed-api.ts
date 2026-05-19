@@ -84,6 +84,16 @@ export type CommentLikeMutationResponse = CommentLikeCheckResponse & {
   changed: boolean;
 };
 
+export type DeletedCommentsResponse = {
+  currentUser: string | null;
+  deletedCommentIds: string[];
+};
+
+export type DeleteCommentResponse = DeletedCommentsResponse & {
+  changed: boolean;
+  commentId: string;
+};
+
 export function isFeedScope(value: string | null): value is FeedScope {
   return value === "new" || value === "subs";
 }
@@ -102,6 +112,10 @@ export function getBookmarkPostApiPath(postId: number) {
 
 export function getCommentLikeApiPath(commentId: PostComment["id"]) {
   return `/api/comment-likes/${encodeURIComponent(String(commentId))}`;
+}
+
+export function getCommentApiPath(commentId: PostComment["id"]) {
+  return `/api/comments/${encodeURIComponent(String(commentId))}`;
 }
 
 export async function readApiJson<T>(response: Response): Promise<T> {
@@ -213,6 +227,20 @@ export async function requestCommentLikes(commentIds: PostComment["id"][]) {
   return readApiJson<CommentLikeListResponse>(response);
 }
 
+export async function requestDeletedComments(commentIds: PostComment["id"][]) {
+  const params = new URLSearchParams();
+
+  for (const commentId of commentIds) {
+    params.append("commentId", String(commentId));
+  }
+
+  const response = await fetch(`/api/comments?${params.toString()}`, {
+    cache: "no-store",
+  });
+
+  return readApiJson<DeletedCommentsResponse>(response);
+}
+
 export async function requestCommentLikeMutation(
   commentId: PostComment["id"],
   nextLiked: boolean
@@ -222,4 +250,14 @@ export async function requestCommentLikeMutation(
   });
 
   return readApiJson<CommentLikeMutationResponse>(response);
+}
+
+export async function requestCommentDeleteMutation(
+  commentId: PostComment["id"]
+) {
+  const response = await fetch(getCommentApiPath(commentId), {
+    method: "DELETE",
+  });
+
+  return readApiJson<DeleteCommentResponse>(response);
 }

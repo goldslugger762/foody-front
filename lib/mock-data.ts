@@ -141,6 +141,14 @@ export const COMMENTS_BY_POST_ID: Record<number, PostComment[]> = {
       text: "Да, яйцо у них просто отпад!",
       likes: 2,
     },
+    {
+      id: 104,
+      user: "@you",
+      realName: "Вы",
+      when: "только что",
+      text: "Сохранил место, хочу сравнить с тако на Даниловском.",
+      likes: 0,
+    },
   ],
   2: [
     {

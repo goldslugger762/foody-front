@@ -74,23 +74,23 @@ function SettingsHeader({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <header className="mb-5 flex items-center gap-4 pt-2">
+    <header className="flex items-center gap-2.5 px-[18px] pt-2 pb-4">
       <motion.button
         type="button"
         aria-label="Назад"
         title="Назад"
         onClick={onBack}
         className={cn(
-          "grid size-9 cursor-pointer place-items-center rounded-full border border-transparent text-[#15291C] outline-none",
-          "backdrop-blur-[18px] backdrop-saturate-[180%] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+          "grid size-10 shrink-0 cursor-pointer place-items-center rounded-full border border-transparent text-[#15291C] outline-none",
+          "backdrop-blur-[18px] backdrop-saturate-[180%] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
         )}
         style={getReviewChromeStyle(brand, "rgba(255,255,255,0.80)")}
         whileTap={canAnimate(shouldReduceMotion) ? { scale: 0.92 } : undefined}
       >
-        <ArrowLeft className="size-[18px]" strokeWidth={2.35} />
+        <ArrowLeft className="size-[19px]" strokeWidth={2.35} />
       </motion.button>
 
-      <h1 className="text-[24px] leading-tight font-semibold tracking-[0px] text-[#15291C]">
+      <h1 className="min-w-0 text-[24px] leading-tight font-semibold tracking-[0px] text-[#15291C]">
         Настройки
       </h1>
     </header>
@@ -164,7 +164,7 @@ function AccountItem({
         </span>
       </span>
       <ChevronRight
-        className="size-4 shrink-0 text-[#5C6B62]/72 transition-transform group-hover:translate-x-0.5"
+        className="size-4 shrink-0 text-[#5C6B62]/72"
         strokeWidth={2.35}
       />
     </motion.button>
@@ -364,9 +364,9 @@ export function SettingsScreen({ brand, palette }: SettingsScreenProps) {
   return (
     <ReviewScreen palette={palette}>
       <ReviewContentLayer>
-        <ReviewScrollArea aria-label="Настройки" className="pb-10">
-          <SettingsHeader brand={brand} onBack={handleBack} />
+        <SettingsHeader brand={brand} onBack={handleBack} />
 
+        <ReviewScrollArea aria-label="Настройки" className="pb-10">
           <div className="space-y-8">
             <SettingsSection title="Аккаунт">
               <div

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Heart, Reply, X } from "lucide-react";
+import { ArrowRight, Heart, LoaderCircle, Reply, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   useEffect,
@@ -16,6 +16,21 @@ import { createPortal } from "react-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { deleteComment } from "@/lib/comments-service";
+import { CURRENT_USER as DEMO_CURRENT_USER } from "@/lib/current-user";
+import { getReviewChromeStyle } from "@/components/review/review-screen-shell";
+import {
+  requestDeletedComments,
   requestCommentLikeMutation,
   requestCommentLikes,
 } from "@/lib/feed-api";
@@ -38,8 +53,11 @@ type CommentRowProps = {
   comment: PostComment;
   liked: boolean;
   likePending: boolean;
+  deletePending: boolean;
+  canDelete: boolean;
   onLikeToggle: (comment: PostComment, nextLiked: boolean) => void;
   onReply: (comment: PostComment) => void;
+  onDeleteRequest: (comment: PostComment) => void;
   shouldReduceMotion: boolean | null;
 };
 
@@ -66,8 +84,8 @@ const AVATAR_PALETTES: ReadonlyArray<readonly [string, string]> = [
 ];
 const CURRENT_USER: PostComment = {
   id: 0,
-  user: "@you",
-  realName: "Вы",
+  user: DEMO_CURRENT_USER.handle,
+  realName: DEMO_CURRENT_USER.realName,
   when: "только что",
   text: "",
   likes: 0,
@@ -198,6 +216,10 @@ function getPersistedCommentIds(comments: PostComment[]) {
     .map((comment) => comment.id);
 }
 
+function isCurrentUserComment(comment: PostComment) {
+  return comment.user === DEMO_CURRENT_USER.handle;
+}
+
 function CommentAvatar({
   comment,
   size = 42,
@@ -245,30 +267,55 @@ export function CommentsSheet({
   const [draft, setDraft] = useState("");
   const [likedCommentIds, setLikedCommentIds] = useState<string[]>([]);
   const [commentLikesLoaded, setCommentLikesLoaded] = useState(false);
+  const [deletedCommentIds, setDeletedCommentIds] = useState<string[]>([]);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [localLikedCommentIds, setLocalLikedCommentIds] = useState<string[]>(
     []
   );
   const [pendingLikedCommentIds, setPendingLikedCommentIds] = useState<
     Set<string>
   >(() => new Set());
+  const [pendingDeletedCommentIds, setPendingDeletedCommentIds] = useState<
+    Set<string>
+  >(() => new Set());
+  const [deleteTarget, setDeleteTarget] = useState<PostComment | null>(null);
   const [replyTarget, setReplyTarget] = useState<PostComment | null>(null);
   const [submittedComments, setSubmittedComments] = useState<PostComment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const shouldAnimate = canAnimate(shouldReduceMotion);
-  const visibleComments = useMemo(
+  const mergedComments = useMemo(
     () => mergeCommentsWithSubmitted(comments, submittedComments),
     [comments, submittedComments]
+  );
+  const deletedCommentIdsSet = useMemo(
+    () => new Set(deletedCommentIds),
+    [deletedCommentIds]
+  );
+  const visibleComments = useMemo(
+    () =>
+      mergedComments.filter(
+        (comment) => !deletedCommentIdsSet.has(getCommentIdKey(comment.id))
+      ),
+    [deletedCommentIdsSet, mergedComments]
   );
   const unsyncedSubmittedCommentsCount = useMemo(
     () =>
       submittedComments.filter(
         (submittedComment) =>
-          !comments.some((comment) => isSameComment(comment, submittedComment))
+          !comments.some((comment) => isSameComment(comment, submittedComment)) &&
+          !deletedCommentIdsSet.has(getCommentIdKey(submittedComment.id))
       ).length,
-    [comments, submittedComments]
+    [comments, deletedCommentIdsSet, submittedComments]
+  );
+  const deletedSeededCommentsCount = useMemo(
+    () =>
+      comments.filter((comment) =>
+        deletedCommentIdsSet.has(getCommentIdKey(comment.id))
+      ).length,
+    [comments, deletedCommentIdsSet]
   );
   const visibleCommentsCount = Math.max(
-    commentsCount + unsyncedSubmittedCommentsCount,
+    commentsCount + unsyncedSubmittedCommentsCount - deletedSeededCommentsCount,
     visibleComments.length
   );
   const likedCommentIdsSet = useMemo(
@@ -279,6 +326,40 @@ export function CommentsSheet({
     () => new Set(localLikedCommentIds),
     [localLikedCommentIds]
   );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const commentIds = getPersistedCommentIds(mergedComments);
+
+    if (commentIds.length === 0) {
+      return;
+    }
+
+    let isActive = true;
+
+    void requestDeletedComments(commentIds)
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+
+        setDeletedCommentIds(response.deletedCommentIds);
+      })
+      .catch(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setDeleteError("Не удалось обновить список комментариев.");
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [mergedComments, open]);
 
   useEffect(() => {
     if (!open) {
@@ -439,6 +520,68 @@ export function CommentsSheet({
     }
   }
 
+  function handleDeleteRequest(comment: PostComment) {
+    setDeleteError(null);
+    setDeleteTarget(comment);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    const commentId = getCommentIdKey(deleteTarget.id);
+
+    if (pendingDeletedCommentIds.has(commentId)) {
+      return;
+    }
+
+    setDeleteError(null);
+    setReplyTarget((currentTarget) =>
+      currentTarget && isSameComment(currentTarget, deleteTarget)
+        ? null
+        : currentTarget
+    );
+    setDeletedCommentIds((currentCommentIds) =>
+      currentCommentIds.includes(commentId)
+        ? currentCommentIds
+        : [...currentCommentIds, commentId]
+    );
+    setPendingDeletedCommentIds((currentCommentIds) => {
+      const nextCommentIds = new Set(currentCommentIds);
+      nextCommentIds.add(commentId);
+
+      return nextCommentIds;
+    });
+
+    try {
+      await deleteComment(deleteTarget.id);
+
+      if (deleteTarget.clientId) {
+        setSubmittedComments((currentComments) =>
+          currentComments.filter((comment) => !isSameComment(comment, deleteTarget))
+        );
+      }
+    } catch (error) {
+      setDeletedCommentIds((currentCommentIds) =>
+        currentCommentIds.filter((currentCommentId) => currentCommentId !== commentId)
+      );
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Не удалось удалить комментарий."
+      );
+    } finally {
+      setDeleteTarget(null);
+      setPendingDeletedCommentIds((currentCommentIds) => {
+        const nextCommentIds = new Set(currentCommentIds);
+        nextCommentIds.delete(commentId);
+
+        return nextCommentIds;
+      });
+    }
+  }
+
   function handleSubmit(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
 
@@ -524,27 +667,48 @@ export function CommentsSheet({
             </div>
 
             <div className="hide-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-7 py-6 max-[430px]:px-5">
+              <AnimatePresence initial={false}>
+                {deleteError && (
+                  <motion.div
+                    role="alert"
+                    className="mb-4 rounded-[18px] border border-[#F5B7B1]/60 bg-[#FFF2F0] px-4 py-3 font-[family-name:var(--font-roboto)] text-[13.5px] leading-snug font-bold text-[#A13D34] shadow-[inset_1px_1px_0_rgba(255,255,255,0.7)]"
+                    initial={shouldAnimate ? { opacity: 0, y: -6 } : { opacity: 1 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={shouldAnimate ? { opacity: 0, y: -6 } : { opacity: 0 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                  >
+                    {deleteError}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="space-y-7">
-                {visibleComments.map((comment) => (
-                  <CommentRow
-                    key={comment.id}
-                    brand={brand}
-                    comment={comment}
-                    liked={
-                      comment.clientId
-                        ? localLikedCommentIdsSet.has(getCommentIdKey(comment.id))
-                        : commentLikesLoaded
-                          ? likedCommentIdsSet.has(getCommentIdKey(comment.id))
-                          : Boolean(comment.liked)
-                    }
-                    likePending={pendingLikedCommentIds.has(
-                      getCommentIdKey(comment.id)
-                    )}
-                    onLikeToggle={handleLikeToggle}
-                    onReply={handleReply}
-                    shouldReduceMotion={shouldReduceMotion}
-                  />
-                ))}
+                <AnimatePresence initial={false}>
+                  {visibleComments.map((comment) => (
+                    <CommentRow
+                      key={comment.id}
+                      brand={brand}
+                      comment={comment}
+                      liked={
+                        comment.clientId
+                          ? localLikedCommentIdsSet.has(getCommentIdKey(comment.id))
+                          : commentLikesLoaded
+                            ? likedCommentIdsSet.has(getCommentIdKey(comment.id))
+                            : Boolean(comment.liked)
+                      }
+                      likePending={pendingLikedCommentIds.has(
+                        getCommentIdKey(comment.id)
+                      )}
+                      deletePending={pendingDeletedCommentIds.has(
+                        getCommentIdKey(comment.id)
+                      )}
+                      canDelete={isCurrentUserComment(comment)}
+                      onLikeToggle={handleLikeToggle}
+                      onReply={handleReply}
+                      onDeleteRequest={handleDeleteRequest}
+                      shouldReduceMotion={shouldReduceMotion}
+                    />
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -631,6 +795,67 @@ export function CommentsSheet({
               </form>
             </div>
           </motion.section>
+          <AlertDialog
+            open={Boolean(deleteTarget)}
+            onOpenChange={(nextOpen) => {
+              if (!nextOpen && !pendingDeletedCommentIds.size) {
+                setDeleteTarget(null);
+              }
+            }}
+          >
+            <AlertDialogContent className="z-[120] rounded-[24px] border-0 bg-white/88 p-5 text-[#15291C] shadow-[0_22px_54px_rgba(20,40,28,0.34),0_8px_18px_rgba(20,40,28,0.12),inset_1px_1px_0_rgba(255,255,255,0.74)] ring-0 backdrop-blur-[22px]">
+              <AlertDialogHeader className="place-items-start text-left">
+                <AlertDialogTitle className="text-[20px] leading-tight font-semibold text-[#15291C]">
+                  Удалить комментарий?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#5C6B62]">
+                  Это действие нельзя отменить.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="-mx-5 -mb-5 flex-col gap-2 rounded-b-[24px] border-t border-white/58 bg-white/45 p-5 sm:flex-col">
+                <AlertDialogCancel
+                  disabled={
+                    deleteTarget
+                      ? pendingDeletedCommentIds.has(getCommentIdKey(deleteTarget.id))
+                      : false
+                  }
+                  className="h-10 w-full rounded-[18px] border border-transparent bg-white px-4 text-[14px] font-bold text-[#15291C] shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] hover:bg-white focus-visible:ring-[#15291C]/12"
+                  style={getReviewChromeStyle(brand)}
+                >
+                  Отмена
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  className="h-10 w-full rounded-[18px] border border-transparent bg-white px-4 text-[14px] font-bold text-[#8F1D1D] shadow-[0_8px_20px_rgba(60,20,20,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] hover:bg-white focus-visible:ring-red-900/15"
+                  disabled={
+                    deleteTarget
+                      ? pendingDeletedCommentIds.has(getCommentIdKey(deleteTarget.id))
+                      : false
+                  }
+                  style={{
+                    background:
+                      "linear-gradient(#FFFFFF,#FFFFFF) padding-box, linear-gradient(140deg, rgba(127,29,29,0.76), rgba(185,28,28,0.44), rgba(239,68,68,0.24), rgba(127,29,29,0.68)) border-box",
+                    boxShadow:
+                      "0 6px 14px rgba(60,20,20,0.07), inset 1px 1px 0 rgba(255,255,255,0.18), inset -1px -1px 0 rgba(47,11,11,0.05)",
+                  }}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    void handleDeleteConfirm();
+                  }}
+                >
+                  {deleteTarget &&
+                  pendingDeletedCommentIds.has(getCommentIdKey(deleteTarget.id)) ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="size-4" />
+                      Удалить
+                    </span>
+                  ) : (
+                    "Удалить"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </motion.div>
       )}
     </AnimatePresence>,
@@ -643,32 +868,42 @@ function CommentRow({
   comment,
   liked,
   likePending,
+  deletePending,
+  canDelete,
   onLikeToggle,
   onReply,
+  onDeleteRequest,
   shouldReduceMotion,
 }: CommentRowProps) {
   const shouldAnimate = canAnimate(shouldReduceMotion);
   const likeCount = comment.likes + (liked ? 1 : 0) - (comment.liked ? 1 : 0);
 
   return (
-    <article
+    <motion.article
+      layout
       className={cn(
         "grid grid-cols-[auto_minmax(0,1fr)_2.25rem] gap-x-3",
         comment.replyTo && "pl-11 max-[430px]:pl-8"
       )}
+      initial={shouldAnimate ? { opacity: 0, y: 8 } : { opacity: 1 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={shouldAnimate ? { opacity: 0, x: -18, scale: 0.98 } : { opacity: 0 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
     >
       <CommentAvatar comment={comment} size={42} className="mt-0.5" />
 
       <div className="min-w-0">
-        <div className="flex min-w-0 items-baseline gap-2">
-          <span className="truncate text-[15.5px] leading-tight font-extrabold tracking-normal text-black">
-            {comment.realName}
-          </span>
-          {SHOW_COMMENT_TIMESTAMPS && (
-            <span className="shrink-0 text-[12px] leading-tight font-bold text-[#99A1AB]">
-              {comment.when}
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-baseline gap-2">
+            <span className="truncate text-[15.5px] leading-tight font-extrabold tracking-normal text-black">
+              {comment.realName}
             </span>
-          )}
+            {SHOW_COMMENT_TIMESTAMPS && (
+              <span className="shrink-0 text-[12px] leading-tight font-bold text-[#99A1AB]">
+                {comment.when}
+              </span>
+            )}
+          </div>
         </div>
 
         <p className="mt-1 font-[family-name:var(--font-roboto)] text-[15.5px] leading-[1.46] font-medium text-black">
@@ -694,32 +929,56 @@ function CommentRow({
         </motion.button>
       </div>
 
-      <button
-        type="button"
-        aria-label="Нравится комментарий"
-        aria-busy={likePending}
-        aria-pressed={liked}
-        disabled={likePending}
-        className="mt-1 flex h-11 w-8 cursor-pointer flex-col items-center justify-start rounded-full border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-black/10 disabled:cursor-not-allowed disabled:opacity-60"
-        onClick={() => onLikeToggle(comment, !liked)}
-      >
-        <motion.span
-          className="grid size-5 place-items-center"
-          whileTap={shouldAnimate ? { scale: 0.84 } : undefined}
-          animate={liked ? { scale: [1, 1.18, 1] } : { scale: 1 }}
-          transition={{ duration: 0.18, ease: "easeOut" }}
+      <div className="mt-1 flex w-8 flex-col items-center">
+        <button
+          type="button"
+          aria-label="Нравится комментарий"
+          aria-busy={likePending}
+          aria-pressed={liked}
+          disabled={likePending}
+          className="flex h-11 w-8 cursor-pointer flex-col items-center justify-start rounded-full border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-black/10 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => onLikeToggle(comment, !liked)}
         >
-          <Heart
-            className="size-5"
-            strokeWidth={2}
-            color={liked ? HEART_COLOR : "#8B949E"}
-            fill={liked ? HEART_COLOR : "none"}
-          />
-        </motion.span>
-        <span className="mt-0.5 text-[11px] leading-none font-bold text-[#65707A] tabular-nums">
-          {likeCount}
-        </span>
-      </button>
-    </article>
+          <motion.span
+            className="grid size-5 place-items-center"
+            whileTap={shouldAnimate ? { scale: 0.84 } : undefined}
+            animate={liked ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+          >
+            <Heart
+              className="size-5"
+              strokeWidth={2}
+              color={liked ? HEART_COLOR : "#8B949E"}
+              fill={liked ? HEART_COLOR : "none"}
+            />
+          </motion.span>
+          <span className="mt-0.5 text-[11px] leading-none font-bold text-[#65707A] tabular-nums">
+            {likeCount}
+          </span>
+        </button>
+
+        {canDelete && (
+          <motion.button
+            type="button"
+            aria-label="Удалить комментарий"
+            aria-busy={deletePending}
+            disabled={deletePending}
+            className="mt-2 grid size-7 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-[#9A5C58] outline-none transition-colors hover:text-[#D94B43] focus-visible:ring-2 focus-visible:ring-[#D94B43]/25 disabled:cursor-not-allowed disabled:opacity-60"
+            initial={shouldAnimate ? { opacity: 0, scale: 0.78 } : { opacity: 1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={shouldAnimate ? { y: -1, scale: 1.04 } : undefined}
+            whileTap={shouldAnimate ? { scale: 0.88 } : undefined}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            onClick={() => onDeleteRequest(comment)}
+          >
+            {deletePending ? (
+              <LoaderCircle className="size-4 animate-spin" strokeWidth={2.4} />
+            ) : (
+              <Trash2 className="size-4" strokeWidth={2.2} />
+            )}
+          </motion.button>
+        )}
+      </div>
+    </motion.article>
   );
 }
