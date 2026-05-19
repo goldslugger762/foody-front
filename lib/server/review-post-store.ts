@@ -281,6 +281,10 @@ export function isPostPendingModeration(post: Post) {
   return post.status === "pending_moderation";
 }
 
+export function isPostRejected(post: Post) {
+  return post.status === "rejected";
+}
+
 export async function getAllPosts() {
   const store = await readReviewPostStore();
 
@@ -306,7 +310,9 @@ export async function getMyPosts(userId = CURRENT_USER.handle) {
   return posts.filter(
     (post) =>
       post.user === userId &&
-      (isCurrentUserProfile || isPostVisibleInFeed(post))
+      (isCurrentUserProfile
+        ? !isPostRejected(post)
+        : isPostVisibleInFeed(post))
   );
 }
 

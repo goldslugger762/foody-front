@@ -141,6 +141,18 @@ export function ExpandedPostCardView({
       />
 
       <div className="hide-scroll min-h-0 flex-1 overflow-y-auto px-3.5 pb-3 [@media(max-width:430px)_and_(max-height:860px)]:px-3">
+        {post.status === "pending_moderation" ? (
+          <div
+            role="status"
+            className="mx-3 mb-2 rounded-[18px] border border-white/72 bg-white/76 px-3.5 py-2 text-center text-[13px] leading-tight font-extrabold tracking-[0px] text-[#15291C] shadow-[0_10px_24px_rgba(20,40,28,0.12),inset_1px_1px_0_rgba(255,255,255,0.82)] backdrop-blur-[18px] backdrop-saturate-[180%] [@media(max-width:430px)_and_(max-height:860px)]:mx-2.5"
+            style={{
+              background: `linear-gradient(#FFFFFFD9,#FFFFFFCC) padding-box, linear-gradient(140deg, ${brand}, rgba(122,236,164,0.72), rgba(255,255,255,0.78)) border-box`,
+            }}
+          >
+            Пост отправлен на модерацию
+          </div>
+        ) : null}
+
         <PhotoCarousel {...photoCarousel} post={post} />
 
         <div className="pt-2.5 [@media(max-width:430px)_and_(max-height:860px)]:pt-1.5">

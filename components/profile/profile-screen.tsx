@@ -601,6 +601,15 @@ export function ProfileScreen({
       const mergedPosts = mergeProfilePosts(nextPosts, userId, currentUser);
 
       setPosts(mergedPosts);
+      setActivePost((currentPost) => {
+        if (!currentPost) {
+          return currentPost;
+        }
+
+        return (
+          mergedPosts.find((post) => post.id === currentPost.id) ?? null
+        );
+      });
       setProfileState((currentState) =>
         currentState && currentState.profile.userId === userId
           ? {

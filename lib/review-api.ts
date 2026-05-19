@@ -120,6 +120,12 @@ export function removeOptimisticReviewPost(clientId: string) {
   dispatchReviewPostsChanged();
 }
 
+function removeOptimisticReviewPostByServerPost(post: Post) {
+  if (post.clientId) {
+    removeOptimisticReviewPost(post.clientId);
+  }
+}
+
 export function createOptimisticReviewPost(
   data: CreateReviewPostData,
   clientId: string
@@ -207,6 +213,10 @@ export async function moderatePost(postId: Post["id"], status: PostStatus) {
     method: "PATCH",
   });
   const result = await readApiJson<ModeratePostResponse>(response);
+
+  if (result.post.status === "approved" || result.post.status === "rejected") {
+    removeOptimisticReviewPostByServerPost(result.post);
+  }
 
   dispatchReviewPostsChanged();
 

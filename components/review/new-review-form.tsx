@@ -6,7 +6,6 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -237,20 +236,6 @@ function PhotoUpload({
   onFilesChange: (files: File[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const previews = useMemo(
-    () =>
-      files.map((file) => ({
-        name: file.name,
-        url: URL.createObjectURL(file),
-      })),
-    [files]
-  );
-
-  useEffect(() => {
-    return () => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview.url));
-    };
-  }, [previews]);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const selectedFiles = Array.from(event.target.files ?? []);
@@ -275,7 +260,7 @@ function PhotoUpload({
       <p className="mt-1 mb-2 font-[family-name:var(--font-roboto)] text-[13px] leading-snug font-medium text-[#5C6B62]">
         (мин. 1 шт.)
       </p>
-      {previews.length === 0 ? (
+      {files.length === 0 ? (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
@@ -294,9 +279,9 @@ function PhotoUpload({
         </button>
       ) : (
         <div className="grid grid-cols-3 gap-2">
-          {previews.map((preview, index) => (
+          {files.map((file, index) => (
             <button
-              key={`${preview.name}-${index}`}
+              key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
               type="button"
               aria-label={`Удалить фото ${index + 1}`}
               onClick={() => removePhoto(index)}
@@ -307,12 +292,7 @@ function PhotoUpload({
               )}
               style={getReviewChromeStyle(brand, "rgba(255,255,255,0.72)")}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={preview.url}
-                alt={preview.name}
-                className="h-full w-full object-cover"
-              />
+              <PhotoPreview file={file} />
             </button>
           ))}
           {files.length < MAX_PHOTOS && (
@@ -342,6 +322,25 @@ function PhotoUpload({
         className="sr-only"
       />
     </section>
+  );
+}
+
+function PhotoPreview({ file }: { file: File }) {
+  const [previewUrl] = useState(() => URL.createObjectURL(file));
+
+  useEffect(() => {
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={previewUrl}
+      alt={file.name}
+      className="block h-full w-full object-cover text-transparent"
+    />
   );
 }
 

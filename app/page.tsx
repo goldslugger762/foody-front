@@ -31,6 +31,7 @@ import {
   type FeedResponse,
 } from "@/lib/feed-api";
 import { DEFAULT_TWEAKS, type Post, type Tweaks } from "@/lib/mock-data";
+import { REVIEW_POSTS_CHANGED_EVENT } from "@/lib/review-api";
 
 const TWEAKS: Tweaks = DEFAULT_TWEAKS;
 const FEED_LOADING_OVERLAY_ENABLED = false;
@@ -224,6 +225,21 @@ export default function FeedPage() {
     },
     [applyFeedResponse, scrollFeedToTop]
   );
+
+  useEffect(() => {
+    function handleReviewPostsChanged() {
+      void syncFeed(feedTab, () => true);
+    }
+
+    window.addEventListener(REVIEW_POSTS_CHANGED_EVENT, handleReviewPostsChanged);
+
+    return () => {
+      window.removeEventListener(
+        REVIEW_POSTS_CHANGED_EVENT,
+        handleReviewPostsChanged
+      );
+    };
+  }, [feedTab, syncFeed]);
 
   useEffect(() => {
     let isActive = true;
