@@ -10,6 +10,7 @@ import {
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
@@ -33,6 +34,7 @@ import {
 import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
 import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
 import { useSearchSubmit } from "@/components/search/use-search-submit";
+import { usePostCommentsCount } from "@/lib/comment-count-store";
 import { COMMENTS_BY_POST_ID, type Density, type Post } from "@/lib/mock-data";
 
 type PostCardProps = {
@@ -158,13 +160,24 @@ export function PostCard({
   const [copyLinkAlertKey, setCopyLinkAlertKey] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   const submitSearchQuery = useSearchSubmit();
+  const commentsCount = usePostCommentsCount(post.id, post.comments);
+  const displayPost = useMemo(
+    () =>
+      commentsCount === post.comments
+        ? post
+        : {
+            ...post,
+            comments: commentsCount,
+          },
+    [commentsCount, post]
+  );
 
   const viewportSize = useViewportSize();
   const photoRatio = getPhotoRatio(density, viewportSize);
-  const [mainTag, ...restTags] = post.tags;
-  const likeCount = post.likes + (isLiked ? 1 : 0);
-  const hasPhotoSlider = post.photos > 1;
-  const lastPhotoIdx = post.photos - 1;
+  const [mainTag, ...restTags] = displayPost.tags;
+  const likeCount = displayPost.likes + (isLiked ? 1 : 0);
+  const hasPhotoSlider = displayPost.photos > 1;
+  const lastPhotoIdx = displayPost.photos - 1;
   const canDragToPreviousPhoto = photoIdx > 0;
   const canDragToNextPhoto = photoIdx < lastPhotoIdx;
   const feedPhotoViewportRef = useRef<HTMLDivElement>(null);
@@ -256,7 +269,7 @@ export function PostCard({
     }
 
     const postUrl = new URL("/", window.location.origin);
-    postUrl.searchParams.set("post", String(post.id));
+    postUrl.searchParams.set("post", String(displayPost.id));
     const postLink = postUrl.toString();
 
     try {
@@ -297,11 +310,11 @@ export function PostCard({
   }
 
   function handleLikeClick() {
-    void onLikeToggle(post.id, !isLiked);
+    void onLikeToggle(displayPost.id, !isLiked);
   }
 
   function handleSaveClick() {
-    void onSaveToggle(post.id, !isSaved);
+    void onSaveToggle(displayPost.id, !isSaved);
   }
 
   function handleCommentClick() {
@@ -487,7 +500,7 @@ export function PostCard({
           ...photoCarousel,
           photoViewportRef: feedPhotoViewportRef,
         }}
-        post={post}
+        post={displayPost}
         restTags={restTags}
         shouldReduceMotion={shouldReduceMotion}
       />
@@ -505,7 +518,7 @@ export function PostCard({
               ...photoCarousel,
               photoViewportRef: expandedPhotoViewportRef,
             }}
-            post={post}
+            post={displayPost}
             restTags={restTags}
             shouldReduceMotion={shouldReduceMotion}
           />
@@ -519,15 +532,16 @@ export function PostCard({
         open={isPhotoViewerOpen}
         openKey={viewerOpenKey}
         photoRatio={photoRatio}
-        post={post}
+        post={displayPost}
         shouldReduceMotion={shouldReduceMotion}
       />
       <CommentsSheet
         open={isCommentsOpen}
         brand={brand}
-        comments={COMMENTS_BY_POST_ID[post.id] ?? []}
-        commentsCount={post.comments}
+        comments={COMMENTS_BY_POST_ID[displayPost.id] ?? []}
+        commentsCount={displayPost.comments}
         onClose={() => setIsCommentsOpen(false)}
+        postId={displayPost.id}
         shouldReduceMotion={shouldReduceMotion}
       />
       <CopyLinkAlert showKey={copyLinkAlertKey} />

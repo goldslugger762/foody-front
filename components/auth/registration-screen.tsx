@@ -43,9 +43,10 @@ type RegistrationScreenProps = {
   palette: Palette;
 };
 
-type RegistrationStep = 1 | 2 | 3;
+type RegistrationStep = 1 | 2 | 3 | 4;
 
 type RegistrationForm = {
+  city: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -58,10 +59,28 @@ type RegistrationErrors = Partial<Record<keyof RegistrationForm | "form", string
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^[\p{L}\d]+$/u;
 const USERNAME_PATTERN = /^[A-Za-z\d_]+$/;
+const MAX_CITY_LENGTH = 64;
+const CITY_OPTIONS_DATALIST_ID = "registration-city-options";
+// TODO: replace this MVP list with the backend city directory when it is ready.
+const MOCK_CITY_OPTIONS = [
+  "Москва",
+  "Санкт-Петербург",
+  "Казань",
+  "Екатеринбург",
+  "Новосибирск",
+  "Нижний Новгород",
+  "Сочи",
+  "Краснодар",
+  "Ростов-на-Дону",
+  "Самара",
+  "Тбилиси",
+  "Ереван",
+] as const;
 const STEP_PROGRESS: Record<RegistrationStep, number> = {
-  1: 33,
-  2: 66,
-  3: 100,
+  1: 25,
+  2: 50,
+  3: 75,
+  4: 100,
 };
 
 function validateEmail(emailValue: string) {
@@ -125,6 +144,20 @@ function validateUsername(usernameValue: string) {
 
   if (!USERNAME_PATTERN.test(username)) {
     return "Имя пользователя может содержать только английские буквы, цифры и _";
+  }
+
+  return undefined;
+}
+
+function validateCity(cityValue: string) {
+  const city = cityValue.trim();
+
+  if (!city) {
+    return "Введите город";
+  }
+
+  if (city.length > MAX_CITY_LENGTH) {
+    return `Название города может быть максимум ${MAX_CITY_LENGTH} символов`;
   }
 
   return undefined;
@@ -219,6 +252,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
   const shouldReduceMotion = useReducedMotion();
   const [step, setStep] = useState<RegistrationStep>(1);
   const [form, setForm] = useState<RegistrationForm>({
+    city: "",
     confirmPassword: "",
     email: "",
     name: "",
@@ -241,7 +275,11 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
       return !!form.password && !!form.confirmPassword;
     }
 
-    return !!form.name.trim() && normalizeUsername(form.username).length > 0;
+    if (step === 3) {
+      return !!form.name.trim() && normalizeUsername(form.username).length > 0;
+    }
+
+    return !!form.city.trim();
   }, [form, step]);
 
   function updateField(field: keyof RegistrationForm, value: string) {
@@ -250,6 +288,8 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
         ? value.slice(0, 12)
         : field === "username"
           ? formatUsernameInput(value)
+          : field === "city"
+            ? value.slice(0, MAX_CITY_LENGTH)
           : value;
 
     setForm((currentForm) => ({
@@ -266,6 +306,20 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
 
   function setBackendError(error: unknown) {
     if (error instanceof AuthApiError && error.field && error.field !== "form") {
+      const targetStep: RegistrationStep =
+        error.field === "email"
+          ? 1
+          : error.field === "password" || error.field === "confirmPassword"
+            ? 2
+            : error.field === "name" || error.field === "username"
+              ? 3
+              : 4;
+
+      if (targetStep !== step) {
+        setSlideDirection(targetStep < step ? -1 : 1);
+        setStep(targetStep);
+      }
+
       setErrors({
         [error.field]: error.message,
       });
@@ -284,7 +338,13 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
     setErrors({});
     setSlideDirection(-1);
     setStep((currentStep) =>
-      currentStep === 3 ? 2 : currentStep === 2 ? 1 : currentStep
+      currentStep === 4
+        ? 3
+        : currentStep === 3
+          ? 2
+          : currentStep === 2
+            ? 1
+            : currentStep
     );
   }
 
@@ -349,14 +409,27 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
       return;
     }
 
-    const nextNameError = validateName(form.name);
-    const nextUsernameError = validateUsername(form.username);
+    if (step === 3) {
+      const nextNameError = validateName(form.name);
+      const nextUsernameError = validateUsername(form.username);
 
-    if (nextNameError || nextUsernameError) {
-      setErrors({
-        name: nextNameError,
-        username: nextUsernameError,
-      });
+      if (nextNameError || nextUsernameError) {
+        setErrors({
+          name: nextNameError,
+          username: nextUsernameError,
+        });
+        return;
+      }
+
+      setSlideDirection(1);
+      setStep(4);
+      return;
+    }
+
+    const nextCityError = validateCity(form.city);
+
+    if (nextCityError) {
+      setErrors({ city: nextCityError });
       return;
     }
 
@@ -367,6 +440,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
 
       await checkUsernameAvailability(username);
       await registerUser({
+        city: form.city,
         email: form.email,
         name: form.name,
         password: form.password,
@@ -380,9 +454,9 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
     }
   }
 
-  const submitLabel = step === 3 ? "Завершить регистрацию" : "Продолжить";
+  const submitLabel = step === 4 ? "Завершить регистрацию" : "Продолжить";
   const loadingLabel =
-    step === 1 ? "Проверяем..." : step === 3 ? "Создаём..." : "Продолжаем...";
+    step === 1 ? "Проверяем..." : step === 4 ? "Создаём..." : "Продолжаем...";
 
   return (
     <ReviewScreen palette={palette}>
@@ -398,14 +472,16 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
             ? "Укажите вашу электронную почту"
             : step === 2
               ? "Укажите ваш пароль"
-              : "Укажите ваши данные"
+              : step === 3
+                ? "Укажите ваши данные"
+                : "Укажите ваш город"
         }
         description={
           step === 1 ? (
             "Укажите электронную почту, по которой с вами можно связаться. Данная электронная почта не будет показана в профиле."
           ) : step === 2 ? (
             "Пароль должен состоять миниум из 6 символов"
-          ) : (
+          ) : step === 3 ? (
             <>
               Укажите ваше имя и имя пользователя. По имени пользователя вас
               смогут найти ваши друзья.
@@ -413,6 +489,8 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
                 Имя и имя пользователя могут быть максимум 12 символов.
               </span>
             </>
+          ) : (
+            "Выберите город, чтобы Foody мог показывать вам актуальные блюда и заведения рядом."
           )
         }
         onBack={step > 1 ? handleHeaderBack : undefined}
@@ -549,6 +627,30 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
                     }}
                     onChange={(value) => updateField("username", value)}
                   />
+                </>
+              ) : null}
+
+              {step === 4 ? (
+                <>
+                  <AuthField
+                    autoComplete="address-level2"
+                    brand={brand}
+                    error={errors.city}
+                    idPrefix="registration"
+                    inputMode="text"
+                    label="Город"
+                    list={CITY_OPTIONS_DATALIST_ID}
+                    maxLength={MAX_CITY_LENGTH}
+                    placeholder="Введите ваш город..."
+                    type="text"
+                    value={form.city}
+                    onChange={(value) => updateField("city", value)}
+                  />
+                  <datalist id={CITY_OPTIONS_DATALIST_ID}>
+                    {MOCK_CITY_OPTIONS.map((city) => (
+                      <option key={city} value={city} />
+                    ))}
+                  </datalist>
                 </>
               ) : null}
             </motion.div>

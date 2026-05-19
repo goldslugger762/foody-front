@@ -9,6 +9,7 @@ import {
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -30,6 +31,7 @@ import {
 import { PhotoViewerModal } from "@/components/feed/post-card/photo-viewer-modal";
 import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
 import { useSearchSubmit } from "@/components/search/use-search-submit";
+import { usePostCommentsCount } from "@/lib/comment-count-store";
 import {
   COMMENTS_BY_POST_ID,
   type Density,
@@ -160,12 +162,23 @@ export function FullScreenPost({
   const [copyLinkAlertKey, setCopyLinkAlertKey] = useState(0);
   const shouldReduceMotion = useReducedMotion();
   const submitSearchQuery = useSearchSubmit();
+  const commentsCount = usePostCommentsCount(post.id, post.comments);
+  const displayPost = useMemo(
+    () =>
+      commentsCount === post.comments
+        ? post
+        : {
+            ...post,
+            comments: commentsCount,
+          },
+    [commentsCount, post]
+  );
   const viewportSize = useViewportSize();
   const photoRatio = getPhotoRatio(density, viewportSize);
-  const [mainTag, ...restTags] = post.tags;
-  const likeCount = post.likes + (isLiked ? 1 : 0);
-  const hasPhotoSlider = post.photos > 1;
-  const lastPhotoIdx = Math.max(post.photos - 1, 0);
+  const [mainTag, ...restTags] = displayPost.tags;
+  const likeCount = displayPost.likes + (isLiked ? 1 : 0);
+  const hasPhotoSlider = displayPost.photos > 1;
+  const lastPhotoIdx = Math.max(displayPost.photos - 1, 0);
   const canDragToPreviousPhoto = photoIdx > 0;
   const canDragToNextPhoto = photoIdx < lastPhotoIdx;
   const expandedPhotoViewportRef = useRef<HTMLDivElement>(null);
@@ -238,7 +251,7 @@ export function FullScreenPost({
 
   async function copyPostLink() {
     const postUrl = new URL("/saved", window.location.origin);
-    postUrl.searchParams.set("post", String(post.id));
+    postUrl.searchParams.set("post", String(displayPost.id));
 
     try {
       await navigator.clipboard.writeText(postUrl.toString());
@@ -360,8 +373,8 @@ export function FullScreenPost({
             triggerCommentPulse();
             setIsCommentsOpen(true);
           },
-          onLikeClick: () => void onLikeToggle(post.id, !isLiked),
-          onSaveClick: () => void onSaveToggle(post.id, !isSaved),
+          onLikeClick: () => void onLikeToggle(displayPost.id, !isLiked),
+          onSaveClick: () => void onSaveToggle(displayPost.id, !isSaved),
           savePending: isSavePending,
           saved: isSaved,
         }}
@@ -398,7 +411,7 @@ export function FullScreenPost({
           photoWidth,
           trackPhotoIndexes,
         }}
-        post={post}
+        post={displayPost}
         restTags={restTags}
         shouldReduceMotion={shouldReduceMotion}
       />
@@ -410,15 +423,16 @@ export function FullScreenPost({
         open={isPhotoViewerOpen}
         openKey={viewerOpenKey}
         photoRatio={photoRatio}
-        post={post}
+        post={displayPost}
         shouldReduceMotion={shouldReduceMotion}
       />
       <CommentsSheet
         open={isCommentsOpen}
         brand={brand}
-        comments={COMMENTS_BY_POST_ID[post.id] ?? []}
-        commentsCount={post.comments}
+        comments={COMMENTS_BY_POST_ID[displayPost.id] ?? []}
+        commentsCount={displayPost.comments}
         onClose={() => setIsCommentsOpen(false)}
+        postId={displayPost.id}
         shouldReduceMotion={shouldReduceMotion}
       />
       <CopyLinkAlert showKey={copyLinkAlertKey} />

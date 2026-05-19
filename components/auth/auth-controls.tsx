@@ -176,6 +176,7 @@ export function AuthField({
   idPrefix = "auth",
   inputMode,
   label,
+  list,
   maxLength,
   onChange,
   onFocus,
@@ -190,6 +191,7 @@ export function AuthField({
   idPrefix?: string;
   inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
   label: string;
+  list?: string;
   maxLength?: number;
   onChange: (value: string) => void;
   onFocus?: () => void;
@@ -223,6 +225,7 @@ export function AuthField({
             aria-invalid={!!error}
             autoComplete={autoComplete}
             inputMode={inputMode}
+            list={list}
             maxLength={maxLength}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange(event.target.value)

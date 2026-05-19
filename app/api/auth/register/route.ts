@@ -8,6 +8,7 @@ import {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^[\p{L}\d]+$/u;
 const USERNAME_PATTERN = /^[A-Za-z\d_]+$/;
+const MAX_CITY_LENGTH = 64;
 const RESERVED_EMAILS = new Set(["taken@example.com", "busy@mail.com"]);
 const RESERVED_USERNAMES = new Set(["admin", "foody", "you"]);
 
@@ -19,6 +20,7 @@ function isRegisterUserInput(value: unknown): value is RegisterUserInput {
   const candidate = value as Partial<RegisterUserInput>;
 
   return (
+    typeof candidate.city === "string" &&
     typeof candidate.email === "string" &&
     typeof candidate.password === "string" &&
     typeof candidate.name === "string" &&
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
   }
 
   const email = payload.email.trim().toLowerCase();
+  const city = payload.city.trim();
   const name = payload.name.trim();
   const username = normalizeUsername(payload.username).toLowerCase();
 
@@ -109,6 +112,18 @@ export async function POST(request: Request) {
     );
   }
 
+  // TODO: validate city against the production city directory when it is ready.
+  if (!city) {
+    return validationError("Введите город", "city");
+  }
+
+  if (city.length > MAX_CITY_LENGTH) {
+    return validationError(
+      `Название города может быть максимум ${MAX_CITY_LENGTH} символов`,
+      "city"
+    );
+  }
+
   // TODO: replace mock conflict checks with production backend uniqueness checks.
   if (RESERVED_EMAILS.has(email) || email.startsWith("taken")) {
     return Response.json(
@@ -136,6 +151,7 @@ export async function POST(request: Request) {
     accessToken: `mock-access-token:${email}`,
     ok: true,
     user: getMockRegisteredAuthUser({
+      city,
       email,
       name,
       username,

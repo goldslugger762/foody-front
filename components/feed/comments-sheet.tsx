@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Heart, LoaderCircle, Reply, Trash2, X } from "lucide-react";
+import { ArrowRight, Heart, MoreHorizontal, Reply, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   useEffect,
@@ -25,8 +25,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
-import { deleteComment } from "@/lib/comments-service";
+import { createComment, deleteComment } from "@/lib/comments-service";
+import {
+  applyOptimisticCommentCreate,
+  applyOptimisticCommentDelete,
+  rollbackOptimisticCommentCreate,
+  rollbackOptimisticCommentDelete,
+} from "@/lib/comment-count-store";
 import { CURRENT_USER as DEMO_CURRENT_USER } from "@/lib/current-user";
 import { getReviewChromeStyle } from "@/components/review/review-screen-shell";
 import {
@@ -34,7 +46,7 @@ import {
   requestCommentLikeMutation,
   requestCommentLikes,
 } from "@/lib/feed-api";
-import type { PostComment } from "@/lib/mock-data";
+import type { Post, PostComment } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 import { HEART_COLOR, canAnimate } from "./post-card/post-card-shared";
@@ -44,6 +56,7 @@ type CommentsSheetProps = {
   brand: string;
   comments: PostComment[];
   commentsCount: number;
+  postId: Post["id"];
   shouldReduceMotion: boolean | null;
   onClose: () => void;
 };
@@ -205,7 +218,7 @@ function createOptimisticComment(payload: CreateCommentPayload): PostComment {
     clientId,
     replyTo: payload.replyToUser,
     replyToCommentId: payload.replyToCommentId,
-    status: "sent",
+    status: "sending",
     text: payload.text,
   };
 }
@@ -261,6 +274,7 @@ export function CommentsSheet({
   brand,
   comments,
   commentsCount,
+  postId,
   shouldReduceMotion,
   onClose,
 }: CommentsSheetProps) {
@@ -268,7 +282,7 @@ export function CommentsSheet({
   const [likedCommentIds, setLikedCommentIds] = useState<string[]>([]);
   const [commentLikesLoaded, setCommentLikesLoaded] = useState(false);
   const [deletedCommentIds, setDeletedCommentIds] = useState<string[]>([]);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [localLikedCommentIds, setLocalLikedCommentIds] = useState<string[]>(
     []
   );
@@ -298,24 +312,8 @@ export function CommentsSheet({
       ),
     [deletedCommentIdsSet, mergedComments]
   );
-  const unsyncedSubmittedCommentsCount = useMemo(
-    () =>
-      submittedComments.filter(
-        (submittedComment) =>
-          !comments.some((comment) => isSameComment(comment, submittedComment)) &&
-          !deletedCommentIdsSet.has(getCommentIdKey(submittedComment.id))
-      ).length,
-    [comments, deletedCommentIdsSet, submittedComments]
-  );
-  const deletedSeededCommentsCount = useMemo(
-    () =>
-      comments.filter((comment) =>
-        deletedCommentIdsSet.has(getCommentIdKey(comment.id))
-      ).length,
-    [comments, deletedCommentIdsSet]
-  );
   const visibleCommentsCount = Math.max(
-    commentsCount + unsyncedSubmittedCommentsCount - deletedSeededCommentsCount,
+    commentsCount,
     visibleComments.length
   );
   const likedCommentIdsSet = useMemo(
@@ -347,19 +345,23 @@ export function CommentsSheet({
         }
 
         setDeletedCommentIds(response.deletedCommentIds);
+
+        for (const deletedCommentId of response.deletedCommentIds) {
+          applyOptimisticCommentDelete(postId, deletedCommentId);
+        }
       })
       .catch(() => {
         if (!isActive) {
           return;
         }
 
-        setDeleteError("Не удалось обновить список комментариев.");
+        setCommentError("Не удалось обновить список комментариев.");
       });
 
     return () => {
       isActive = false;
     };
-  }, [mergedComments, open]);
+  }, [mergedComments, open, postId]);
 
   useEffect(() => {
     if (!open) {
@@ -521,7 +523,7 @@ export function CommentsSheet({
   }
 
   function handleDeleteRequest(comment: PostComment) {
-    setDeleteError(null);
+    setCommentError(null);
     setDeleteTarget(comment);
   }
 
@@ -536,7 +538,9 @@ export function CommentsSheet({
       return;
     }
 
-    setDeleteError(null);
+    setCommentError(null);
+    const rollbackToken = applyOptimisticCommentDelete(postId, deleteTarget.id);
+
     setReplyTarget((currentTarget) =>
       currentTarget && isSameComment(currentTarget, deleteTarget)
         ? null
@@ -563,10 +567,11 @@ export function CommentsSheet({
         );
       }
     } catch (error) {
+      rollbackOptimisticCommentDelete(postId, rollbackToken);
       setDeletedCommentIds((currentCommentIds) =>
         currentCommentIds.filter((currentCommentId) => currentCommentId !== commentId)
       );
-      setDeleteError(
+      setCommentError(
         error instanceof Error
           ? error.message
           : "Не удалось удалить комментарий."
@@ -582,7 +587,7 @@ export function CommentsSheet({
     }
   }
 
-  function handleSubmit(event?: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
 
     const text = draft.trim();
@@ -596,16 +601,48 @@ export function CommentsSheet({
       replyToCommentId: replyTarget?.id,
       replyToUser: replyTarget?.user,
     });
+    const nextCommentId = getCommentIdKey(nextComment.id);
 
+    setCommentError(null);
+    applyOptimisticCommentCreate(postId, nextComment.id);
     setSubmittedComments((currentComments) => [...currentComments, nextComment]);
     setDraft("");
     setReplyTarget(null);
+
+    try {
+      const result = await createComment({
+        comment: nextComment,
+        postId,
+      });
+
+      setSubmittedComments((currentComments) =>
+        currentComments.map((currentComment) =>
+          isSameComment(currentComment, nextComment)
+            ? result.comment
+            : currentComment
+        )
+      );
+    } catch (error) {
+      rollbackOptimisticCommentCreate(postId, nextComment.id);
+      setSubmittedComments((currentComments) =>
+        currentComments.filter(
+          (currentComment) =>
+            !isSameComment(currentComment, nextComment) &&
+            getCommentIdKey(currentComment.id) !== nextCommentId
+        )
+      );
+      setCommentError(
+        error instanceof Error
+          ? error.message
+          : "Не удалось добавить комментарий."
+      );
+    }
   }
 
   function handleDraftKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
-      handleSubmit();
+      void handleSubmit();
     }
   }
 
@@ -668,7 +705,7 @@ export function CommentsSheet({
 
             <div className="hide-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-7 py-6 max-[430px]:px-5">
               <AnimatePresence initial={false}>
-                {deleteError && (
+                {commentError && (
                   <motion.div
                     role="alert"
                     className="mb-4 rounded-[18px] border border-[#F5B7B1]/60 bg-[#FFF2F0] px-4 py-3 font-[family-name:var(--font-roboto)] text-[13.5px] leading-snug font-bold text-[#A13D34] shadow-[inset_1px_1px_0_rgba(255,255,255,0.7)]"
@@ -677,7 +714,7 @@ export function CommentsSheet({
                     exit={shouldAnimate ? { opacity: 0, y: -6 } : { opacity: 0 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
                   >
-                    {deleteError}
+                    {commentError}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -739,7 +776,10 @@ export function CommentsSheet({
                 )}
               </AnimatePresence>
 
-              <form className="flex items-end gap-2.5" onSubmit={handleSubmit}>
+              <form
+                className="flex items-end gap-2.5"
+                onSubmit={(event) => void handleSubmit(event)}
+              >
                 <CommentAvatar
                   comment={CURRENT_USER}
                   size={40}
@@ -929,14 +969,63 @@ function CommentRow({
         </motion.button>
       </div>
 
-      <div className="mt-1 flex w-8 flex-col items-center">
+      <div className="mt-0.5 flex w-8 flex-col items-center">
+        {canDelete && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                title="Ещё"
+                aria-label="Ещё"
+                className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-[9px] bg-transparent text-[#8B949E] outline-none transition-colors hover:text-[#65707A] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+              >
+                <motion.span
+                  className="grid size-4 place-items-center"
+                  whileHover={shouldAnimate ? { y: -1, scale: 1.04 } : undefined}
+                  whileTap={shouldAnimate ? { scale: 0.88 } : undefined}
+                  transition={{ duration: 0.16, ease: "easeOut" }}
+                >
+                  <MoreHorizontal className="size-4" strokeWidth={2} />
+                </motion.span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              sideOffset={7}
+              className={cn(
+                "z-[130] w-[178px] translate-x-1.5 rounded-[15px] border-0 bg-[#FFF8FC] p-1.5 text-[#15291C] outline-none ring-0",
+                "shadow-[0_12px_28px_rgba(20,40,28,0.16)]",
+                "backdrop-blur-none backdrop-saturate-100",
+                "data-open:animate-none data-closed:animate-none data-open:zoom-in-100 data-closed:zoom-out-100"
+              )}
+            >
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={deletePending}
+                className={cn(
+                  "h-10 cursor-pointer rounded-[12px] px-2.5 text-[13px] font-extrabold tracking-[0px] text-[#B63B34] outline-none",
+                  "focus:bg-[#15291C]/8 focus:text-[#9F2E28]",
+                  "data-[highlighted]:bg-[#15291C]/8 data-[highlighted]:text-[#9F2E28]",
+                  "active:bg-[#15291C]/10"
+                )}
+                onSelect={() => {
+                  onDeleteRequest(comment);
+                }}
+              >
+                <Trash2 className="size-4 text-[#E5443B]" strokeWidth={2.2} />
+                <span>Удалить</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
         <button
           type="button"
           aria-label="Нравится комментарий"
           aria-busy={likePending}
           aria-pressed={liked}
           disabled={likePending}
-          className="flex h-11 w-8 cursor-pointer flex-col items-center justify-start rounded-full border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-black/10 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-0.5 flex h-11 w-8 cursor-pointer flex-col items-center justify-start rounded-full border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-black/10 disabled:cursor-not-allowed disabled:opacity-60"
           onClick={() => onLikeToggle(comment, !liked)}
         >
           <motion.span
@@ -953,31 +1042,9 @@ function CommentRow({
             />
           </motion.span>
           <span className="mt-0.5 text-[11px] leading-none font-bold text-[#65707A] tabular-nums">
-            {likeCount}
+          {likeCount}
           </span>
         </button>
-
-        {canDelete && (
-          <motion.button
-            type="button"
-            aria-label="Удалить комментарий"
-            aria-busy={deletePending}
-            disabled={deletePending}
-            className="mt-2 grid size-7 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-[#9A5C58] outline-none transition-colors hover:text-[#D94B43] focus-visible:ring-2 focus-visible:ring-[#D94B43]/25 disabled:cursor-not-allowed disabled:opacity-60"
-            initial={shouldAnimate ? { opacity: 0, scale: 0.78 } : { opacity: 1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={shouldAnimate ? { y: -1, scale: 1.04 } : undefined}
-            whileTap={shouldAnimate ? { scale: 0.88 } : undefined}
-            transition={{ duration: 0.16, ease: "easeOut" }}
-            onClick={() => onDeleteRequest(comment)}
-          >
-            {deletePending ? (
-              <LoaderCircle className="size-4 animate-spin" strokeWidth={2.4} />
-            ) : (
-              <Trash2 className="size-4" strokeWidth={2.2} />
-            )}
-          </motion.button>
-        )}
       </div>
     </motion.article>
   );

@@ -6,6 +6,7 @@ export type AuthActionResponse = {
 };
 
 export type AuthUser = {
+  city?: string;
   email: string;
   handle: string;
   realName: string;
@@ -24,6 +25,7 @@ export type LoginUserInput = {
 export type LoginUserResponse = AuthActionResponse & AuthSession;
 
 export type RegisterUserInput = {
+  city: string;
   email: string;
   name: string;
   password: string;
@@ -153,6 +155,7 @@ function readStoredSession(): AuthSession | null {
     return {
       accessToken,
       user: {
+        ...(typeof user.city === "string" ? { city: user.city } : {}),
         email: user.email,
         handle: user.handle,
         realName: user.realName,
@@ -237,6 +240,7 @@ function isAuthErrorField(
     field === "email" ||
     field === "password" ||
     field === "confirmPassword" ||
+    field === "city" ||
     field === "name" ||
     field === "username" ||
     field === "form"
@@ -278,6 +282,7 @@ export async function registerUser(input: RegisterUserInput) {
   const response = await fetch("/api/auth/register", {
     body: JSON.stringify({
       ...input,
+      city: input.city.trim(),
       email: input.email.trim().toLowerCase(),
       name: input.name.trim(),
       username: normalizeUsername(input.username),
@@ -323,6 +328,7 @@ export function getMockAuthUser(email: string): AuthUser {
 }
 
 export function getMockRegisteredAuthUser(input: {
+  city: string;
   email: string;
   name: string;
   username: string;
@@ -330,6 +336,7 @@ export function getMockRegisteredAuthUser(input: {
   const username = normalizeUsername(input.username);
 
   return {
+    city: input.city.trim(),
     email: input.email,
     handle: username ? `@${username}` : CURRENT_USER.handle,
     realName: input.name.trim() || CURRENT_USER.realName,
