@@ -32,6 +32,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  getStoredAuthUser,
+  subscribeToAuthState,
+} from "@/lib/auth-api";
 import { createComment, deleteComment } from "@/lib/comments-service";
 import {
   applyOptimisticCommentCreate,
@@ -47,6 +51,7 @@ import {
   requestCommentLikes,
 } from "@/lib/feed-api";
 import type { Post, PostComment } from "@/lib/mock-data";
+import { getCurrentUserProfile } from "@/lib/profile-api";
 import { cn } from "@/lib/utils";
 
 import { HEART_COLOR, canAnimate } from "./post-card/post-card-shared";
@@ -64,6 +69,7 @@ type CommentsSheetProps = {
 type CommentRowProps = {
   brand: string;
   comment: PostComment;
+  displayName: string;
   liked: boolean;
   likePending: boolean;
   deletePending: boolean;
@@ -80,6 +86,15 @@ type CreateCommentPayload = {
   replyToUser?: string;
 };
 
+type CurrentCommentAuthor = {
+  authName?: string | null;
+  authUsername?: string | null;
+  avatarUrl?: string | null;
+  profileDisplayName?: string | null;
+  profileName?: string | null;
+  profileUsername?: string | null;
+};
+
 const SHEET_TRANSITION = {
   duration: 0.32,
   ease: [0.22, 1, 0.36, 1],
@@ -87,10 +102,11 @@ const SHEET_TRANSITION = {
 const OVERLAY_TRANSITION = { duration: 0.22, ease: "easeOut" } as const;
 // MVP: timestamps are hidden in the sheet, but can be restored by flipping this.
 const SHOW_COMMENT_TIMESTAMPS = false;
-const CURRENT_USER: PostComment = {
+const FALLBACK_COMMENT_AUTHOR_NAME = "Пользователь";
+const CURRENT_USER_COMMENT_BASE: PostComment = {
   id: 0,
   user: DEMO_CURRENT_USER.handle,
-  realName: DEMO_CURRENT_USER.realName,
+  realName: FALLBACK_COMMENT_AUTHOR_NAME,
   when: "только что",
   text: "",
   likes: 0,
@@ -197,11 +213,70 @@ function createClientCommentId() {
   return `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function createOptimisticComment(payload: CreateCommentPayload): PostComment {
+function getStoredCurrentCommentAuthor(): CurrentCommentAuthor {
+  const authUser = getStoredAuthUser();
+
+  return {
+    authName: authUser?.realName,
+    authUsername: authUser?.handle,
+    profileUsername: DEMO_CURRENT_USER.handle,
+  };
+}
+
+function normalizeAuthorName(value: string | null | undefined) {
+  const normalized = value?.trim();
+
+  if (!normalized || normalized === DEMO_CURRENT_USER.realName) {
+    return null;
+  }
+
+  return normalized;
+}
+
+function normalizeAuthorFallback(value: string | null | undefined) {
+  const normalized = value?.trim();
+
+  return normalized || null;
+}
+
+function getCurrentCommentAuthorDisplayName(author: CurrentCommentAuthor) {
+  return (
+    normalizeAuthorName(author.profileDisplayName) ??
+    normalizeAuthorName(author.profileName) ??
+    normalizeAuthorName(author.authName) ??
+    normalizeAuthorFallback(author.profileUsername) ??
+    normalizeAuthorFallback(author.authUsername) ??
+    FALLBACK_COMMENT_AUTHOR_NAME
+  );
+}
+
+function getCommentDisplayName(
+  comment: PostComment,
+  currentCommentAuthor: CurrentCommentAuthor
+) {
+  return isCurrentUserComment(comment)
+    ? getCurrentCommentAuthorDisplayName(currentCommentAuthor)
+    : comment.realName;
+}
+
+function getCurrentUserComment(
+  currentCommentAuthor: CurrentCommentAuthor
+): PostComment {
+  return {
+    ...CURRENT_USER_COMMENT_BASE,
+    avatarUrl: currentCommentAuthor.avatarUrl ?? undefined,
+    realName: getCurrentCommentAuthorDisplayName(currentCommentAuthor),
+  };
+}
+
+function createOptimisticComment(
+  payload: CreateCommentPayload,
+  currentCommentAuthor: CurrentCommentAuthor
+): PostComment {
   const clientId = createClientCommentId();
 
   return {
-    ...CURRENT_USER,
+    ...getCurrentUserComment(currentCommentAuthor),
     id: clientId,
     clientId,
     replyTo: payload.replyToUser,
@@ -268,6 +343,8 @@ export function CommentsSheet({
   const [deleteTarget, setDeleteTarget] = useState<PostComment | null>(null);
   const [replyTarget, setReplyTarget] = useState<PostComment | null>(null);
   const [submittedComments, setSubmittedComments] = useState<PostComment[]>([]);
+  const [currentCommentAuthor, setCurrentCommentAuthor] =
+    useState<CurrentCommentAuthor>(() => getStoredCurrentCommentAuthor());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const shouldAnimate = canAnimate(shouldReduceMotion);
   const mergedComments = useMemo(
@@ -297,6 +374,58 @@ export function CommentsSheet({
     () => new Set(localLikedCommentIds),
     [localLikedCommentIds]
   );
+  const currentUserComment = useMemo(
+    () => getCurrentUserComment(currentCommentAuthor),
+    [currentCommentAuthor]
+  );
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    let isActive = true;
+
+    function syncStoredAuthor() {
+      const storedAuthor = getStoredCurrentCommentAuthor();
+
+      setCurrentCommentAuthor((currentAuthor) => ({
+        ...currentAuthor,
+        ...storedAuthor,
+      }));
+    }
+
+    syncStoredAuthor();
+
+    const unsubscribe = subscribeToAuthState(syncStoredAuthor);
+
+    void getCurrentUserProfile()
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+
+        const profile = response.profile as typeof response.profile & {
+          name?: unknown;
+        };
+
+        setCurrentCommentAuthor((currentAuthor) => ({
+          ...currentAuthor,
+          avatarUrl: profile.avatarUrl,
+          profileDisplayName: profile.displayName,
+          profileName: typeof profile.name === "string" ? profile.name : null,
+          profileUsername: profile.username,
+        }));
+      })
+      .catch(() => {
+        // Auth storage still gives us a usable local fallback.
+      });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -569,11 +698,14 @@ export function CommentsSheet({
       return;
     }
 
-    const nextComment = createOptimisticComment({
-      text,
-      replyToCommentId: replyTarget?.id,
-      replyToUser: replyTarget?.user,
-    });
+    const nextComment = createOptimisticComment(
+      {
+        text,
+        replyToCommentId: replyTarget?.id,
+        replyToUser: replyTarget?.user,
+      },
+      currentCommentAuthor
+    );
     const nextCommentId = getCommentIdKey(nextComment.id);
 
     setCommentError(null);
@@ -698,6 +830,10 @@ export function CommentsSheet({
                       key={comment.id}
                       brand={brand}
                       comment={comment}
+                      displayName={getCommentDisplayName(
+                        comment,
+                        currentCommentAuthor
+                      )}
                       liked={
                         comment.clientId
                           ? localLikedCommentIdsSet.has(getCommentIdKey(comment.id))
@@ -754,7 +890,7 @@ export function CommentsSheet({
                 onSubmit={(event) => void handleSubmit(event)}
               >
                 <CommentAvatar
-                  comment={CURRENT_USER}
+                  comment={currentUserComment}
                   size={40}
                   className="mb-0.5"
                 />
@@ -879,6 +1015,7 @@ export function CommentsSheet({
 function CommentRow({
   brand,
   comment,
+  displayName,
   liked,
   likePending,
   deletePending,
@@ -909,7 +1046,7 @@ function CommentRow({
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex min-w-0 items-baseline gap-2">
             <span className="truncate text-[15.5px] leading-tight font-extrabold tracking-normal text-black">
-              {comment.realName}
+              {displayName}
             </span>
             {SHOW_COMMENT_TIMESTAMPS && (
               <span className="shrink-0 text-[12px] leading-tight font-bold text-[#99A1AB]">
@@ -917,6 +1054,54 @@ function CommentRow({
               </span>
             )}
           </div>
+          {canDelete && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  title="Ещё"
+                  aria-label="Ещё"
+                  className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-[9px] bg-transparent text-[#8B949E] outline-none transition-colors hover:text-[#65707A] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
+                >
+                  <motion.span
+                    className="grid size-4 place-items-center"
+                    whileHover={shouldAnimate ? { y: -1, scale: 1.04 } : undefined}
+                    whileTap={shouldAnimate ? { scale: 0.88 } : undefined}
+                    transition={{ duration: 0.16, ease: "easeOut" }}
+                  >
+                    <MoreHorizontal className="size-4" strokeWidth={2} />
+                  </motion.span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={7}
+                className={cn(
+                  "z-[130] w-[178px] translate-x-1.5 rounded-[15px] border-0 bg-[#FFF8FC] p-1.5 text-[#15291C] outline-none ring-0",
+                  "shadow-[0_12px_28px_rgba(20,40,28,0.16)]",
+                  "backdrop-blur-none backdrop-saturate-100",
+                  "data-open:animate-none data-closed:animate-none data-open:zoom-in-100 data-closed:zoom-out-100"
+                )}
+              >
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={deletePending}
+                  className={cn(
+                    "h-10 cursor-pointer rounded-[12px] px-2.5 text-[13px] font-extrabold tracking-[0px] text-[#B63B34] outline-none",
+                    "focus:bg-[#15291C]/8 focus:text-[#9F2E28]",
+                    "data-[highlighted]:bg-[#15291C]/8 data-[highlighted]:text-[#9F2E28]",
+                    "active:bg-[#15291C]/10"
+                  )}
+                  onSelect={() => {
+                    onDeleteRequest(comment);
+                  }}
+                >
+                  <Trash2 className="size-4 text-[#E5443B]" strokeWidth={2.2} />
+                  <span>Удалить</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <p className="mt-1 font-[family-name:var(--font-roboto)] text-[15.5px] leading-[1.46] font-medium text-black">
@@ -943,55 +1128,6 @@ function CommentRow({
       </div>
 
       <div className="mt-0.5 flex w-8 flex-col items-center">
-        {canDelete && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                title="Ещё"
-                aria-label="Ещё"
-                className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-[9px] bg-transparent text-[#8B949E] outline-none transition-colors hover:text-[#65707A] focus-visible:ring-2 focus-visible:ring-[#15291C]/18"
-              >
-                <motion.span
-                  className="grid size-4 place-items-center"
-                  whileHover={shouldAnimate ? { y: -1, scale: 1.04 } : undefined}
-                  whileTap={shouldAnimate ? { scale: 0.88 } : undefined}
-                  transition={{ duration: 0.16, ease: "easeOut" }}
-                >
-                  <MoreHorizontal className="size-4" strokeWidth={2} />
-                </motion.span>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              sideOffset={7}
-              className={cn(
-                "z-[130] w-[178px] translate-x-1.5 rounded-[15px] border-0 bg-[#FFF8FC] p-1.5 text-[#15291C] outline-none ring-0",
-                "shadow-[0_12px_28px_rgba(20,40,28,0.16)]",
-                "backdrop-blur-none backdrop-saturate-100",
-                "data-open:animate-none data-closed:animate-none data-open:zoom-in-100 data-closed:zoom-out-100"
-              )}
-            >
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={deletePending}
-                className={cn(
-                  "h-10 cursor-pointer rounded-[12px] px-2.5 text-[13px] font-extrabold tracking-[0px] text-[#B63B34] outline-none",
-                  "focus:bg-[#15291C]/8 focus:text-[#9F2E28]",
-                  "data-[highlighted]:bg-[#15291C]/8 data-[highlighted]:text-[#9F2E28]",
-                  "active:bg-[#15291C]/10"
-                )}
-                onSelect={() => {
-                  onDeleteRequest(comment);
-                }}
-              >
-                <Trash2 className="size-4 text-[#E5443B]" strokeWidth={2.2} />
-                <span>Удалить</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
         <button
           type="button"
           aria-label="Нравится комментарий"
