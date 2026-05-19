@@ -43,6 +43,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { FoodCategory } from "@/lib/categories";
 import type { Palette } from "@/lib/mock-data";
+import {
+  addOptimisticReviewPost,
+  createOptimisticReviewPost,
+  createReviewPost,
+  removeOptimisticReviewPost,
+  storeReviewSubmitError,
+  type CreateReviewPostData,
+} from "@/lib/review-api";
 import { cn } from "@/lib/utils";
 import {
   FIELD_INPUT_CLASSES,
@@ -473,6 +481,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
   const [showRequiredAlert, setShowRequiredAlert] = useState(false);
   const [showDraftDialog, setShowDraftDialog] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const requiredAlertTimerRef = useRef<number | null>(null);
   const hasDraft =
     dish.trim().length > 0 ||
@@ -555,13 +564,71 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
     }, REQUIRED_ALERT_MS);
   }
 
-  function handlePublishClick() {
-    if (!isPublishReady) {
+  function readFileAsDataUrl(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onerror = () => reject(new Error("Не удалось прочитать фото."));
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+
+        reject(new Error("Не удалось прочитать фото."));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handlePublishClick() {
+    if (!isPublishReady || isPublishing) {
       showRequiredFieldsAlert();
       return;
     }
 
     setShowRequiredAlert(false);
+    setIsPublishing(true);
+
+    try {
+      const photoUrls = await Promise.all(photos.map(readFileAsDataUrl));
+      const clientId =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `review-${Date.now()}`;
+      const reviewData: CreateReviewPostData = {
+        address,
+        categoryLabel: category?.label ?? null,
+        clientId,
+        dish,
+        photoUrls,
+        place,
+        price,
+        rating,
+        tags,
+        text: review,
+      };
+
+      addOptimisticReviewPost(createOptimisticReviewPost(reviewData, clientId));
+      router.push("/me?reviewSubmitted=1");
+
+      void createReviewPost(reviewData)
+        .then(() => {
+          removeOptimisticReviewPost(clientId);
+        })
+        .catch((error) => {
+          removeOptimisticReviewPost(clientId);
+          storeReviewSubmitError(
+            error instanceof Error
+              ? error.message
+              : "Не удалось отправить отзыв на модерацию."
+          );
+        });
+    } catch {
+      setIsPublishing(false);
+      showRequiredFieldsAlert();
+    }
   }
 
   function handleSelectCategory(nextCategory: FoodCategory) {
@@ -795,7 +862,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
               <SubscribeStyleButton
                 ariaLabel="Опубликовать"
                 brand={brand}
-                muted={!isPublishReady}
+                muted={!isPublishReady || isPublishing}
                 onClick={handlePublishClick}
                 shouldReduceMotion={shouldReduceMotion}
                 className={cn(
@@ -804,7 +871,7 @@ export function NewReviewForm({ brand, palette }: NewReviewFormProps) {
                 )}
                 style={getReviewChromeStyle(brand, "transparent")}
               >
-                <span>Опубликовать</span>
+                <span>{isPublishing ? "Отправляем..." : "Опубликовать"}</span>
               </SubscribeStyleButton>
             </div>
           </div>

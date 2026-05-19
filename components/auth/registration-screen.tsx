@@ -59,23 +59,8 @@ type RegistrationErrors = Partial<Record<keyof RegistrationForm | "form", string
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^[\p{L}\d]+$/u;
 const USERNAME_PATTERN = /^[A-Za-z\d_]+$/;
+const MIN_PASSWORD_LENGTH = 6;
 const MAX_CITY_LENGTH = 64;
-const CITY_OPTIONS_DATALIST_ID = "registration-city-options";
-// TODO: replace this MVP list with the backend city directory when it is ready.
-const MOCK_CITY_OPTIONS = [
-  "Москва",
-  "Санкт-Петербург",
-  "Казань",
-  "Екатеринбург",
-  "Новосибирск",
-  "Нижний Новгород",
-  "Сочи",
-  "Краснодар",
-  "Ростов-на-Дону",
-  "Самара",
-  "Тбилиси",
-  "Ереван",
-] as const;
 const STEP_PROGRESS: Record<RegistrationStep, number> = {
   1: 25,
   2: 50,
@@ -94,8 +79,8 @@ function validateEmail(emailValue: string) {
 }
 
 function validatePassword(password: string) {
-  if (password.length < 8) {
-    return "Пароль должен быть минимум 8 символов";
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return `Пароль должен быть минимум ${MIN_PASSWORD_LENGTH} символов`;
   }
 
   if (!PASSWORD_PATTERN.test(password)) {
@@ -480,7 +465,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
           step === 1 ? (
             "Укажите электронную почту, по которой с вами можно связаться. Данная электронная почта не будет показана в профиле."
           ) : step === 2 ? (
-            "Пароль должен состоять миниум из 6 символов"
+            `Пароль должен состоять минимум из ${MIN_PASSWORD_LENGTH} символов`
           ) : step === 3 ? (
             <>
               Укажите ваше имя и имя пользователя. По имени пользователя вас
@@ -561,6 +546,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
                     placeholder="Введите Ваш пароль..."
                     type={passwordVisible ? "text" : "password"}
                     value={form.password}
+                    minLength={MIN_PASSWORD_LENGTH}
                     onChange={(value) => updateField("password", value)}
                     rightControl={
                       <PasswordVisibilityButton
@@ -580,6 +566,7 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
                     placeholder="Повторите пароль..."
                     type={confirmPasswordVisible ? "text" : "password"}
                     value={form.confirmPassword}
+                    minLength={MIN_PASSWORD_LENGTH}
                     onChange={(value) => updateField("confirmPassword", value)}
                     rightControl={
                       <PasswordVisibilityButton
@@ -631,27 +618,19 @@ export function RegistrationScreen({ brand, palette }: RegistrationScreenProps) 
               ) : null}
 
               {step === 4 ? (
-                <>
-                  <AuthField
-                    autoComplete="address-level2"
-                    brand={brand}
-                    error={errors.city}
-                    idPrefix="registration"
-                    inputMode="text"
-                    label="Город"
-                    list={CITY_OPTIONS_DATALIST_ID}
-                    maxLength={MAX_CITY_LENGTH}
-                    placeholder="Введите ваш город..."
-                    type="text"
-                    value={form.city}
-                    onChange={(value) => updateField("city", value)}
-                  />
-                  <datalist id={CITY_OPTIONS_DATALIST_ID}>
-                    {MOCK_CITY_OPTIONS.map((city) => (
-                      <option key={city} value={city} />
-                    ))}
-                  </datalist>
-                </>
+                <AuthField
+                  autoComplete="address-level2"
+                  brand={brand}
+                  error={errors.city}
+                  idPrefix="registration"
+                  inputMode="text"
+                  label="Город"
+                  maxLength={MAX_CITY_LENGTH}
+                  placeholder="Введите ваш город..."
+                  type="text"
+                  value={form.city}
+                  onChange={(value) => updateField("city", value)}
+                />
               ) : null}
             </motion.div>
           </AnimatePresence>

@@ -4,12 +4,12 @@ import { dirname, join } from "node:path";
 import { CURRENT_USER } from "@/lib/current-user";
 import {
   getProfileByUserId,
-  getProfilePosts,
   type UserProfile,
 } from "@/lib/profile-data";
 import { getSavedPostIds } from "@/lib/server/bookmark-store";
 import { getFollowedUsers } from "@/lib/server/follow-store";
 import { getLikedPostIds } from "@/lib/server/like-store";
+import { getMyPosts } from "@/lib/server/review-post-store";
 
 export type ProfileUpdateInput = {
   about: string | null;
@@ -30,7 +30,7 @@ export type UserProfileSnapshot = {
 
 export type UserPostsSnapshot = {
   currentUser: string | null;
-  posts: ReturnType<typeof getProfilePosts>;
+  posts: Awaited<ReturnType<typeof getMyPosts>>;
   userId: string;
 };
 
@@ -272,19 +272,24 @@ export async function getUserProfileSnapshot(
     followingUsers,
     isFollowing: followingUsers.includes(userId),
     likedPostIds,
-    profile,
+    profile: {
+      ...profile,
+      postsCount: (await getMyPosts(userId)).length,
+    },
     savedPostIds,
   };
 }
 
-export function getUserPostsSnapshot(userId: string): UserPostsSnapshot | null {
+export async function getUserPostsSnapshot(
+  userId: string
+): Promise<UserPostsSnapshot | null> {
   if (!getProfileByUserId(userId)) {
     return null;
   }
 
   return {
     currentUser: CURRENT_USER.handle,
-    posts: getProfilePosts(userId),
+    posts: await getMyPosts(userId),
     userId,
   };
 }

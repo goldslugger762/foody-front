@@ -1,4 +1,7 @@
+export type PostStatus = "pending_moderation" | "approved" | "rejected";
+
 export type Post = {
+  clientId?: string;
   id: number;
   user: string;
   realName: string;
@@ -12,7 +15,9 @@ export type Post = {
   photos: number;
   likes: number;
   comments: number;
+  photoUrls?: string[];
   seed: number;
+  status: PostStatus;
 };
 
 export type PostComment = {
@@ -61,6 +66,7 @@ export const POSTS: Post[] = [
     likes: 999,
     comments: 262,
     seed: 0,
+    status: "approved",
   },
   {
     id: 2,
@@ -77,6 +83,7 @@ export const POSTS: Post[] = [
     likes: 1413,
     comments: 88,
     seed: 5,
+    status: "approved",
   },
   {
     id: 3,
@@ -93,6 +100,7 @@ export const POSTS: Post[] = [
     likes: 742,
     comments: 41,
     seed: 2,
+    status: "approved",
   },
   {
     id: 4,
@@ -109,6 +117,7 @@ export const POSTS: Post[] = [
     likes: 1186,
     comments: 73,
     seed: 8,
+    status: "approved",
   },
 ];
 

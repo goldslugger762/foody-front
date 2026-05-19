@@ -1,7 +1,5 @@
 "use client";
 
-import { PartyPopper, Sparkles } from "lucide-react";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,19 +30,9 @@ export function RegistrationSuccessAlert({
       }}
     >
       <AlertDialogContent className="rounded-[24px] border-0 bg-white/90 p-5 text-[#15291C] shadow-[0_22px_54px_rgba(20,40,28,0.34),0_8px_18px_rgba(20,40,28,0.12),inset_1px_1px_0_rgba(255,255,255,0.74)] ring-0 backdrop-blur-[22px]">
-        <div
-          aria-hidden="true"
-          className="mb-1 flex items-center gap-2 text-[#1B7F45]"
-        >
-          <span className="grid size-10 place-items-center rounded-full bg-[#2ECC71]/14">
-            <PartyPopper className="size-5" strokeWidth={2.25} />
-          </span>
-          <Sparkles className="size-5" strokeWidth={2.25} />
-          <span className="text-[20px] leading-none">🥳</span>
-        </div>
         <AlertDialogHeader className="place-items-start text-left">
           <AlertDialogTitle className="text-[20px] leading-tight font-semibold text-[#15291C]">
-            Аккаунт создан 🎉
+            Аккаунт создан 🎉🥳
           </AlertDialogTitle>
           <AlertDialogDescription className="font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#5C6B62]">
             Добро пожаловать в Foody! Теперь можно искать вкусные блюда и

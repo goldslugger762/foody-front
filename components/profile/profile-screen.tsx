@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Edit3,
+  CheckCircle2,
   ImageOff,
   Images,
   RefreshCw,
@@ -21,6 +22,15 @@ import { SubscribeStyleButton } from "@/components/feed/subscribe-style-button";
 import { UserAvatar } from "@/components/feed/user-avatar";
 import { CopyLinkAlert } from "@/components/shared/copy-link-alert";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import {
   getNextPostIdMembership,
@@ -36,6 +46,13 @@ import {
   type UserProfileResponse,
 } from "@/lib/profile-api";
 import type { Density, Post } from "@/lib/mock-data";
+import { isPostPendingModeration, isPostRejected } from "@/lib/post-status";
+import {
+  consumeReviewSubmitError,
+  getOptimisticReviewPosts,
+  REVIEW_POSTS_CHANGED_EVENT,
+  REVIEW_SUBMIT_ERROR_EVENT,
+} from "@/lib/review-api";
 import { cn } from "@/lib/utils";
 
 type ProfileScreenProps = {
@@ -43,6 +60,7 @@ type ProfileScreenProps = {
   density: Density;
   initialUserId: string;
   ownProfileRoute?: boolean;
+  reviewSubmittedNotice?: boolean;
   savedNotice?: boolean;
 };
 
@@ -375,15 +393,23 @@ function StatsSection({
 }
 
 function ProfilePostCard({
+  isOwnProfile,
   onClick,
   post,
   shouldReduceMotion,
 }: {
+  isOwnProfile: boolean;
   onClick: () => void;
   post: Post;
   shouldReduceMotion: boolean | null;
 }) {
   const hasPhoto = post.photos > 0;
+  const moderationLabel = isPostPendingModeration(post)
+    ? "Отправлено на модерацию"
+    : isPostRejected(post)
+      ? "Отклонено модерацией"
+      : null;
+  const shouldShowModerationOverlay = isOwnProfile && moderationLabel !== null;
 
   return (
     <motion.button
@@ -397,12 +423,24 @@ function ProfilePostCard({
         className="relative overflow-hidden rounded-[18px] bg-white/42 shadow-[0_8px_18px_rgba(20,40,28,0.12),inset_1px_1px_0_rgba(255,255,255,0.78)]"
       >
         {hasPhoto ? (
-          <DishPhoto seed={post.seed} height="100%" label="" />
+          <DishPhoto
+            seed={post.seed}
+            height="100%"
+            label=""
+            src={post.photoUrls?.[0]}
+          />
         ) : (
           <div className="grid h-full place-items-center bg-[rgba(46,204,113,0.12)]">
             <ImageOff className="size-6 text-[#1B7F45]/55" strokeWidth={2.2} />
           </div>
         )}
+        {shouldShowModerationOverlay ? (
+          <div className="absolute inset-0 grid place-items-center bg-black/24 px-2 text-center text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)] backdrop-blur-[14px] backdrop-saturate-[140%]">
+            <span className="max-w-[96%] rounded-[13px] border border-white/34 bg-black/28 px-2.5 py-1.5 text-[10.5px] leading-[1.12] font-extrabold tracking-[0px] text-white shadow-[0_8px_18px_rgba(0,0,0,0.2)] backdrop-blur-[10px]">
+              {moderationLabel}
+            </span>
+          </div>
+        ) : null}
       </AspectRatio>
     </motion.button>
   );
@@ -464,6 +502,7 @@ function PostsSection({
           {posts.map((post) => (
             <ProfilePostCard
               key={post.id}
+              isOwnProfile={isOwnProfile}
               post={post}
               shouldReduceMotion={shouldReduceMotion}
               onClick={() => onPostClick(post)}
@@ -491,6 +530,7 @@ export function ProfileScreen({
   density,
   initialUserId,
   ownProfileRoute = false,
+  reviewSubmittedNotice = false,
   savedNotice = false,
 }: ProfileScreenProps) {
   const router = useRouter();
@@ -513,6 +553,8 @@ export function ProfileScreen({
     () => new Set()
   );
   const [notice, setNotice] = useState<string | null>(null);
+  const [showReviewSubmittedDialog, setShowReviewSubmittedDialog] =
+    useState(reviewSubmittedNotice);
   const [copyLinkAlertKey, setCopyLinkAlertKey] = useState(0);
   const profile = profileState?.profile ?? null;
   const isOwnProfile =
@@ -530,6 +572,50 @@ export function ProfileScreen({
     [profileState?.savedPostIds]
   );
 
+  const mergeProfilePosts = useCallback(
+    (serverPosts: Post[], userId: string, currentUser: string | null) => {
+      if (!currentUser || currentUser !== userId) {
+        return serverPosts;
+      }
+
+      const serverPostIds = new Set(serverPosts.map((post) => post.id));
+      const serverClientIds = new Set(
+        serverPosts
+          .map((post) => post.clientId)
+          .filter((clientId): clientId is string => Boolean(clientId))
+      );
+      const optimisticPosts = getOptimisticReviewPosts().filter(
+        (post) =>
+          post.user === userId &&
+          !serverPostIds.has(post.id) &&
+          (!post.clientId || !serverClientIds.has(post.clientId))
+      );
+
+      return [...optimisticPosts, ...serverPosts];
+    },
+    []
+  );
+
+  const applyProfilePosts = useCallback(
+    (nextPosts: Post[], userId: string, currentUser: string | null) => {
+      const mergedPosts = mergeProfilePosts(nextPosts, userId, currentUser);
+
+      setPosts(mergedPosts);
+      setProfileState((currentState) =>
+        currentState && currentState.profile.userId === userId
+          ? {
+              ...currentState,
+              profile: {
+                ...currentState.profile,
+                postsCount: mergedPosts.length,
+              },
+            }
+          : currentState
+      );
+    },
+    [mergeProfilePosts]
+  );
+
   useEffect(() => {
     if (!savedNotice || !ownProfileRoute || profileLoadState !== "ready") {
       return;
@@ -542,6 +628,12 @@ export function ProfileScreen({
 
     return () => window.clearTimeout(timer);
   }, [ownProfileRoute, profileLoadState, router, savedNotice]);
+
+  useEffect(() => {
+    if (reviewSubmittedNotice) {
+      setShowReviewSubmittedDialog(true);
+    }
+  }, [reviewSubmittedNotice]);
 
   const loadProfile = useCallback(async () => {
     setProfileLoadState("loading");
@@ -560,7 +652,11 @@ export function ProfileScreen({
       try {
         const postsResponse = await getUserPosts(response.profile.userId);
 
-        setPosts(postsResponse.posts);
+        applyProfilePosts(
+          postsResponse.posts,
+          response.profile.userId,
+          response.currentUser
+        );
         setPostsLoadState("ready");
       } catch {
         setPostsLoadState("error");
@@ -572,7 +668,7 @@ export function ProfileScreen({
       setPostsLoadState("ready");
       setNotice("Не удалось загрузить профиль.");
     }
-  }, [initialUserId, ownProfileRoute]);
+  }, [applyProfilePosts, initialUserId, ownProfileRoute]);
 
   const loadPosts = useCallback(async () => {
     if (!profile) {
@@ -585,13 +681,53 @@ export function ProfileScreen({
     try {
       const response = await getUserPosts(profile.userId);
 
-      setPosts(response.posts);
+      applyProfilePosts(response.posts, profile.userId, response.currentUser);
       setPostsLoadState("ready");
     } catch {
       setPostsLoadState("error");
       setNotice("Не удалось загрузить посты профиля.");
     }
-  }, [profile]);
+  }, [applyProfilePosts, profile]);
+
+  useEffect(() => {
+    if (!ownProfileRoute) {
+      return;
+    }
+
+    function handleReviewPostsChanged() {
+      void loadPosts();
+    }
+
+    function handleReviewSubmitError() {
+      const errorMessage = consumeReviewSubmitError();
+
+      if (errorMessage) {
+        setNotice(errorMessage);
+      }
+
+      void loadPosts();
+    }
+
+    window.addEventListener(REVIEW_POSTS_CHANGED_EVENT, handleReviewPostsChanged);
+    window.addEventListener(REVIEW_SUBMIT_ERROR_EVENT, handleReviewSubmitError);
+
+    const initialErrorMessage = consumeReviewSubmitError();
+
+    if (initialErrorMessage) {
+      setNotice(initialErrorMessage);
+    }
+
+    return () => {
+      window.removeEventListener(
+        REVIEW_POSTS_CHANGED_EVENT,
+        handleReviewPostsChanged
+      );
+      window.removeEventListener(
+        REVIEW_SUBMIT_ERROR_EVENT,
+        handleReviewSubmitError
+      );
+    };
+  }, [loadPosts, ownProfileRoute]);
 
   useEffect(() => {
     let isActive = true;
@@ -622,7 +758,11 @@ export function ProfileScreen({
             return;
           }
 
-          setPosts(postsResponse.posts);
+          applyProfilePosts(
+            postsResponse.posts,
+            response.profile.userId,
+            response.currentUser
+          );
           setPostsLoadState("ready");
         } catch {
           if (!isActive) {
@@ -648,7 +788,7 @@ export function ProfileScreen({
     return () => {
       isActive = false;
     };
-  }, [initialUserId, ownProfileRoute]);
+  }, [applyProfilePosts, initialUserId, ownProfileRoute]);
 
   const toggleFollow = useCallback(
     async (author: string, nextFollowing: boolean) => {
@@ -853,6 +993,14 @@ export function ProfileScreen({
     router.push("/me/settings");
   }
 
+  function handleReviewSubmittedDialogChange(open: boolean) {
+    setShowReviewSubmittedDialog(open);
+
+    if (!open && reviewSubmittedNotice) {
+      router.replace("/me", { scroll: false });
+    }
+  }
+
   const retryButton = (
     <motion.button
       type="button"
@@ -929,6 +1077,37 @@ export function ProfileScreen({
             <p role="status">{notice}</p>
           </div>
         )}
+        <AlertDialog
+          open={showReviewSubmittedDialog}
+          onOpenChange={handleReviewSubmittedDialogChange}
+        >
+          <AlertDialogContent className="rounded-[24px] border-0 bg-white/90 p-5 text-[#15291C] shadow-[0_22px_54px_rgba(20,40,28,0.34),0_8px_18px_rgba(20,40,28,0.12),inset_1px_1px_0_rgba(255,255,255,0.74)] ring-0 backdrop-blur-[22px]">
+            <AlertDialogHeader className="place-items-center text-center">
+              <div
+                className="mb-1 grid size-12 place-items-center rounded-full"
+                style={{ backgroundColor: `${brand}24`, color: brand }}
+              >
+                <CheckCircle2 className="size-7" strokeWidth={2.25} />
+              </div>
+              <AlertDialogTitle className="text-[20px] leading-tight font-semibold text-[#15291C]">
+                Успешно!
+              </AlertDialogTitle>
+              <AlertDialogDescription className="font-[family-name:var(--font-roboto)] text-[14px] leading-snug font-medium text-[#5C6B62]">
+                Ваш отзыв отправлен на модерацию
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="-mx-5 -mb-5 rounded-b-[24px] border-t border-white/58 bg-white/45 p-5 sm:justify-center">
+              <AlertDialogAction
+                className="h-10 w-full rounded-[18px] border border-transparent bg-white px-4 text-[14px] font-bold text-[#15291C] shadow-[0_8px_20px_rgba(20,40,28,0.08),inset_1px_1px_0_rgba(255,255,255,0.72),inset_-1px_-1px_0_rgba(255,255,255,0.28)] hover:bg-white focus-visible:ring-[#15291C]/12"
+                style={{
+                  background: `linear-gradient(#FFFFFF,#FFFFFF) padding-box, linear-gradient(140deg, ${brand}, rgba(122,236,164,0.7), rgba(255,255,255,0.76)) border-box`,
+                }}
+              >
+                Хорошо
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         <CopyLinkAlert showKey={copyLinkAlertKey} />
 
         <AnimatePresence>

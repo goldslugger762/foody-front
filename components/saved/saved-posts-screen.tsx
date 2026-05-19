@@ -231,6 +231,7 @@ function SavedPostGridCard({
             seed={post.seed}
             height="100%"
             label=""
+            src={post.photoUrls?.[0]}
           />
         ) : (
           <div className="grid h-full place-items-center bg-[rgba(46,204,113,0.12)]">

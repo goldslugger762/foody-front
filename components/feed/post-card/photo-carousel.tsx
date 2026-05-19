@@ -230,6 +230,7 @@ export function PhotoCarousel({
                 seed={post.seed + trackPhotoIdx}
                 height="100%"
                 label={`dish photo ${trackPhotoIdx + 1} / ${post.photos} · ${post.dish.toLowerCase()}`}
+                src={post.photoUrls?.[trackPhotoIdx]}
                 labelClassName={
                   hasPhotoSlider
                     ? "right-3 left-auto max-w-[calc(100%-6.75rem)] overflow-hidden text-right text-ellipsis whitespace-nowrap"

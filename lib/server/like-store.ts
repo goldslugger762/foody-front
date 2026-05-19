@@ -6,7 +6,7 @@ import type {
   LikeCheckResponse,
   LikeMutationResponse,
 } from "@/lib/feed-api";
-import { POSTS } from "@/lib/mock-data";
+import { getKnownPostById } from "@/lib/server/review-post-store";
 
 type LikeRecord = {
   createdAt: string;
@@ -137,7 +137,7 @@ function getLikedPostIdsFromStore(store: LikeStore, user: string) {
     .map((record) => record.postId);
 }
 
-function validatePostId(postId: number) {
+async function validatePostId(postId: number) {
   if (!Number.isInteger(postId) || postId <= 0) {
     throw new LikeValidationError(
       "invalid_post_id",
@@ -145,7 +145,7 @@ function validatePostId(postId: number) {
     );
   }
 
-  if (!POSTS.some((post) => post.id === postId)) {
+  if (!(await getKnownPostById(postId))) {
     throw new LikeValidationError(
       "unknown_post",
       "Такого поста нет в ленте.",
@@ -163,7 +163,7 @@ export async function getLikedPostIds(user = CURRENT_USER.handle) {
 }
 
 export async function getLikeCheck(postId: number): Promise<LikeCheckResponse> {
-  const targetPostId = validatePostId(postId);
+  const targetPostId = await validatePostId(postId);
   const likedPostIds = await getLikedPostIds();
 
   return {
@@ -177,7 +177,7 @@ export async function getLikeCheck(postId: number): Promise<LikeCheckResponse> {
 export async function likePost(
   postId: number
 ): Promise<LikeMutationResponse> {
-  const targetPostId = validatePostId(postId);
+  const targetPostId = await validatePostId(postId);
 
   return updateLikeStore((store) => {
     const alreadyLiked = store.likes.some(
@@ -206,7 +206,7 @@ export async function likePost(
 export async function unlikePost(
   postId: number
 ): Promise<LikeMutationResponse> {
-  const targetPostId = validatePostId(postId);
+  const targetPostId = await validatePostId(postId);
 
   return updateLikeStore((store) => {
     const previousLength = store.likes.length;

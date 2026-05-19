@@ -415,6 +415,7 @@ export function PhotoViewerModal({
                         seed={post.seed + trackPhotoIdx}
                         height="100%"
                         label={`${post.dish.toLowerCase()} · ${trackPhotoIdx + 1} / ${post.photos}`}
+                        src={post.photoUrls?.[trackPhotoIdx]}
                         labelClassName="right-4 bottom-4 left-auto max-w-[calc(100%-2rem)] overflow-hidden rounded-full bg-black/18 px-2.5 py-1 text-right text-ellipsis whitespace-nowrap"
                       />
                     </div>

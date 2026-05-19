@@ -8,6 +8,7 @@ import {
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^[\p{L}\d]+$/u;
 const USERNAME_PATTERN = /^[A-Za-z\d_]+$/;
+const MIN_PASSWORD_LENGTH = 6;
 const MAX_CITY_LENGTH = 64;
 const RESERVED_EMAILS = new Set(["taken@example.com", "busy@mail.com"]);
 const RESERVED_USERNAMES = new Set(["admin", "foody", "you"]);
@@ -75,8 +76,11 @@ export async function POST(request: Request) {
     return validationError("Введите корректную электронную почту", "email");
   }
 
-  if (payload.password.length < 8) {
-    return validationError("Пароль должен быть минимум 8 символов", "password");
+  if (payload.password.length < MIN_PASSWORD_LENGTH) {
+    return validationError(
+      `Пароль должен быть минимум ${MIN_PASSWORD_LENGTH} символов`,
+      "password"
+    );
   }
 
   if (!PASSWORD_PATTERN.test(payload.password)) {

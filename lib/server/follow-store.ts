@@ -10,6 +10,7 @@ import type {
 import { POSTS } from "@/lib/mock-data";
 import { getSavedPostIds } from "@/lib/server/bookmark-store";
 import { getLikedPostIds } from "@/lib/server/like-store";
+import { getFeedPosts } from "@/lib/server/review-post-store";
 
 type FollowRecord = {
   createdAt: string;
@@ -192,10 +193,11 @@ export async function getFeedSnapshot(scope: FeedScope) {
   const followingUsers = await getFollowedUsers();
   const likedPostIds = await getLikedPostIds();
   const savedPostIds = await getSavedPostIds();
+  const approvedPosts = await getFeedPosts();
   const posts =
     scope === "subs"
-      ? POSTS.filter((post) => followingUsers.includes(post.user))
-      : POSTS;
+      ? approvedPosts.filter((post) => followingUsers.includes(post.user))
+      : approvedPosts;
 
   return {
     currentUser: CURRENT_USER.handle,

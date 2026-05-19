@@ -17,6 +17,7 @@ type DishPhotoProps = {
   height?: CSSProperties["height"];
   label?: string;
   labelClassName?: string;
+  src?: string;
 };
 
 export function DishPhoto({
@@ -24,6 +25,7 @@ export function DishPhoto({
   height = 360,
   label,
   labelClassName,
+  src,
 }: DishPhotoProps) {
   const palette = PALETTES[seed % PALETTES.length];
   const angle = (seed * 47) % 360;
@@ -36,14 +38,21 @@ export function DishPhoto({
         background: `linear-gradient(${angle}deg, ${palette[0]} 0%, ${palette[1]} 55%, ${palette[2]} 100%)`,
       }}
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 14px, rgba(0,0,0,0.04) 14px 28px)",
-        }}
-      />
-      <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_30%_20%,rgba(255,255,255,0.35),transparent_60%)]" />
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <>
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 14px, rgba(0,0,0,0.04) 14px 28px)",
+            }}
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_30%_20%,rgba(255,255,255,0.35),transparent_60%)]" />
+        </>
+      )}
       {label && (
         <div
           className={cn(

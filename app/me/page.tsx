@@ -7,11 +7,12 @@ const TWEAKS: Tweaks = DEFAULT_TWEAKS;
 type MePageProps = {
   searchParams: Promise<{
     profileSaved?: string;
+    reviewSubmitted?: string;
   }>;
 };
 
 export default async function MePage({ searchParams }: MePageProps) {
-  const { profileSaved } = await searchParams;
+  const { profileSaved, reviewSubmitted } = await searchParams;
 
   return (
     <ProfileScreen
@@ -20,6 +21,7 @@ export default async function MePage({ searchParams }: MePageProps) {
       initialUserId={CURRENT_USER.handle}
       ownProfileRoute
       savedNotice={profileSaved === "1"}
+      reviewSubmittedNotice={reviewSubmitted === "1"}
     />
   );
 }

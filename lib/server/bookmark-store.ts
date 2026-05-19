@@ -7,7 +7,8 @@ import type {
   FavoritePostsResponse,
   BookmarkMutationResponse,
 } from "@/lib/feed-api";
-import { POSTS, type Post } from "@/lib/mock-data";
+import type { Post } from "@/lib/mock-data";
+import { getKnownPostById } from "@/lib/server/review-post-store";
 
 type BookmarkRecord = {
   createdAt: string;
@@ -149,14 +150,14 @@ function getFavoriteRecordsFromStore(store: BookmarkStore, user: string) {
     );
 }
 
-function getPostById(postId: number) {
-  return POSTS.find((post) => post.id === postId) ?? null;
-}
+async function getFavoritePostsFromStore(store: BookmarkStore, user: string) {
+  const posts = await Promise.all(
+    getFavoriteRecordsFromStore(store, user).map((record) =>
+      getKnownPostById(record.postId)
+    )
+  );
 
-function getFavoritePostsFromStore(store: BookmarkStore, user: string) {
-  return getFavoriteRecordsFromStore(store, user)
-    .map((record) => getPostById(record.postId))
-    .filter((post): post is Post => post !== null);
+  return posts.filter((post): post is Post => post !== null);
 }
 
 function getRecentFavoriteTagsFromPosts(posts: Post[], limit: number) {
@@ -181,7 +182,7 @@ function getRecentFavoriteTagsFromPosts(posts: Post[], limit: number) {
   return tags;
 }
 
-function validatePostId(postId: number) {
+async function validatePostId(postId: number) {
   if (!Number.isInteger(postId) || postId <= 0) {
     throw new BookmarkValidationError(
       "invalid_post_id",
@@ -189,7 +190,7 @@ function validatePostId(postId: number) {
     );
   }
 
-  if (!POSTS.some((post) => post.id === postId)) {
+  if (!(await getKnownPostById(postId))) {
     throw new BookmarkValidationError(
       "unknown_post",
       "Такого поста нет в ленте.",
@@ -239,7 +240,7 @@ export async function getFavoritePostsSnapshot(
   }
 ): Promise<FavoritePostsResponse> {
   const store = await readBookmarkStore();
-  const posts = getFavoritePostsFromStore(store, user);
+  const posts = await getFavoritePostsFromStore(store, user);
   const savedPostIds = getSavedPostIdsFromStore(store, user);
 
   return {
@@ -256,7 +257,7 @@ export async function getFavoritePostsSnapshot(
 export async function getBookmarkCheck(
   postId: number
 ): Promise<BookmarkCheckResponse> {
-  const targetPostId = validatePostId(postId);
+  const targetPostId = await validatePostId(postId);
   const savedPostIds = await getSavedPostIds();
 
   return {
@@ -270,7 +271,7 @@ export async function getBookmarkCheck(
 export async function savePost(
   postId: number
 ): Promise<BookmarkMutationResponse> {
-  const targetPostId = validatePostId(postId);
+  const targetPostId = await validatePostId(postId);
 
   return updateBookmarkStore((store) => {
     const alreadySaved = store.bookmarks.some(
@@ -301,7 +302,7 @@ export async function savePost(
 export async function unsavePost(
   postId: number
 ): Promise<BookmarkMutationResponse> {
-  const targetPostId = validatePostId(postId);
+  const targetPostId = await validatePostId(postId);
 
   return updateBookmarkStore((store) => {
     const previousLength = store.bookmarks.length;

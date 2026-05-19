@@ -30,7 +30,7 @@ export async function GET(
   context: ProfilePostsRouteContext
 ) {
   try {
-    const snapshot = getUserPostsSnapshot(await getRouteUserId(context));
+    const snapshot = await getUserPostsSnapshot(await getRouteUserId(context));
 
     if (!snapshot) {
       return jsonError(

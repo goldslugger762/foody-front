@@ -178,6 +178,7 @@ export function AuthField({
   label,
   list,
   maxLength,
+  minLength,
   onChange,
   onFocus,
   placeholder,
@@ -193,6 +194,7 @@ export function AuthField({
   label: string;
   list?: string;
   maxLength?: number;
+  minLength?: number;
   onChange: (value: string) => void;
   onFocus?: () => void;
   placeholder: string;
@@ -227,6 +229,7 @@ export function AuthField({
             inputMode={inputMode}
             list={list}
             maxLength={maxLength}
+            minLength={minLength}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onChange(event.target.value)
             }
